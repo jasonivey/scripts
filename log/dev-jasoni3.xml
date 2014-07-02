@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<NetworkSessions>
+	<Session Host="DEV-JASONI" User="">
+		<File Date="2006-09-08 10:40:02.12">
+			\PIPE\srvsvc
+		</File>
+	</Session>
+	<Session Host="10.160.64.117" User="JAMES_RUSSELL"/>
+	<Session Host="DEV-RUSSELLJ" User="JAMES_RUSSELL"/>
+	<Session Host="DEV-JASONI" User="JASONI">
+		<File Date="2006-09-08 10:35:01.73">
+			D:\music
+		</File>
+		<File Date="2006-09-08 10:35:01.73">
+			D:\music\America\(1975) History - America's Greatest Hits
+		</File>
+		<File Date="2006-09-08 13:07:56.25">
+			D:\music\Evanescence\(2006) The Open Door\06 - Evanescence - Snow White Queen.mp3
+		</File>
+		<File Date="2006-09-08 13:11:56.44">
+			D:\music\Evanescence\(2006) The Open Door\07 - Evanescence - Lacrymosa.mp3
+		</File>
+		<File Date="2006-09-08 13:11:56.44">
+			D:\music\Evanescence\(2006) The Open Door\folder.jpg
+		</File>
+		<File Date="2006-09-08 18:11:08.75">
+			\PIPE\srvsvc
+		</File>
+		<File Date="2006-09-08 18:11:08.75">
+			D:\music\Evanescence\(2006) The Open Door\01 - Evanescence - Sweet Sacrifice.mp3
+		</File>
+		<File Date="2006-09-08 18:11:08.75">
+			D:\music\Evanescence\(2006) The Open Door\08 - Evanescence - Like You.mp3
+		</File>
+		<File Date="2006-09-08 18:11:08.75">
+			D:\music\Evanescence\(2006) The Open Door\09 - Evanescence - Lose Control.mp3
+		</File>
+	</Session>
+	<Session Host="MOYUKH-DEV" User="MOYUKH_GOSWAMI"/>
+	<Session Host="10.160.64.149" User="NIELO"/>
+</NetworkSessions>

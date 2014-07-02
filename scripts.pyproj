@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{83d1ccd6-39d6-4394-bd64-682a10119b31}</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>find_duplicates.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <AssemblyName>scripts</AssemblyName>
+    <Name>scripts</Name>
+    <RootNamespace>scripts</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
+    <InterpreterId>2af0f10d-7135-4994-9156-5d01c9c11b7e</InterpreterId>
+    <InterpreterVersion>2.6</InterpreterVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="add_boost_to_vcproj.py" />
+    <Compile Include="add_cache_to_vcproj.py" />
+    <Compile Include="add_excption_handling_to_vcproj.py" />
+    <Compile Include="add_ignore_warning.py" />
+    <Compile Include="add_property_sheets.py" />
+    <Compile Include="add_x64_settings.py" />
+    <Compile Include="align_kindle_books.py" />
+    <Compile Include="alphabatize_solution.py" />
+    <Compile Include="analyze_photos.py" />
+    <Compile Include="analyze_sme.py" />
+    <Compile Include="attempt_open_image.py" />
+    <Compile Include="binary_search.py" />
+    <Compile Include="catalog_books.py" />
+    <Compile Include="change_history.py" />
+    <Compile Include="check_includes.py" />
+    <Compile Include="clean_sandbox.py" />
+    <Compile Include="compiler_command.py" />
+    <Compile Include="compile_source.py" />
+    <Compile Include="convert_debug_logs.py" />
+    <Compile Include="convert_to_php.py" />
+    <Compile Include="copy_perforce_files.py" />
+    <Compile Include="copy_with_no_data.py" />
+    <Compile Include="create_download_check_sums.py" />
+    <Compile Include="create_handbrake_script.py" />
+    <Compile Include="decrypt_amazon_books.py" />
+    <Compile Include="delayed_apply_converter.py" />
+    <Compile Include="describe_label.py" />
+    <Compile Include="diff_dump.py" />
+    <Compile Include="dump_dir.py" />
+    <Compile Include="dump_timing_info.py" />
+    <Compile Include="edit_env_var.py" />
+    <Compile Include="eliminate_includes.py" />
+    <Compile Include="files_to_html.py" />
+    <Compile Include="files_to_html_md5.py" />
+    <Compile Include="find_comas.py" />
+    <Compile Include="find_configurations.py" />
+    <Compile Include="find_cycles.py" />
+    <Compile Include="find_disco_objects.py" />
+    <Compile Include="find_duplicates.py" />
+    <Compile Include="find_errors.py" />
+    <Compile Include="find_ev_no_reg.py" />
+    <Compile Include="find_files_in_project.py" />
+    <Compile Include="find_fix_.py" />
+    <Compile Include="find_modified.py" />
+    <Compile Include="find_path.py" />
+    <Compile Include="find_result.py" />
+    <Compile Include="find_serials.py" />
+    <Compile Include="find_str_funcs.py" />
+    <Compile Include="find_str_in_dump_bin.py" />
+    <Compile Include="find_str_in_perforce.py" />
+    <Compile Include="find_str_in_sandbox.py" />
+    <Compile Include="fix_copyrights.py" />
+    <Compile Include="fix_diffs.py" />
+    <Compile Include="generate_results.py" />
+    <Compile Include="gen_license_file.py" />
+    <Compile Include="get_dir_size.py" />
+    <Compile Include="line_count.py" />
+    <Compile Include="list_changes.py" />
+    <Compile Include="list_changes_between_labels.py" />
+    <Compile Include="list_changes_between_labels_local.py" />
+    <Compile Include="list_opened_files.py" />
+    <Compile Include="make_read_only.py" />
+    <Compile Include="md5sum.py" />
+    <Compile Include="merge_audio_book.py" />
+    <Compile Include="migrate_changes.py" />
+    <Compile Include="migrate_shelvset.py" />
+    <Compile Include="net_share.py" />
+    <Compile Include="newlines_test.py" />
+    <Compile Include="open_image_files.py" />
+    <Compile Include="open_project_files.py" />
+    <Compile Include="parse_image_timing.py" />
+    <Compile Include="parse_jpg_headers.py" />
+    <Compile Include="parse_seu_files.py" />
+    <Compile Include="parse_sln.py" />
+    <Compile Include="parse_test_timing.py" />
+    <Compile Include="parse_timing.py" />
+    <Compile Include="parse_unit_test.py" />
+    <Compile Include="parse_unit_tests.py" />
+    <Compile Include="perforce_grep.py" />
+    <Compile Include="pin_tool.py" />
+    <Compile Include="process_utils.py" />
+    <Compile Include="ps_upgrade_to_msvc2010.py" />
+    <Compile Include="remove-win64-proj.py" />
+    <Compile Include="remove_find_locations.py" />
+    <Compile Include="remove_ia64_settings.py" />
+    <Compile Include="remove_stripped_pdb.py" />
+    <Compile Include="rename_media.py" />
+    <Compile Include="rename_pearl_scripts.py" />
+    <Compile Include="rename_pl.py" />
+    <Compile Include="rename_x64.py" />
+    <Compile Include="revert_writable.py" />
+    <Compile Include="run_prebuildall.py" />
+    <Compile Include="service_util.py" />
+    <Compile Include="setup_generic_mount.py" />
+    <Compile Include="set_user_types.py" />
+    <Compile Include="shelve_utility.py" />
+    <Compile Include="show_ver.py" />
+    <Compile Include="temp.py" />
+    <Compile Include="test.py" />
+    <Compile Include="update_file.py" />
+    <Compile Include="update_linker_settings.py" />
+    <Compile Include="update_main_cpp.py" />
+    <Compile Include="update_vcproj.py" />
+    <Compile Include="update_warning_level.py" />
+    <Compile Include="update_x64_configurations.py" />
+    <Compile Include="verify_source.py" />
+    <Compile Include="virtual_server.py" />
+  </ItemGroup>
+</Project>

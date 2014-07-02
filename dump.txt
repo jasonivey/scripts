@@ -1,0 +1,114 @@
+{
+    "channels": [
+        {
+            "channel_guid": "f7b134ede54a4b27aeede3b8b1db12d1",
+            "key_channel": true,
+            "service_info": {
+                "callsign": "KSLDT",
+                "channel_major": 5,
+                "channel_minor": 1,
+                "channel_rf": 38
+            }
+        },
+        {
+            "channel_guid": "03cd213502544e31839a76c76d590858",
+            "key_channel": true,
+            "service_info": {
+                "callsign": "KTVXDT",
+                "channel_major": 4,
+                "channel_minor": 1,
+                "channel_rf": 40
+            }
+        },
+        {
+            "channel_guid": "2590e6fa729d4252a92388946acb736e",
+            "key_channel": true,
+            "service_info": {
+                "callsign": "KSTUDT",
+                "channel_major": 13,
+                "channel_minor": 1,
+                "channel_rf": 28
+            }
+        },
+        {
+            "channel_guid": "2d0fe4b3ba5c4ac2a84edf04b4eb78bc",
+            "key_channel": true,
+            "service_info": {
+                "callsign": "KUTVDT",
+                "channel_major": 2,
+                "channel_minor": 1,
+                "channel_rf": 34
+            }
+        },
+        {
+            "channel_guid": "03da2fb4d4de42259e376c4d4ffe57c3",
+            "key_channel": false,
+            "service_info": {
+                "callsign": "KUEDDT",
+                "channel_major": 7,
+                "channel_minor": 1,
+                "channel_rf": 42
+            }
+        },
+        {
+            "channel_guid": "210ba286d18548418e118ad6134a79b9",
+            "key_channel": false,
+            "service_info": {
+                "callsign": "KUTHDT",
+                "channel_major": 32,
+                "channel_minor": 1,
+                "channel_rf": 32
+            }
+        },
+        {
+            "channel_guid": "e0055e72caa94d3f83fe4a328c998c7e",
+            "key_channel": false,
+            "service_info": {
+                "callsign": "KUENDT",
+                "channel_major": 9,
+                "channel_minor": 1,
+                "channel_rf": 36
+            }
+        },
+        {
+            "channel_guid": "24459c5e91054bd9a12e3263fe17b3b8",
+            "key_channel": false,
+            "service_info": {
+                "callsign": "KBYUDT",
+                "channel_major": 11,
+                "channel_minor": 1,
+                "channel_rf": 44
+            }
+        },
+        {
+            "channel_guid": "226625ffd2134c17b8804916b6df9602",
+            "key_channel": false,
+            "service_info": {
+                "callsign": "KJZZDT",
+                "channel_major": 14,
+                "channel_minor": 1,
+                "channel_rf": 46
+            }
+        },
+        {
+            "channel_guid": "fa972756af084f1299747b3c09d0010c",
+            "key_channel": false,
+            "service_info": {
+                "callsign": "KUPXDT",
+                "channel_major": 16,
+                "channel_minor": 1,
+                "channel_rf": 29
+            }
+        },
+        {
+            "channel_guid": "20f887587dc7409c8e5f121a8d6bd3ac",
+            "key_channel": false,
+            "service_info": {
+                "callsign": "KUCWDT",
+                "channel_major": 30,
+                "channel_minor": 1,
+                "channel_rf": 48
+            }
+        }
+    ]
+}

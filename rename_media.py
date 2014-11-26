@@ -6,14 +6,22 @@ import sys
 def is_mp3_file(filename):
     return filename.lower().endswith('.mp3')
 
-def _get_new_name(name_pattern, dest_dir, index, files_count):
-    file_pattern = '{0:0' + str(len(str(files_count))) + 'd} - ' + name_pattern + '.mp3'
+def _get_new_name(name, name_pattern, dest_dir, index, files_count):
+    new_name = None
+    name_index = name.rfind(' - ')
+    if name_index != -1:
+        new_name = name[name_index + len(' - ') : name.rfind('.')]
+    file_pattern = '{0:0' + str(len(str(files_count))) + 'd} - '
+    if new_name:
+        file_pattern += '{0} - {1}.mp3'.format(name_pattern, new_name)
+    else:
+        file_pattern += name_pattern + '.mp3'
     return os.path.join(dest_dir, file_pattern.format(index))
 
 def rename_files(files, dest_dir, name_pattern, execute):
     for i, filename in enumerate(files, 1):
         dir, oldname = os.path.split(filename)
-        newpath = _get_new_name(name_pattern, dest_dir, i, len(files))
+        newpath = _get_new_name(oldname, name_pattern, dest_dir, i, len(files))
         index = len(os.path.dirname(dest_dir)) + 1
         print('mv "{0}" "{1}"'.format(filename[index:], newpath[index:]))
         if execute:

@@ -42,7 +42,7 @@ def main():
 
     try:
         for path in _find_system_include_paths(compiler):
-            print('"{0}"'.format(path))
+            print(path)
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)

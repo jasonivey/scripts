@@ -71,6 +71,49 @@ class StreamSize(object):
             str += ' ({0} mb)'.format(round(average / (1024.0 * 1024.0), 1))
         return str
 
+def get_asset_ids(ipaddr, verbose):
+    asset_ids = []
+    url = 'http://{0}/m3u8/'.format(ipaddr)
+    with closing(urllib.urlopen(url)) as site:
+        for link in _get_links_in_html_page(site.read()):
+            match = re.match(r'^(?P<asset>[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{12})/$', link)
+            if match:
+                asset_ids.append(match.group('asset'))
+    return asset_ids
+
+def _get_m3u8_files(ipaddr, asset_id, verbose):
+    m3u8s = []
+    url = 'http://{0}/m3u8/{1}'.format(ipaddr, asset_id)
+    with closing(urllib.urlopen(url)) as site:
+        for link in _get_links_in_html_page(site.read()):
+            match = re.match(r'^(?P<m3u8>.*\.m3u8$', link)
+            if match:
+                m3u8s.append(match.group('asset'))
+    return m3u8s
+
+def _get_m3u8_file(ipaddr, asset_id, verbose):
+    m3u8s = _get_m3u8_files(ipaddr, asset_id, verbose)
+    m3u8 = None
+    for i in m3u8s:
+        if i == 'index.m3u8':
+            pass
+        m3u8 = i
+        break
+    return m3u8
+    
+def get_stream_ids(ipaddr, asset_id, verbose):
+    m3u8 = _get_m3u8_file(ipaddr, asset_id, verbose)
+    if not m3u8:
+        return []
+    stream_ids = []
+    url = 'http://{0}/m3u8/{1}/{2}'.format(ipaddr, asset_id, m3u8)
+    with closing(urllib.urlopen(url)) as site:
+        for line in site.read().split('\n'):
+            match = re.match(r'\.\./\.\./(?P<stream_id>[^/]+)/.*\.ts', line)
+            if match and match.group('stream_id') not in stream_ids:
+                stream_ids.append(match.group('stream_id'))
+    return stream_ids
+
 def get_stream_partitions(ipaddr, stream, verbose):
     partitions = []
     url = 'http://{0}/{1}/'.format(ipaddr, stream)

@@ -371,6 +371,7 @@ def _get_asset_ids(ip_addr):
 
 def _get_recordings(ip_addr):
     recordings = []
+    error = False
     try:
         asset_ids = _get_asset_ids(ip_addr)
         clips_list_params_chunks = _create_get_clips_list_params_chunk(asset_ids)
@@ -380,7 +381,13 @@ def _get_recordings(ip_addr):
             for stream in recording.streams:
                 stream.stream_files = _get_stream_files(ip_addr, stream.stream_id)
     except urllib2.HTTPError, err:
+        error = True
         print('EXCEPTION: while getting recordings for {0}. {1}'.format(ip_addr, err))
+    #if error:
+    #    asset_ids = lsdvr_http_api.get_asset_ids(ip_addr, _is_verbose_output_enabled())
+    #    for asset_id in asset_ids:
+    #        stream_ids = lsdvr_http_api.get_stream_ids(ip_addr, asset_id, _is_verbose_output_enabled())
+    #        for stream_id in stream_ids:
     return recordings
 
 def _validate_recording(ip_addr, recording):

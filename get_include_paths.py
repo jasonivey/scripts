@@ -14,10 +14,11 @@ def _parse_args():
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-c', '--compiler', metavar='<compiler>', required=True, help='name of compiler')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='output verbose debugging information')
+    parser.add_argument('-s', '--single-line', default=False, action='store_true', help='output include paths as a single line')
     args = parser.parse_args()
     global _VERBOSE_OUTPUT
     _VERBOSE_OUTPUT = args.verbose
-    return args.compiler
+    return args.compiler, args.single_line
 
 def _find_system_include_paths(compiler):
     command = '{0} -E -x c++ - -v < /dev/null'.format(compiler)
@@ -37,12 +38,16 @@ def _find_system_include_paths(compiler):
     return paths
 
 def main():
-    compiler = _parse_args()
-    print('compiler: {0}, verbose: {1}'.format(compiler, _is_verbose_output_enabled()))
+    compiler, single_line = _parse_args()
+    print('compiler: {0}, single line: {1}, verbose: {2}'.format(compiler, single_line, _is_verbose_output_enabled()))
 
     try:
-        for path in _find_system_include_paths(compiler):
-            print(path)
+        paths = _find_system_include_paths(compiler)
+        if single_line:
+            print(':'.join(paths))
+        else:
+            for path in paths:
+                print(path)
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)

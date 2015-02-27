@@ -12,18 +12,24 @@ def _is_verbose_output_enabled():
 def _parse_args():
     description = 'Find the system include paths associated with a given compiler'
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('-c', '--compiler', metavar='<compiler>', required=True, help='name of compiler')
+    parser.add_argument('-c', '--compiler', metavar='<compiler>', required=True, help='name of compiler (gcc/g++/clang++)')
+    parser.add_argument('-l', '--stdlib', metavar='<stdlib>', help='the standard library to use (libstdc++ or libc++)')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='output verbose debugging information')
     parser.add_argument('-s', '--single-line', default=False, action='store_true', help='output include paths as a single line')
     args = parser.parse_args()
     global _VERBOSE_OUTPUT
     _VERBOSE_OUTPUT = args.verbose
-    return args.compiler, args.single_line
+    return args.compiler, args.stdlib, args.single_line
 
-def _find_system_include_paths(compiler):
-    command = '{0} -E -x c++ - -v < /dev/null'.format(compiler)
+def _find_system_include_paths(compiler, stdlib=None):
+    if stdlib:
+        command = '{0} -stdlib={1} -E -x c++ - -v < /dev/null'.format(compiler, stdlib)
+    else:
+        command = '{0} -E -x c++ - -v < /dev/null'.format(compiler)
     paths = []
     found = False
+    if _is_verbose_output_enabled():
+        print(command)
     for line in os.popen4(command, 't')[1].readlines():
         if line.strip() == '#include <...> search starts here:':
             found = True
@@ -38,11 +44,11 @@ def _find_system_include_paths(compiler):
     return paths
 
 def main():
-    compiler, single_line = _parse_args()
-    print('compiler: {0}, single line: {1}, verbose: {2}'.format(compiler, single_line, _is_verbose_output_enabled()))
+    compiler, stdlib, single_line = _parse_args()
+    print('compiler: {0}, standard library: {1} single line: {2}, verbose: {3}'.format(compiler, stdlib, single_line, _is_verbose_output_enabled()))
 
     try:
-        paths = _find_system_include_paths(compiler)
+        paths = _find_system_include_paths(compiler, stdlib)
         if single_line:
             print(':'.join(paths))
         else:

@@ -13,13 +13,6 @@ _DATE_CONVERSION_FMT = '%Y-%m-%d'
 def _is_verbose_output_enabled():
     return _VERBOSE_OUTPUT
 
-'''
-{
-   "name": "sample",
-   "amount": 4,
-}
-'''
-
 def _is_date(date_str):
     try:
         return _to_date(date_str)
@@ -29,16 +22,15 @@ def _is_date(date_str):
 def _parse_args():
     description = 'Medical perscription usage'
     parser = argparse.ArgumentParser(description=description)
-    sub_parsers = parser.add_subparsers()
+    sub_parsers = parser.add_subparsers(help='commands', dest='command')
     status = sub_parsers.add_parser('status', help='report the status of the medication')
-    create = sub_parsers.add_parser('new', help='create a new medication')
-    #create = parser.add_argument_group('create')
+    print_meds = sub_parsers.add_parser('show_meds', help='dump the medication and usages')
+    create = sub_parsers.add_parser('create', help='create a new medication')
     create.add_argument('-n', '--name', required=True, help='name of the medication')
     create.add_argument('-c', '--count', required=True, metavar='<NUMBER>', type=int, help='total pills in medication')
     create.add_argument('-u', '--usage', required=True, metavar='<NUMBER>', type=int, help='daily pill usage')
     create.add_argument('-s', '--start_date', required=True, metavar='<YYYY-MM-DD>', type=_is_date, help='start date of the medication')
-    #new_usage = parser.add_argument_group('new usage')
-    new_usage = sub_parsers.add_parser('usage', help='log a medication usage')
+    new_usage = sub_parsers.add_parser('add', help='log a medication usage')
     new_usage.add_argument('-a', '--amount', required=True, metavar='<NUMBER>', type=int, help='pill usage amount')
     new_usage.add_argument('-d', '--date', metavar='<YYYY-MM-DD>', default=datetime.datetime.today(), type=_is_date, help='date of the usage')
     parser.add_argument('-f', '--file', required=True, help='file name of persistent data')
@@ -46,12 +38,16 @@ def _parse_args():
     args = parser.parse_args()
     global _VERBOSE_OUTPUT
     _VERBOSE_OUTPUT = args.verbose
-    if 'name' in dir(args):
-        return args.name, args.count, args.usage, args.start_date, None, None, args.file
-    elif 'amount' in dir(args):
-        return None, None, None, None, args.amount, args.date, args.file
-    else:
-        return None, None, None, None, None, None, args.file
+    commands = {}
+    commands['create'] = {}
+    commands['add'] = {}
+    commands['status'] = args.command == 'status' 
+    commands['show_meds'] = args.command == 'show_meds'
+    if args.command == 'create':
+        commands['create'] = {'name':args.name, 'count':args.count, 'daily_count':args.usage, 'start_date':args.start_date}
+    elif args.command == 'add':
+        commands['add'] = {'count':args.amount, 'date':args.date}
+    return commands, args.file
 
 def _to_date(value):
     return datetime.datetime.strptime(value, _DATE_CONVERSION_FMT)
@@ -61,9 +57,9 @@ def _from_date(value):
     return fmt_str.format(value)
 
 class MedicationUsage(object):
-    def __init__(self, count, date):
-        self._count = count
-        self._date = date
+    def __init__(self,  **kwargs):
+        self._count = kwargs['count']
+        self._date = kwargs['date']
     
     def serialize(self):
         obj = {}
@@ -73,7 +69,8 @@ class MedicationUsage(object):
 
     @classmethod
     def deserialize(cls, obj):
-        c = cls(obj['count'], _to_date(obj['date']))
+        data = {'count':obj['count'], 'date':_to_date(obj['date'])}
+        c = cls(**data)
         return c
     
     @property
@@ -87,15 +84,18 @@ class MedicationUsage(object):
     def __cmp__(self, other):
         return cmp(self._date, other._date)
 
+    def __str__(self):
+        return 'count: {0}, date: {1}'.format(self.count, _from_date(self.date))
+
 
 class Medication(object):
-    def __init__(self, name, count, daily_count, start_date = datetime.datetime.today()):
-        self._name = name
-        self._count = count
-        self._daily_count = daily_count
-        self._start_date = start_date 
+    def __init__(self, **kwargs):
+        self._name = kwargs['name']
+        self._count = kwargs['count']
+        self._daily_count = kwargs['daily_count']
+        self._start_date = kwargs['start_date']
         self._usages = []
-
+    
     def report_status(self):
         pill_count = self.current_count
         days = (datetime.datetime.today() - self._start_date).days
@@ -118,12 +118,13 @@ class Medication(object):
         print('pills in excess:  {0}'.format(pill_excess))
         print('pills last until: {0}'.format(_from_date(pill_end_date)))
 
-    def add_usage(self, count, dt):
+    def add_usage(self, **kwargs):
+        medication_usage = MedicationUsage(**kwargs)
         for usage in self._usages:
-            if _from_date(usage.date) == _from_date(dt):
+            if _from_date(usage.date) == _from_date(medication_usage.date):
                 print('EROR: The usage has already been added')
                 return
-        self._usages.append(MedicationUsage(count, dt))
+        self._usages.append(medication_usage)
         self._usages.sort()
 
     def serialize(self):
@@ -139,10 +140,8 @@ class Medication(object):
 
     @classmethod
     def deserialize(cls, obj):
-        c = cls(obj['name'],
-                obj['count'],
-                obj['daily_count'],
-                _to_date(obj['start_date']))
+        data = {'name':obj['name'], 'count':obj['count'], 'daily_count':obj['daily_count'], 'start_date':_to_date(obj['start_date'])}
+        c = cls(**data)
         for obj_usage in obj['usages']:
             c.usages.append(MedicationUsage.deserialize(obj_usage))
         return c
@@ -174,18 +173,25 @@ class Medication(object):
             count += usage.count
         return self.count - count
 
-def _load_database(filename):
+    def __str__(self):
+        s =  'name:      {0}\n'.format(self.name)
+        s += 'count:     {0}\n'.format(self.current_count)
+        s += 'total:     {0}\n'.format(self.count)
+        s += 'pills/day: {0}\n'.format(self.daily_count)
+        s += 'start:     {0}\n'.format(_from_date(self.start_date))
+        for i, usage in enumerate(self.usages):
+            s += '{0:-2}. {1}\n'.format(i + 1, usage)
+        return s
+
+
+def _load_data(filename):
     with open(filename, 'r') as file:
         if _is_verbose_output_enabled():
             print('reading the data from {0}'.format(filename))
         return Medication.deserialize(json.loads(file.read()))
 
-def _load_data(med_name, total_count, daily_count, start_date, filename):
-    if med_name:
-        medication = Medication(med_name, total_count, daily_count, start_date)
-    else:
-        medication = _load_database(filename)
-    return medication
+def _create_database(**kwargs):
+    return Medication(**kwargs)
 
 def _unload_data(filename, medication):
     with open(filename, 'w') as file:
@@ -194,26 +200,26 @@ def _unload_data(filename, medication):
         file.write(json.dumps(medication.serialize(), sort_keys=True, indent=4, separators=(',', ': ')))
 
 def main():
-    med_name, total_count, daily_count, start_date, usage_amount, usage_date, filename = _parse_args()
+    commands, filename = _parse_args()
 
     if _is_verbose_output_enabled():
-        print('name: {0}, count: {1}, daily: {2}, start: {3}, amount: {4}, date: {5}, file: {6}'.
-            format(med_name, total_count, daily_count, start_date, usage_amount, usage_date, filename))
-    
+        for key, value in commands.items():
+            print('command {0}: {1}'.format(key, value))
+
     try:
-        if not med_name and not os.path.isfile(filename):
-            print('Error: must create a medication before adding a new usage')
-            return 1
+        if len(commands['create']) > 0:
+            create_params = commands['create']
+            medication = _create_database(**commands['create'])
+        else:
+            medication = _load_data(filename)
 
-        creating = med_name != None
-        adding = usage_amount != None
-        status = med_name == None and usage_amount == None
-
-        medication = _load_data(med_name, total_count, daily_count, start_date, filename)
-        if adding:
-            medication.add_usage(usage_amount, usage_date)
-        elif status:
+        if len(commands['add']) > 0:
+            medication.add_usage(**commands['add'])
+        elif commands['status']:
             medication.report_status()
+        elif commands['show_meds']:
+            print(medication)
+
         _unload_data(filename, medication)
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()

@@ -14,6 +14,7 @@ _COMMANDS_STATS = 'stats'
 _COMMANDS_SHOW  = 'show'
 _COMMANDS_CREATE = 'create'
 _COMMANDS_ADD = 'add'
+_COMMANDS_UPDATE = 'update'
 
 def _is_verbose_output_enabled():
     return _VERBOSE_OUTPUT
@@ -38,41 +39,74 @@ def _is_date(date_str):
     except:
         raise argparse.ArgumentTypeError('date value is invalid')
 
+def _print_args(commands):
+    for key, value in commands.items():
+        if isinstance(value, dict):
+            values = ''
+            for subkey, subvalue in value.items():
+                if isinstance(subvalue, datetime.date):
+                    values += '{0}: {1}, '.format(subkey, _from_date(subvalue))
+                else:
+                    values += '{0}: {1}, '.format(subkey, subvalue)
+            print('command {0}: [{1}]'.format(key, values.rstrip(' ,')))
+        else:
+            print('command {0}: {1}'.format(key, value))
+
 def _parse_args():
     description = 'Medical perscription usage'
     parser = argparse.ArgumentParser(description=description)
+
     sub_parsers = parser.add_subparsers(help='commands', dest='command')
+
     stats = sub_parsers.add_parser(_COMMANDS_STATS, help='report the stats of the medication')
+
     show = sub_parsers.add_parser(_COMMANDS_SHOW, help='dump the medication and usages')
+
     create = sub_parsers.add_parser(_COMMANDS_CREATE, help='create a new medication')
     create.add_argument('-n', '--name', required=True, help='name of the medication')
     create.add_argument('-c', '--count', required=True, metavar='<NUMBER>', type=int, help='total pills in medication')
     create.add_argument('-u', '--usage', required=True, metavar='<NUMBER>', type=int, help='daily pill usage')
-    create.add_argument('-s', '--start_date', required=True, metavar='<YYYY-MM-DD>', type=_is_date, help='start date of the medication')
-    new_usage = sub_parsers.add_parser(_COMMANDS_ADD, help='log a medication usage')
-    new_usage.add_argument('-a', '--amount', required=True, metavar='<NUMBER>', type=int, help='pill usage amount')
-    new_usage.add_argument('-d', '--date', metavar='<YYYY-MM-DD>', default=datetime.date.today(), type=_is_date, help='date of the usage')
+    create.add_argument('-s', '--start_date', metavar='<YYYY-MM-DD>', default=datetime.date.today(), type=_is_date, help='start date of medication')
+
+    add = sub_parsers.add_parser(_COMMANDS_ADD, help='log a medication usage')
+    add.add_argument('-a', '--amount', required=True, metavar='<NUMBER>', type=int, help='pill usage amount')
+    add.add_argument('-d', '--date', metavar='<YYYY-MM-DD>', default=datetime.date.today(), type=_is_date, help='date of the usage')
+
+    update = sub_parsers.add_parser(_COMMANDS_UPDATE, help='update a medication usage')
+    update.add_argument('-a', '--amount', required=True, metavar='<NUMBER>', type=int, help='pill usage amount')
+    update.add_argument('-d', '--date', metavar='<YYYY-MM-DD>', default=datetime.date.today(), type=_is_date, help='date of the usage')
+
     parser.add_argument('-f', '--file', required=True, help='file name of persistent data')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help='output verbose debugging information')
+
     args = parser.parse_args()
     global _VERBOSE_OUTPUT
     _VERBOSE_OUTPUT = args.verbose
-    commands = {}
-    commands[_COMMANDS_STATS] = args.command == 'stats' 
-    commands[_COMMANDS_SHOW] = args.command == 'show'
-    commands[_COMMANDS_CREATE] = {}
-    commands[_COMMANDS_ADD] = {}
-    if args.command == 'create':
-        commands['create'] = {'name':args.name, 'count':args.count, 'daily_count':args.usage, 'start_date':args.start_date}
-    elif args.command == 'add':
-        commands['add'] = {'count':args.amount, 'date':args.date}
+
+    commands = {_COMMANDS_STATS: args.command == 'stats', 
+                _COMMANDS_SHOW: args.command == 'show',
+                _COMMANDS_CREATE: {},
+                _COMMANDS_ADD: {},
+                _COMMANDS_UPDATE: {}}
+
+    if args.command == _COMMANDS_CREATE:
+        commands[_COMMANDS_CREATE] = {'name':args.name, 'count':args.count, 'daily_count':args.usage, 'start_date':args.start_date}
+    elif args.command == _COMMANDS_ADD:
+        commands[_COMMANDS_ADD] = {'count':args.amount, 'date':args.date}
+    elif args.command == _COMMANDS_UPDATE:
+        commands[_COMMANDS_UPDATE] = {'count':args.amount, 'date':args.date}
+
+    if _is_verbose_output_enabled():
+        _print_args(commands)
+
     return commands, args.file
+
 
 class MedicationUsage(object):
     def __init__(self,  **kwargs):
         self._count = kwargs['count']
         self._date = kwargs['date']
-    
+
     def serialize(self):
         obj = {}
         obj['count'] = self._count
@@ -88,6 +122,10 @@ class MedicationUsage(object):
     @property
     def count(self):
         return self._count
+    
+    @count.setter
+    def count(self, value):
+        self._count = value
     
     @property
     def date(self):
@@ -107,6 +145,7 @@ class Medication(object):
         self._daily_count = kwargs['daily_count']
         self._start_date = kwargs['start_date']
         self._usages = []
+        self._dirty = False
     
     def report_stats(self):
         pill_count = self.current_count
@@ -132,14 +171,27 @@ class Medication(object):
 
     def add_usage(self, **kwargs):
         medication_usage = MedicationUsage(**kwargs)
-        for usage in self._usages:
-            if _from_date(usage.date) == _from_date(medication_usage.date):
-                print('EROR: The usage has already been added')
+        for usage in self.usages:
+            if usage.date == medication_usage.date:
+                print('EROR: the usage has already been added')
                 return
         if _is_verbose_output_enabled():
             print('adding {0} pills used on {1}'.format(medication_usage.count, medication_usage.date))
-        self._usages.append(medication_usage)
-        self._usages.sort()
+        self.usages.append(medication_usage)
+        self.usages.sort()
+        self.dirty = True
+
+    def update_usage(self, **kwargs):
+        medication_usage = MedicationUsage(**kwargs)
+        for usage in self.usages:
+            if usage.date == medication_usage.date:
+                if _is_verbose_output_enabled():
+                    print('updating the usage on {0} to be {1} pills used'.format(usage.date, usage.count))
+                usage.count = medication_usage.count
+                self.dirty = True
+                return
+        if _is_verbose_output_enabled():
+            print('ERROR: usage for {0} is not found'.format(_from_date(medication_usage.date)))
 
     def serialize(self):
         obj = {}
@@ -186,6 +238,14 @@ class Medication(object):
         for usage in self._usages:
             count += usage.count
         return self.count - count
+        
+    @property
+    def dirty(self):
+        return self._dirty
+
+    @dirty.setter
+    def dirty(self, value):
+        self._dirty = value
 
     def __str__(self):
         s =  'name:      {0}\n'.format(self.name)
@@ -205,9 +265,15 @@ def _load_data(filename):
         return Medication.deserialize(json.loads(file.read()))
 
 def _create_database(**kwargs):
-    return Medication(**kwargs)
+    medication = Medication(**kwargs)
+    medication.dirty = True
+    return medication
 
 def _unload_data(filename, medication):
+    if not medication.dirty:
+        if _is_verbose_output_enabled():
+            print('not re-writing data to file {0}'.format(filename))
+            return
     with open(filename, 'w') as file:
         if _is_verbose_output_enabled():
             print('writing the data to {0}'.format(filename))
@@ -216,19 +282,6 @@ def _unload_data(filename, medication):
 def main():
     commands, filename = _parse_args()
 
-    if _is_verbose_output_enabled():
-        for key, value in commands.items():
-            if isinstance(value, dict):
-                values = ''
-                for subkey, subvalue in value.items():
-                    if isinstance(subvalue, datetime.date):
-                        values += '{0}: {1}, '.format(subkey, _from_date(subvalue))
-                    else:
-                        values += '{0}: {1}, '.format(subkey, subvalue)
-                print('command {0}: [{1}]'.format(key, values.rstrip(' ,')))
-            else:
-                print('command {0}: {1}'.format(key, value))
-
     try:
         if len(commands[_COMMANDS_CREATE]) > 0:
             medication = _create_database(**commands[_COMMANDS_CREATE])
@@ -236,7 +289,9 @@ def main():
             medication = _load_data(filename)
 
         if len(commands[_COMMANDS_ADD]) > 0:
-            medication.add_usage(**commands['add'])
+            medication.add_usage(**commands[_COMMANDS_ADD])
+        if len(commands[_COMMANDS_UPDATE]) > 0:
+            medication.update_usage(**commands[_COMMANDS_UPDATE])
         elif commands[_COMMANDS_STATS]:
             medication.report_stats()
         elif commands[_COMMANDS_SHOW]:

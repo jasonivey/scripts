@@ -22,9 +22,14 @@ def _is_verbose_output_enabled():
 def _to_date(value):
     return datetime.datetime.strptime(value, _DATE_CONVERSION_FMT).date()
 
-def _from_date(value):
-    fmt_str = '{0:' + _DATE_CONVERSION_FMT + '}'
-    return fmt_str.format(value)
+def _from_date(value, include_weekday=False):
+    if not include_weekday:
+        fmt_str = '{0:' + _DATE_CONVERSION_FMT + '}'
+        return fmt_str.format(value)
+    else:
+        weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        fmt_str = '{0:' + _DATE_CONVERSION_FMT + '} ({1})'
+        return fmt_str.format(value, weekdays[value.weekday()])
 
 def _is_date(date_str):
     try:
@@ -45,7 +50,7 @@ def _print_args(commands):
             values = ''
             for subkey, subvalue in value.items():
                 if isinstance(subvalue, datetime.date):
-                    values += '{0}: {1}, '.format(subkey, _from_date(subvalue))
+                    values += '{0}: {1}, '.format(subkey, _from_date(subvalue, True))
                 else:
                     values += '{0}: {1}, '.format(subkey, subvalue)
             print('command {0}: [{1}]'.format(key, values.rstrip(' ,')))
@@ -110,7 +115,7 @@ class MedicationUsage(object):
     def serialize(self):
         obj = {}
         obj['count'] = self._count
-        obj['date'] = _from_date(self._date)
+        obj['date'] = _from_date(self._date, False)
         return obj
 
     @classmethod
@@ -135,8 +140,10 @@ class MedicationUsage(object):
         return cmp(self._date, other._date)
 
     def __str__(self):
-        return 'count: {0}, date: {1}'.format(self.count, _from_date(self.date))
+        return 'count: {0}, date: {1}'.format(self.count, _from_date(self.date, True))
 
+
+_DAYS_IN_PERSCRIPTION = 30
 
 class Medication(object):
     def __init__(self, **kwargs):
@@ -148,57 +155,60 @@ class Medication(object):
         self._dirty = False
     
     def report_stats(self):
-        pill_count = self.current_count
-        days = (datetime.date.today() - self._start_date).days
-        day_count = 30 - days 
-        pills_used = self.count - pill_count
-        pills_needed = day_count * self.daily_count
-        pill_excess = pill_count - pills_needed
-        pill_num_days = (pill_count / self.daily_count)
-        pill_end_date = datetime.date.today() + datetime.timedelta(days=pill_num_days)
-        print('name:             {0}'.format(self.name))
-        print('count:            {0}'.format(self.count))
-        print('daily count:      {0}'.format(self.daily_count))
-        print('start date:       {0}'.format(self.start_date))
-        print('end date:         {0}'.format(self.start_date + datetime.timedelta(days=30)))
-        print('pill count:       {0}'.format(pill_count))
-        print('days:             {0}'.format(days))
-        print('day count:        {0}'.format(day_count))
-        print('pills used:       {0}'.format(pills_used))
-        print('pills needed:     {0}'.format(pills_needed))
-        print('pills in excess:  {0}'.format(pill_excess))
-        print('pills last until: {0}'.format(_from_date(pill_end_date)))
+        start_date = self.start_date
+        end_date = self.start_date + datetime.timedelta(days=_DAYS_IN_PERSCRIPTION)
+        pill_end_date = datetime.date.today() + datetime.timedelta(days=(self.current_count * self.daily_count))
+        print('name:                    {0}'.format(self.name))
+        print('start date:              {0}'.format(_from_date(start_date, True)))
+        print('end date:                {0}'.format(_from_date(end_date, True)))
+        print('todays date:             {0}'.format(_from_date(datetime.date.today(), True)))
+        print('end pill date:           {0}'.format(_from_date(pill_end_date, True)))
+
+        days_elapsed = (datetime.date.today() - self.start_date).days
+        days_remaining = (end_date - datetime.date.today()).days
+        print('total days in RX:        {0}'.format(_DAYS_IN_PERSCRIPTION))
+        print('days elapsed:            {0}'.format(days_elapsed))
+        print('days remaining:          {0}'.format(days_remaining))
+        print('days of pills remaining: {0}'.format(self.current_count / self.daily_count))
+
+        print('total pill count:        {0}'.format(self.count))
+        print('remaining pill count:    {0}'.format(self.current_count))
+        print('pill amount per day:     {0}'.format(self.daily_count))
+        print('pill amount left in RX:  {0} (may not actually be real)'.format(days_remaining * self.daily_count))
+        print('pills used:              {0}'.format(self.count - self.current_count))
+        print('pills needed:            {0}'.format(days_remaining * self.daily_count))
+        print('pills in excess:         {0} (add this value to "remaining pill count" for the "pill amount left in RX")'.format(self.current_count - (days_remaining * self.daily_count)))
 
     def add_usage(self, **kwargs):
-        medication_usage = MedicationUsage(**kwargs)
-        for usage in self.usages:
-            if usage.date == medication_usage.date:
-                print('EROR: the usage has already been added')
+        new_medication = MedicationUsage(**kwargs)
+        for existing_usage in self.usages:
+            if existing_usage.date == new_medication.date:
+                print('EROR: the usage on {0} has already been added'.format(_from_date(existing_usage.date, True)))
                 return
         if _is_verbose_output_enabled():
-            print('adding {0} pills used on {1}'.format(medication_usage.count, medication_usage.date))
-        self.usages.append(medication_usage)
+            print('adding {0} pills used on {1}'.format(new_medication.count, _from_date(new_medication.date, True)))
+        self.usages.append(new_medication)
         self.usages.sort()
         self.dirty = True
 
     def update_usage(self, **kwargs):
-        medication_usage = MedicationUsage(**kwargs)
-        for usage in self.usages:
-            if usage.date == medication_usage.date:
+        new_medication = MedicationUsage(**kwargs)
+        for existing_usage in self.usages:
+            if existing_usage.date == new_medication.date:
                 if _is_verbose_output_enabled():
-                    print('updating the usage on {0} to be {1} pills used'.format(usage.date, usage.count))
-                usage.count = medication_usage.count
+                    print('updating the usage on {0} to be {1} pills used'.format(_from_date(existing_usage.date, True), new_medication.count))
+                existing_usage.count = new_medication.count
                 self.dirty = True
                 return
         if _is_verbose_output_enabled():
-            print('ERROR: usage for {0} is not found'.format(_from_date(medication_usage.date)))
+            print('ERROR: usage for {0} is not found'.format(_from_date(new_medication.date, True)))
 
     def serialize(self):
         obj = {}
         obj['name'] = self._name
         obj['count'] = self._count
         obj['daily_count'] = self._daily_count
-        obj['start_date'] = _from_date(self._start_date)
+        obj['start_date'] = _from_date(self._start_date, False)
         obj['usages'] = []
         for usage in self._usages:
             obj['usages'].append(usage.serialize())
@@ -252,7 +262,7 @@ class Medication(object):
         s += 'count:     {0}\n'.format(self.current_count)
         s += 'total:     {0}\n'.format(self.count)
         s += 'pills/day: {0}\n'.format(self.daily_count)
-        s += 'start:     {0}\n'.format(_from_date(self.start_date))
+        s += 'start:     {0}\n'.format(_from_date(self.start_date, True))
         for i, usage in enumerate(self.usages):
             s += '{0:-2}. {1}\n'.format(i + 1, usage)
         return s

@@ -157,15 +157,15 @@ class Medication(object):
     def report_stats(self):
         start_date = self.start_date
         end_date = self.start_date + datetime.timedelta(days=_DAYS_IN_PERSCRIPTION)
-        pill_end_date = datetime.date.today() + datetime.timedelta(days=(self.current_count * self.daily_count))
+        pill_end_date = datetime.date.today() + datetime.timedelta(days=(self.current_count / self.daily_count))
         print('name:                    {0}'.format(self.name))
+        print('todays date:             {0}'.format(_from_date(datetime.date.today(), True)))
         print('start date:              {0}'.format(_from_date(start_date, True)))
         print('end date:                {0}'.format(_from_date(end_date, True)))
-        print('todays date:             {0}'.format(_from_date(datetime.date.today(), True)))
         print('end pill date:           {0}'.format(_from_date(pill_end_date, True)))
 
-        days_elapsed = (datetime.date.today() - self.start_date).days
-        days_remaining = (end_date - datetime.date.today()).days
+        days_elapsed = (datetime.date.today() - self.start_date).days + 1
+        days_remaining = (end_date - datetime.date.today()).days - 1
         print('total days in RX:        {0}'.format(_DAYS_IN_PERSCRIPTION))
         print('days elapsed:            {0}'.format(days_elapsed))
         print('days remaining:          {0}'.format(days_remaining))
@@ -174,10 +174,9 @@ class Medication(object):
         print('total pill count:        {0}'.format(self.count))
         print('remaining pill count:    {0}'.format(self.current_count))
         print('pill amount per day:     {0}'.format(self.daily_count))
-        print('pill amount left in RX:  {0} (may not actually be real)'.format(days_remaining * self.daily_count))
         print('pills used:              {0}'.format(self.count - self.current_count))
         print('pills needed:            {0}'.format(days_remaining * self.daily_count))
-        print('pills in excess:         {0} (add this value to "remaining pill count" for the "pill amount left in RX")'.format(self.current_count - (days_remaining * self.daily_count)))
+        print('pills in excess:         {0}'.format(self.current_count - (days_remaining * self.daily_count)))
 
     def add_usage(self, **kwargs):
         new_medication = MedicationUsage(**kwargs)

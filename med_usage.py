@@ -137,7 +137,7 @@ class MedicationUsage(object):
         return self._date
 
     def __cmp__(self, other):
-        return cmp(self._date, other._date)
+        return cmp(self.date, other.date)
 
     def __str__(self):
         return 'count: {0}, date: {1}'.format(self.count, _from_date(self.date, True))
@@ -185,7 +185,7 @@ class Medication(object):
                 print('EROR: the usage on {0} has already been added'.format(_from_date(existing_usage.date, True)))
                 return
         if _is_verbose_output_enabled():
-            print('adding {0} pills used on {1}'.format(new_medication.count, _from_date(new_medication.date, True)))
+            print('INFO: adding {0} pills used on {1}'.format(new_medication.count, _from_date(new_medication.date, True)))
         self.usages.append(new_medication)
         self.usages.sort()
         self.dirty = True
@@ -195,7 +195,7 @@ class Medication(object):
         for existing_usage in self.usages:
             if existing_usage.date == new_medication.date:
                 if _is_verbose_output_enabled():
-                    print('updating the usage on {0} to be {1} pills used'.format(_from_date(existing_usage.date, True), new_medication.count))
+                    print('INFO: updating the usage on {0} to be {1} pills used'.format(_from_date(existing_usage.date, True), new_medication.count))
                 existing_usage.count = new_medication.count
                 self.dirty = True
                 return
@@ -219,6 +219,11 @@ class Medication(object):
         c = cls(**data)
         for obj_usage in obj['usages']:
             c.usages.append(MedicationUsage.deserialize(obj_usage))
+        usages = c.usages
+        c.usages.sort()
+        c.dirty = usages != c.usages
+        if c.dirty and _is_verbose_output_enabled():
+            print('INFO: serialized data was not sorted on disk')
         return c
     
     @property
@@ -270,7 +275,7 @@ class Medication(object):
 def _load_data(filename):
     with open(filename, 'r') as file:
         if _is_verbose_output_enabled():
-            print('reading the data from {0}'.format(filename))
+            print('INFO: deserializing data from {0}'.format(filename))
         return Medication.deserialize(json.loads(file.read()))
 
 def _create_database(**kwargs):
@@ -281,11 +286,11 @@ def _create_database(**kwargs):
 def _unload_data(filename, medication):
     if not medication.dirty:
         if _is_verbose_output_enabled():
-            print('not re-writing data to file {0}'.format(filename))
-            return
+            print('INFO: not serializing identical data to disk {0}'.format(filename))
+        return
     with open(filename, 'w') as file:
         if _is_verbose_output_enabled():
-            print('writing the data to {0}'.format(filename))
+            print('INFO: writing the data to {0}'.format(filename))
         file.write(json.dumps(medication.serialize(), sort_keys=True, indent=4, separators=(',', ': ')))
 
 def main():

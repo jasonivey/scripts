@@ -2,7 +2,7 @@
 import os
 import re
 import codecs
-import exceptions
+#import exceptions
 
 
 def GetFileEncoding(path):

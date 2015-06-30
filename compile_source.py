@@ -5,6 +5,7 @@ import os
 import sys
 import re
 import subprocess
+import traceback
 import uuid
 
 def enum(**enums):
@@ -54,13 +55,14 @@ def _parse_args():
     parser.add_argument('-f', '--option-file', type=_is_valid_file, help='path to .clang_complete file style file')
     parser.add_argument('-o', '--option', nargs='*', help='specify an option to be passed to the compiler')
     parser.add_argument('-k', '--keep', default=False, action='store_true', help='keep the generated source file when compiling header')
+    parser.add_argument('-b', '--break', dest='break_on_error', default=False, action='store_true', help='stop the compile after the first error')
     parser.add_argument('source', type=_is_valid_source, nargs='+', help='source file or directory')
     args = parser.parse_args()
     global _VERBOSE_LEVEL
     _VERBOSE_LEVEL = args.verbose
-    verbose_print(Verbosity.INFO, 'compiler: {0}, standard library: {1}, verbose: {2}, preprocessor: {3}, option-file: {4}, options: {5}, keep: {6},  source: {7}' \
-            .format(args.compiler, args.stdlib, args.verbose, args.preprocessor, args.option_file, args.option, args.keep, args.source))
-    return args.compiler, args.stdlib, args.preprocessor, args.option_file, args.option, args.keep, args.source
+    verbose_print(Verbosity.INFO, 'compiler: {0}, standard library: {1}, verbose: {2}, preprocessor: {3}, option-file: {4}, options: {5}, keep: {6}, break: {7}, source: {8}' \
+            .format(args.compiler, args.stdlib, args.verbose, args.preprocessor, args.option_file, args.option, args.keep, args.break_on_error, args.source))
+    return args.compiler, args.stdlib, args.preprocessor, args.option_file, args.option, args.keep, args.break_on_error, args.source
 
 def _is_source_file(filename):
     return filename.lower().endswith('.c') or \
@@ -86,14 +88,18 @@ def _is_header_file(filename):
            filename.lower().endswith('.tpl')
 
 def _get_all_sources(sources):
+    verbose_print(Verbosity.DEBUG, 'identifing all the files to compile')
     all_sources = []
     for source in sources:
         if os.path.isfile(source):
+            verbose_print(Verbosity.TRACE, 'adding %s as a file to compile' % source)
             all_sources.append(source)
         else:
+            verbose_print(Verbosity.TRACE, 'interpreting %s as a directory' % source)
             for root, dirs, files in os.walk(source):
                 for file_name in files:
                     if _is_source_file(file_name):
+                        verbose_print(Verbosity.TRACE, 'adding %s as a file to compile' % source)
                         all_sources.append(os.path.join(root, file_name))
     return all_sources
 
@@ -103,6 +109,7 @@ class Compiler(object):
         self._options = ['-std=c++11']
         self._preprocessor = preprocessor
         self._keep = keep
+        self._errors = None
         if stdlib and stdlib != 'libstdc++':
             self._options.append('-stdlib={0}'.format(stdlib))
         if self._preprocessor:
@@ -146,6 +153,10 @@ class Compiler(object):
 
     #def add_include_path(self, path):
     #    self._options.append('-I{0}'.format(os.path.abspath(path)))
+
+    @property
+    def errors(self):
+        return self._errors
 
     @property
     def options(self):
@@ -206,26 +217,36 @@ class Compiler(object):
         process = subprocess.Popen(command, shell=True, bufsize=1, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         stdoutdata, stderrdata = process.communicate()
         if process.wait() != 0:
-            verbose_print(Verbosity.INFO, stderrdata.decode('utf-8'))
+            self._errors = stderrdata.decode('utf-8')
             return False
         else:
-            verbose_print(Verbosity.INFO, 'Compile success -- %s' % filename)
             return True
 
     def compile_str(self, str_buffer):
         pass
 
 
+def main():
+    compiler_name, stdlib, preprocessor, option_file, options, keep, break_on_error, sources = _parse_args()
+
+    failed = False
+    try:
+        compiler = Compiler(compiler_name, stdlib, preprocessor, option_file, options, keep)
+        for source in _get_all_sources(sources):
+            if compiler.compile_file(source):
+                print('%s -- success' % source)
+            else:
+                print('%s -- failure\n%s' % (source, compiler.errors))
+                failed = True
+            if failed and break_on_error:
+                break
+    except:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
+        return 1
+
+    return 0 if not failed else 1
+
 if __name__ == '__main__':
-    compiler, stdlib, preprocessor, option_file, options, keep, sources = _parse_args()
+    sys.exit(main())
 
-    c = Compiler(compiler, stdlib, preprocessor, option_file, options, keep)
-    retval = True
-    for source in _get_all_sources(sources):
-        if not c.compile_file(source):
-            retval = False
-
-    if not retval:
-        sys.exit(1)
-    else:
-        sys.exit(0)

@@ -1,4 +1,5 @@
 from __future__ import print_function
+from functools import total_ordering
 import argparse
 import datetime
 import json
@@ -139,6 +140,12 @@ class MedicationUsage(object):
     def __cmp__(self, other):
         return cmp(self.date, other.date)
 
+    def __lt__(self, other):
+        return self.date < other.date
+
+    def __eq__(self, other):
+        return self.date == other.date
+
     def __str__(self):
         return 'count: {0}, date: {1}'.format(self.count, _from_date(self.date, True))
 
@@ -169,7 +176,7 @@ class Medication(object):
         print('total days in RX:        {0}'.format(_DAYS_IN_PERSCRIPTION))
         print('days elapsed:            {0}'.format(days_elapsed))
         print('days remaining:          {0}'.format(days_remaining))
-        print('days of pills remaining: {0}'.format(self.current_count / self.daily_count))
+        print('days of pills remaining: {0}'.format(int(self.current_count / self.daily_count)))
 
         print('total pill count:        {0}'.format(self.count))
         print('remaining pill count:    {0}'.format(self.current_count))

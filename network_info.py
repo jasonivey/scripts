@@ -34,7 +34,6 @@ class NetworkInfo:
                 self.active = match.group('status') == 'active'
 
     def _parse_linux(self, buf):
-        print(buf[0])
         match = re.match(r'(?P<name>[^\s]+)\s+Link encap:', buf[0])
         if match:
             self.name = match.group('name')

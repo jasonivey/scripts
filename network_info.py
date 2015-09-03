@@ -16,22 +16,46 @@ class NetworkInfo:
         self.active = False
         self._parse(buf)
 
-    def _parse(self, buf):
-        if len(buf) == 0:
-            return
-        self.name = re.match('(?P<name>[^:]+):\s*flags=', buf[0]).group('name')
+    def _parse_mac(self, buf):
+        match = re.match(r'(?P<name>[^:]+):\s*flags=', buf[0])
+        if match:
+            self.name = match.group('name')
         for i in buf[1:]:
-            match = re.match('ether\s*(?P<ether>[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2})', i.strip())
+            match = re.match(r'ether\s*(?P<ether>[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2})', i.strip())
             if match:
                 self.mac = match.group('ether')
                 continue
-            match = re.match('inet\s+(?P<ipaddr>[^\s]+)\s+netmask', i.strip())
+            match = re.match(r'inet\s+(?P<ipaddr>[^\s]+)\s+netmask', i.strip())
             if match:
                 self.ip = match.group('ipaddr')
                 continue
-            match = re.match('status:\s+(?P<status>(in)?active)', i.strip())
+            match = re.match(r'status:\s+(?P<status>(in)?active)', i.strip())
             if match:
                 self.active = match.group('status') == 'active'
+
+    def _parse_linux(self, buf):
+        print(buf[0])
+        match = re.match(r'(?P<name>[^\s]+)\s+Link encap:', buf[0])
+        if match:
+            self.name = match.group('name')
+        for i in buf:
+            match = re.search(r'HWaddr\s+(?P<ether>[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2})', i.strip())
+            if match:
+                self.mac = match.group('ether')
+                continue
+            match = re.match(r'inet addr:\s*(?P<ipaddr>[^\s]+)\s+Bcast', i.strip())
+            if match:
+                self.ip = match.group('ipaddr')
+                continue
+            self.active = True
+
+    def _parse(self, buf):
+        if len(buf) == 0:
+            return
+        if sys.platform.startswith('darwin'):
+            self._parse_mac(buf)
+        else:
+            self._parse_linux(buf)
 
     @property
     def valid(self):
@@ -39,12 +63,9 @@ class NetworkInfo:
 
     def __str__(self):
         s = ''
-        #s += 'IP Address eth0:  '
-        #s += 'MAC Address eth0: '
         s += '%-17s %s\n' % ('IP Address {0}:'.format(self.name), self.ip)
         s += '%-17s %s' % ('MAC Address {0}:'.format(self.name), self.mac)
         return s
-        #return '{0}: {1} - {2}'.format(self.name, self.mac, self.ip)
 
 def network_info():
     command = 'ifconfig'
@@ -55,7 +76,7 @@ def network_info():
     device = []
     devices = []
     for line in stdoutdata.decode('ascii').split('\n'):
-        inside_device = line.startswith('\t')
+        inside_device = re.match(r'^\s.*$', line)
         if not inside_device:
             network_info = NetworkInfo(device)
             if network_info.valid:

@@ -1,0 +1,163 @@
+from __future__ import print_function
+import os
+import sys
+import traceback
+
+arry = [
+     './modules/bcertformat/common/objchk/i386/drmbcertformatcommon.lib', \
+     './modules/bcertformat/parser/objchk/i386/drmbcertformatparser.lib', \
+     './modules/bcertformat/parsercache/objchk/i386/drmbcertformatparsercache.lib', \
+     './core/lib/objchk/i386/drmcore.lib', \
+     './cmdlnpars/objchk/i386/cmdlnpars.lib', \
+     './oem/common/shared/objchk/i386/oemshared.lib', \
+     './oem/common/bignum/objchk/i386/oembignum.lib', \
+     './oem/common/cocktail/stub/objchk/i386/oemcocktailstub.lib', \
+     './oem/common/md5/objchk/i386/oemmd5.lib', \
+     './oem/common/sha/sha1/objchk/i386/oemsha1.lib', \
+     './oem/common/sha/sha256/objchk/i386/oemsha256.lib', \
+     './oem/common/rc4/lib/objchk/i386/oemrc4.lib', \
+     './oem/common/rsa/base/objchk/i386/oemrsabase.lib', \
+     './oem/ansi/lib/objchk/i386/oem_ansi.lib', \
+     './oem/ansi/trace/lib/objchk/i386/oem_trace_ansi.lib', \
+     './constants/real/objchk/i386/drmconstants.lib', \
+     './modules/activation/stub/objchk/i386/drmactivationstub.lib', \
+     './modules/bcertformat/builder/objchk/i386/drmbcertformatbuilder.lib', \
+     './modules/antirollbackclock/real/objchk/i386/drmantirollbackclockreal.lib', \
+     './modules/certcache/real/objchk/i386/drmcertcachereal.lib', \
+     './modules/cleanstore/real/objchk/i386/drmcleanstorereal.lib', \
+     './modules/contract/stub/objchk/i386/drmcontractstub.lib', \
+     './modules/crt/real/objchk/i386/drmcrtreal.lib', \
+     './modules/deviceassets/real/objchk/i386/drmdeviceassetsreal.lib', \
+     './modules/domain/real/objchk/i386/drmdomainreal.lib', \
+     './modules/est/real/objchk/i386/drmestreal.lib', \
+     './modules/contentspecific/h264/stub/objchk/i386/drmh264stub.lib', \
+     './modules/hds/real/objchk/i386/drmhdsreal.lib', \
+     './modules/hdsblockheadercache/stub/objchk/i386/drmhdsblockheadercachestub.lib', \
+     './modules/keygen/stub/objchk/i386/drmkeygenstub.lib', \
+     './modules/licacq/real/objchk/i386/drmlicacqreal.lib', \
+     './modules/licgen/stub/objchk/i386/drmlicgenstub.lib', \
+     './modules/m2tsencryptor/real/objchk/i386/drmm2tsencryptorreal.lib', \
+     './modules/metercertrevocation/real/objchk/i386/drmmetercertrevocationreal.lib', \
+     './modules/metering/real/objchk/i386/drmmeteringreal.lib', \
+     './modules/modelrevocation/stub/objchk/i386/drmmodelrevocationstub.lib', \
+     './modules/move/stub/objchk/i386/drmmovestub.lib', \
+     './modules/performance/real/objchk/i386/drmperformancereal.lib', \
+     './modules/perstreamkeys/stub/objchk/i386/drmperstreamkeysstub.lib', \
+     './modules/prndrx/stub/objchk/i386/drmprndrxstub.lib', \
+     './modules/prndtx/stub/objchk/i386/drmprndtxstub.lib', \
+     './securecore/trustedexec/prnd/stub/objchk/i386/drmscteeprndstub.lib', \
+     './modules/prnd/stub/objchk/i386/drmprndstub.lib', \
+     './modules/secure_clock/real/objchk/i386/drmsecureclockreal.lib', \
+     './modules/securestop/stub/objchk/i386/drmsecurestopstub.lib', \
+     './modules/xmrformat/parser/objchk/i386/drmxmrformatparser.lib', \
+     './modules/xmrformat/builder/objchk/i386/drmxmrformatbuilder.lib', \
+     './modules/xmrformat/common/objchk/i386/drmxmrformatcommon.lib', \
+     './trustedexec/teeproxystub/common/objchk/i386/drmteeproxystubcommon.lib', \
+     './trustedexec/teeproxystub/proxy/base/passthrough/objchk/i386/drmteeproxybasepassthrough.lib', \
+     './trustedexec/teeproxystub/proxy/aes128ctr/passthrough/objchk/i386/drmteeproxyaes128ctrpassthrough.lib', \
+     './trustedexec/teeproxystub/proxy/dom/passthrough/objchk/i386/drmteeproxydompassthrough.lib', \
+     './trustedexec/teeproxystub/proxy/licprep/passthrough/objchk/i386/drmteeproxylicpreppassthrough.lib', \
+     './trustedexec/teeproxystub/proxy/lprov/passthrough/objchk/i386/drmteeproxylprovpassthrough.lib', \
+     './trustedexec/teeproxystub/proxy/rprov/passthrough/objchk/i386/drmteeproxyrprovpassthrough.lib', \
+     './trustedexec/teeproxystub/proxy/revocation/passthrough/objchk/i386/drmteeproxyrevocationpassthrough.lib', \
+     './trustedexec/teeproxystub/proxy/sign/passthrough/objchk/i386/drmteeproxysignpassthrough.lib', \
+     './trustedexec/base/objchk/i386/drmteebase.lib', \
+     './trustedexec/debug/objchk/i386/drmteedebug.lib', \
+     './oem/common/aeskeywrap/objchk/i386/oemaeskeywrap.lib', \
+     './trustedexec/aes128ctr/objchk/i386/drmteeaes128ctr.lib', \
+     './trustedexec/dom/objchk/i386/drmteedom.lib', \
+     './trustedexec/teeproxystub/proxy/licgen/stub/objchk/i386/drmteeproxylicgenstub.lib', \
+     './trustedexec/licprep/objchk/i386/drmteelicprep.lib', \
+     './trustedexec/lprov/objchk/i386/drmteelprov.lib', \
+     './trustedexec/rprov/objchk/i386/drmteerprov.lib', \
+     './modules/rprovformat/real/objchk/i386/drmrprovformat.lib', \
+     './trustedexec/revocation/objchk/i386/drmteerevocation.lib', \
+     './trustedexec/sampleprot/stub/objchk/i386/drmteesampleprotstub.lib', \
+     './trustedexec/securestop/objchk/i386/drmteesecurestop.lib', \
+     './trustedexec/sign/objchk/i386/drmteesign.lib', \
+     './trustedexec/teeproxystub/stub/common/objchk/i386/drmteestubcommon.lib', \
+     './trustedexec/teeproxystub/stub/h264/stub/objchk/i386/drmteeh264stub.lib', \
+     './trustedexec/teeproxystub/stub/licgen/stub/objchk/i386/drmteelicgenstub.lib', \
+     './trustedexec/teeproxystub/stub/prndrx/stub/objchk/i386/drmteeprndrxstub.lib', \
+     './trustedexec/teeproxystub/stub/prndtx/stub/objchk/i386/drmteeprndtxstub.lib', \
+     './trustedexec/teeproxystub/stub/securestop/stub/objchk/i386/drmteestubsecurestopstub.lib', \
+     './oem/common/trustedexec/dom/objchk/i386/oemteedom.lib', \
+     './oem/common/trustedexec/aes128ctr/objchk/i386/oemteeaes128ctr.lib', \
+     './oem/common/trustedexec/lprov/objchk/i386/oemteelprov.lib', \
+     './oem/common/trustedexec/rprov/objchk/i386/oemteerprov.lib', \
+     './oem/common/trustedexec/shared/objchk/i386/oemteeshared.lib', \
+     './oem/common/trustedexec/version/objchk/i386/oemteeversion.lib', \
+     './securecore/securecoreredirector/objchk/i386/drmscredirector.lib', \
+     './securecore/trustedexec/prndrx/stub/objchk/i386/drmscteeprndrxstub.lib', \
+     './securecore/trustedexec/licgen/stub/objchk/i386/drmscteelicgenstub.lib', \
+     './securecore/trustedexec/sampleprot/stub/objchk/i386/drmscteesampleprotstub.lib', \
+     './securecore/trustedexec/securestop/stub/objchk/i386/drmscteesecurestopstub.lib', \
+     './securecore/trustedexec/base/objchk/i386/drmscteebase.lib', \
+     './securecore/trustedexec/getcert/objchk/i386/drmscteegetcert.lib', \
+     './securecore/trustedexec/init/objchk/i386/drmscteeinit.lib', \
+     './securecore/trustedexec/aes128ctr/real/objchk/i386/drmscteeaes128ctrreal.lib', \
+     './securecore/trustedexec/dom/real/objchk/i386/drmscteedom.lib', \
+     './securecore/trustedexec/licprep/real/objchk/i386/drmscteelicprepreal.lib', \
+     './securecore/trustedexec/rprov/real/objchk/i386/drmscteerprov.lib', \
+     './securecore/trustedexec/prndtx/stub/objchk/i386/drmscteeprndtxstub.lib', \
+     './securecore/trustedexec/revocation/real/objchk/i386/drmscteerevocationreal.lib', \
+     './securecore/trustedexec/rmp/real/objchk/i386/drmscteermpreal.lib', \
+     './securecore/trustedexec/getcert/objchk/i386/drmscteegetcert.lib', \
+     './modules/thumbnail/stub/objchk/i386/drmthumbnailstub.lib', \
+     './modules/wmdrmnet/real/objchk/i386/drmwmdrmnetreal.lib', \
+     './modules/xmlhash/real/objchk/i386/drmxmlhashreal.lib', \
+     './modules/base64/real/objchk/i386/drmbase64real.lib', \
+     './modules/bcertformat/parser/objchk/i386/drmbcertformatparser.lib', \
+     './modules/bcertformat/common/objchk/i386/drmbcertformatcommon.lib', \
+     './modules/bytemanip/real/objchk/i386/drmbytemanipreal.lib', \
+     './modules/chkdebug/real/objchk/i386/drmchkdebugreal.lib', \
+     './modules/datastore/real/objchk/i386/drmdatastorereal.lib', \
+     './modules/headerparser/real/objchk/i386/drmheaderparserreal.lib', \
+     './modules/licstore/real/objchk/i386/drmlicstorereal.lib', \
+     './modules/mathsafe/real/objchk/i386/drmmathsafereal.lib', \
+     './modules/noncestore/real/objchk/i386/drmnoncestorereal.lib', \
+     './modules/nonceverify/real/objchk/i386/drmnonceverify.lib', \
+     './modules/playreadyobj/real/objchk/i386/drmplayreadyobjreal.lib', \
+     './modules/removaldatestore/real/objchk/i386/drmremovaldatestorereal.lib', \
+     './modules/stkalloc/real/objchk/i386/drmstkallocreal.lib', \
+     './modules/strsafe/real/objchk/i386/drmstrsafereal.lib', \
+     './modules/utf/real/objchk/i386/drmutfreal.lib', \
+     './modules/utilities/general/objchk/i386/drmutilitiesgeneral.lib', \
+     './modules/utilities/id/objchk/i386/drmutilitiesid.lib', \
+     './modules/xbinary/real/objchk/i386/drmxbinaryreal.lib', \
+     './modules/xmlparser/general/objchk/i386/drmxmlparsergeneral.lib', \
+     './modules/soapxml/real/objchk/i386/drmsoapxmlreal.lib', \
+     './modules/xmlsig/general/objchk/i386/drmxmlsiggeneral.lib', \
+     './modules/xmlsig/builder/objchk/i386/drmxmlsigbuilder.lib', \
+     './modules/xmlbuilder/general/objchk/i386/drmxmlbuildergeneral.lib', \
+     './oem/ansi/main/objchk/i386/oemmain_ansi.lib', \
+     './modules/bcertformat/builder/objchk/i386/drmbcertformatbuilder.lib', \
+     './tools/shared/common/objchk/i386/drmtoolscommon.lib', \
+     './drmmanager/real/objchk/i386/drmmanager.lib', \
+     './wmdrmcert/certparser/objchk/i386/wmdrmcert.lib', \
+     './oem/common/aeskeywrap/objchk/i386/oemaeskeywrap.lib', \
+     './oem/common/aes/objchk/i386/oemaes.lib', \
+     './oem/common/aesmulti/objchk/i386/oemaesmulti.lib', \
+     './oem/common/ecc/baseimpl/objchk/i386/oemeccbaseimpl.lib', \
+     './oem/common/ecc/base/objchk/i386/oemeccbase.lib', \
+     './oem/common/rsa/base/objchk/i386/oemrsabase.lib', \
+     './oem/common/rsa/oaeppssimpl/objchk/i386/oemrsaoaeppssimpl.lib', \
+     './oem/common/rsa/oaeppss/objchk/i386/oemrsaoaeppss.lib', \
+     './oem/common/normalworld/objchk/i386/oemnw.lib', \
+     './tools/shared/netio/real/objchk/i386/drmtoolsnetio_real.lib', \
+     './tools/shared/oem/win32/objchk/i386/drmtoolsoem_win32.lib', \
+     './securecore/trustedexec/rprov/real/objchk/i386/drmscteerprov.lib', \
+    ]
+
+def main():
+    try:
+        for device in network_info():
+            print(device)
+    except:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
+        return 1
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

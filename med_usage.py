@@ -59,7 +59,7 @@ def _print_args(commands):
             print('command {0}: {1}'.format(key, value))
 
 def _parse_args():
-    description = 'Medical perscription usage'
+    description = 'Medical prescription usage'
     parser = argparse.ArgumentParser(description=description)
 
     sub_parsers = parser.add_subparsers(help='commands', dest='command')
@@ -150,7 +150,7 @@ class MedicationUsage(object):
         return 'count: {0}, date: {1}'.format(self.count, _from_date(self.date, True))
 
 
-_DAYS_IN_PERSCRIPTION = 30
+_DAYS_IN_PRESCRIPTION = 30
 
 class Medication(object):
     def __init__(self, **kwargs):
@@ -163,7 +163,7 @@ class Medication(object):
     
     def report_stats(self):
         start_date = self.start_date
-        end_date = self.start_date + datetime.timedelta(days=_DAYS_IN_PERSCRIPTION)
+        end_date = self.start_date + datetime.timedelta(days=_DAYS_IN_PRESCRIPTION)
         pill_end_date = datetime.date.today() + datetime.timedelta(days=(self.current_count / self.daily_count))
         print('name:                    {0}'.format(self.name))
         print('todays date:             {0}'.format(_from_date(datetime.date.today(), True)))
@@ -173,7 +173,7 @@ class Medication(object):
 
         days_elapsed = (datetime.date.today() - self.start_date).days + 1
         days_remaining = (end_date - datetime.date.today()).days - 1
-        print('total days in RX:        {0}'.format(_DAYS_IN_PERSCRIPTION))
+        print('total days in RX:        {0}'.format(_DAYS_IN_PRESCRIPTION))
         print('days elapsed:            {0}'.format(days_elapsed))
         print('days remaining:          {0}'.format(days_remaining))
         print('days of pills remaining: {0}'.format(int(self.current_count / self.daily_count)))

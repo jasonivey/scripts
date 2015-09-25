@@ -72,7 +72,8 @@ def network_info():
     process = subprocess.Popen(command, shell=True, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdoutdata, stderrdata = process.communicate()
     if process.wait() != 0:
-        raise exceptions.RuntimeError('error while running ifconfig')
+        if False: print('ERROR: while running ifconfig')
+        return []
     device = []
     devices = []
     for line in stdoutdata.decode('ascii').split('\n'):

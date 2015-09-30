@@ -162,28 +162,24 @@ class Medication(object):
         self._dirty = False
     
     def report_stats(self):
-        start_date = self.start_date
-        end_date = self.start_date + datetime.timedelta(days=_DAYS_IN_PRESCRIPTION)
-        pill_end_date = datetime.date.today() + datetime.timedelta(days=(self.current_count / self.daily_count))
         print('name:                    {0}'.format(self.name))
-        print('todays date:             {0}'.format(_from_date(datetime.date.today(), True)))
-        print('start date:              {0}'.format(_from_date(start_date, True)))
-        print('end date:                {0}'.format(_from_date(end_date, True)))
-        print('end pill date:           {0}'.format(_from_date(pill_end_date, True)))
+        print('today\'s date:            {0}'.format(_from_date(datetime.date.today(), True)))
+        print('start date:              {0}'.format(_from_date(self.start_date, True)))
+        print('end date:                {0}'.format(_from_date(self.end_date, True)))
+        print('end pill date:           {0}'.format(_from_date(self.actual_end_date, True)))
 
-        days_elapsed = (datetime.date.today() - self.start_date).days + 1
-        days_remaining = (end_date - datetime.date.today()).days - 1
         print('total days in RX:        {0}'.format(_DAYS_IN_PRESCRIPTION))
-        print('days elapsed:            {0}'.format(days_elapsed))
-        print('days remaining:          {0}'.format(days_remaining))
-        print('days of pills remaining: {0}'.format(int(self.current_count / self.daily_count)))
+        print('days elapsed:            {0}'.format(self.days_elapsed))
+        print('days remaining:          {0}'.format(self.days_remaining))
+        print('days of pills remaining: {0}'.format(self.days_of_pills_remaining))
 
         print('total pill count:        {0}'.format(self.count))
         print('remaining pill count:    {0}'.format(self.current_count))
         print('pill amount per day:     {0}'.format(self.daily_count))
-        print('pills used:              {0}'.format(self.count - self.current_count))
-        print('pills needed:            {0}'.format(days_remaining * self.daily_count))
-        print('pills in excess:         {0}'.format(self.current_count - (days_remaining * self.daily_count)))
+        print('pills used:              {0}'.format(self.used_count))
+        print('pills needed:            {0}'.format(self.needed_count))
+        print('pills in excess:         {0}'.format(self.excess_count))
+        print('daily recovery count:    {0}'.format(self.recovery_count))
 
     def add_usage(self, **kwargs):
         new_medication = MedicationUsage(**kwargs)
@@ -246,20 +242,56 @@ class Medication(object):
         return self._daily_count
 
     @property
+    def current_count(self):
+        return self.count - self.used_count
+
+    @property
+    def recovery_count(self):
+        return 0
+
+    @property
+    def used_count(self):
+        count = 0
+        for usage in self.usages:
+            count += usage.count
+        return count
+
+    @property
+    def needed_count(self):
+        return self.days_remaining * self.daily_count
+
+    @property
+    def excess_count(self):
+        return self.current_count - self.needed_count
+
+    @property
     def start_date(self):
         return self._start_date
     
+    @property
+    def end_date(self):
+        return self.start_date + datetime.timedelta(days=_DAYS_IN_PRESCRIPTION)
+
+    @property
+    def actual_end_date(self):
+        return datetime.date.today() + datetime.timedelta(days=self.days_of_pills_remaining)
+
     @property
     def usages(self):
         return self._usages
 
     @property
-    def current_count(self):
-        count = 0
-        for usage in self._usages:
-            count += usage.count
-        return self.count - count
-        
+    def days_elapsed(self):
+        return (datetime.date.today() - self.start_date).days + 1
+
+    @property
+    def days_remaining(self):
+        return (self.end_date - datetime.date.today()).days - 1
+
+    @property
+    def days_of_pills_remaining(self):
+        return int(self.current_count / self.daily_count)
+
     @property
     def dirty(self):
         return self._dirty

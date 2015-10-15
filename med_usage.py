@@ -179,7 +179,7 @@ class Medication(object):
         print('pills used:              {0}'.format(self.used_count))
         print('pills needed:            {0}'.format(self.needed_count))
         print('pills in excess:         {0}'.format(self.excess_count))
-        print('daily recovery count:    {0}'.format(self.recovery_count))
+        print('daily recovery count:    {0:.2f}'.format(self.recovery_count))
 
     def add_usage(self, **kwargs):
         new_medication = MedicationUsage(**kwargs)
@@ -247,7 +247,7 @@ class Medication(object):
 
     @property
     def recovery_count(self):
-        return 0
+        return 0 if self.excess_count >= 0 else float(self.current_count) / float(self.days_remaining)
 
     @property
     def used_count(self):

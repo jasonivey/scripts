@@ -1,33 +1,37 @@
 from __future__ import print_function
 import argparse
 import datetime
-import json
-import os
+import logging
+import logging.handlers
 import sys
 import traceback
 
-def enum(**enums):
-    return type('Enum', (), enums)
+def _update_logger(verbosity):
+    if verbosity == 0:
+        _log.setLevel(logging.ERROR)
+    elif verbosity == 1:
+        _log.setLevel(logging.INFO)
+    elif verbosity >= 2:
+        _log.setLevel(logging.DEBUG)
 
-Verbosity = enum(ERROR=0, INFO=1, DEBUG=2, TRACE=3)
+def _initialize_logger():
+    logger = logging.getLogger(__name__)
+    logging.captureWarnings(True)
+    logger.propagate = False
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    #handler = logging.handlers.TimedRotatingFileHandler(config_file.log_file,
+    #                                                    when="midnight",
+    #                                                    interval=1,
+    #                                                    backupCount=7)
+    #handler.setFormatter(formatter)
+    #logger.addHandler(handler)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    return logger
 
-_VERBOSE_LEVEL = 0
-
-def get_verbosity(verbosity):
-    if verbosity == Verbosity.ERROR:
-        return 'ERROR'
-    if verbosity == Verbosity.INFO:
-        return 'INFO'
-    if verbosity == Verbosity.DEBUG:
-        return 'DEBUG'
-    if verbosity == Verbosity.TRACE:
-        return 'TRACE'
-    return None
-
-def verbose_print(verbosity, msg):
-    if verbosity > _VERBOSE_LEVEL:
-        return
-    print('{0}: {1}'.format(get_verbosity(verbosity), msg))
+_log = _initialize_logger()
 
 _DATE_CONVERSION_FMT = '%Y-%m-%d'
 
@@ -69,17 +73,19 @@ def _parse_args():
     description = 'Calculate prescription refill date'
     parser = argparse.ArgumentParser(description=description)
 
-    parser.add_argument('-d', '--days', metavar='<NUMBER>', default=30, type=int, help='total number of days in prescription')
-    parser.add_argument('-s', '--start_date', metavar='<YYYY-MM-DD>', default=datetime.date.today(), type=_is_date, help='date of the usage')
-    parser.add_argument('-p', '--percentage', metavar='<NUMBER>', default='80', type=_is_percentage, help='percentage of prescription before a refill')
-    parser.add_argument('-v', '--verbose', action='count', default=0, help='output verbose debugging information')
+    parser.add_argument('-d', '--days', metavar='<NUMBER>', default=30, type=int,
+                        help='total number of days in prescription')
+    parser.add_argument('-s', '--start_date', metavar='<YYYY-MM-DD>', default=datetime.date.today(), type=_is_date,
+                        help='date of the usage')
+    parser.add_argument('-p', '--percentage', metavar='<NUMBER>', default='80', type=_is_percentage,
+                        help='percentage of prescription before a refill')
+    parser.add_argument('-v', '--verbose', action='count', default=0,
+                        help='output verbose debugging information')
 
     args = parser.parse_args()
-    global _VERBOSE_LEVEL
-    _VERBOSE_LEVEL = args.verbose
-    verbose_print(Verbosity.INFO, 'verbose: {0}, days: {1}, start date: {2}, percentage: {3}' \
-            .format(args.verbose, args.days, args.start_date, args.percentage))
-
+    _update_logger(args.verbose)
+    _log.info('verbose: %d, days: %d, start date: %s, percentage: %s',
+              args.verbose, args.days, _from_date(args.start_date), args.percentage)
     return args.days, args.start_date, int(args.percentage)
 
 def _get_refill_date(days, start_date, percentage):
@@ -88,10 +94,10 @@ def _get_refill_date(days, start_date, percentage):
 
 def main():
     days, start_date, percentage = _parse_args()
-    
+
     try:
         print('Refill date: {0}'.format(_from_date(_get_refill_date(days, start_date, percentage), True)))
-    except:
+    except Exception:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
         return 1

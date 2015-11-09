@@ -66,12 +66,12 @@ def _is_percentage(percentage_str):
         raise argparse.ArgumentTypeError('percentage value is invalid (try a number between 1 and 100)')
 
 def _parse_args():
-    description = 'Calculate perscription refill date'
+    description = 'Calculate prescription refill date'
     parser = argparse.ArgumentParser(description=description)
 
-    parser.add_argument('-d', '--days', metavar='<NUMBER>', default=30, type=int, help='total number of days in perscription')
+    parser.add_argument('-d', '--days', metavar='<NUMBER>', default=30, type=int, help='total number of days in prescription')
     parser.add_argument('-s', '--start_date', metavar='<YYYY-MM-DD>', default=datetime.date.today(), type=_is_date, help='date of the usage')
-    parser.add_argument('-p', '--percentage', metavar='<NUMBER>', default='80', type=_is_percentage, help='percentage of perscription before a refill')
+    parser.add_argument('-p', '--percentage', metavar='<NUMBER>', default='80', type=_is_percentage, help='percentage of prescription before a refill')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='output verbose debugging information')
 
     args = parser.parse_args()

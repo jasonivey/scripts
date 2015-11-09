@@ -72,6 +72,7 @@ def _parse_args():
     create.add_argument('-n', '--name', required=True, help='name of the medication')
     create.add_argument('-c', '--count', required=True, metavar='<NUMBER>', type=int, help='total pills in medication')
     create.add_argument('-u', '--usage', required=True, metavar='<NUMBER>', type=int, help='daily pill usage')
+    create.add_argument('-d', '--days', required=False, metavar='<NUMBER>', default=30, type=int, help='total number of days in prescription')
     create.add_argument('-s', '--start_date', metavar='<YYYY-MM-DD>', default=datetime.date.today(), type=_is_date, help='start date of medication')
 
     add = sub_parsers.add_parser(_COMMANDS_ADD, help='log a medication usage')
@@ -96,7 +97,7 @@ def _parse_args():
                 _COMMANDS_UPDATE: {}}
 
     if args.command == _COMMANDS_CREATE:
-        commands[_COMMANDS_CREATE] = {'name':args.name, 'count':args.count, 'daily_count':args.usage, 'start_date':args.start_date}
+        commands[_COMMANDS_CREATE] = {'name':args.name, 'count':args.count, 'days': args.days, 'daily_count':args.usage, 'start_date':args.start_date}
     elif args.command == _COMMANDS_ADD:
         commands[_COMMANDS_ADD] = {'count':args.amount, 'date':args.date}
     elif args.command == _COMMANDS_UPDATE:
@@ -124,15 +125,19 @@ class MedicationUsage(object):
         data = {'count':obj['count'], 'date':_to_date(obj['date'])}
         c = cls(**data)
         return c
-    
+
+    @property
+    def date(self):
+        return self._date
+
     @property
     def count(self):
         return self._count
-    
+
     @count.setter
     def count(self, value):
         self._count = value
-    
+
     @property
     def date(self):
         return self._date
@@ -150,25 +155,25 @@ class MedicationUsage(object):
         return 'count: {0}, date: {1}'.format(self.count, _from_date(self.date, True))
 
 
-_DAYS_IN_PRESCRIPTION = 30
-
 class Medication(object):
     def __init__(self, **kwargs):
         self._name = kwargs['name']
         self._count = kwargs['count']
+        self._days = kwargs['days']
         self._daily_count = kwargs['daily_count']
         self._start_date = kwargs['start_date']
+        self._todays_date = datetime.date.today()
         self._usages = []
         self._dirty = False
     
     def report_stats(self):
         print('name:                    {0}'.format(self.name))
-        print('today\'s date:            {0}'.format(_from_date(datetime.date.today(), True)))
+        print('today\'s date:            {0}'.format(_from_date(self.todays_date, True)))
         print('start date:              {0}'.format(_from_date(self.start_date, True)))
         print('end date:                {0}'.format(_from_date(self.end_date, True)))
         print('end pill date:           {0}'.format(_from_date(self.actual_end_date, True)))
 
-        print('total days in RX:        {0}'.format(_DAYS_IN_PRESCRIPTION))
+        print('total days in RX:        {0}'.format(self.days))
         print('days elapsed:            {0}'.format(self.days_elapsed))
         print('days remaining:          {0}'.format(self.days_remaining))
         print('days of pills remaining: {0}'.format(self.days_of_pills_remaining))
@@ -181,6 +186,10 @@ class Medication(object):
         print('pills in excess:         {0}'.format(self.excess_count))
         print('daily recovery count:    {0:.2f}'.format(self.recovery_count))
 
+    def update_date(self):
+        if len(self.usages) > 0 and self.usages[-1].date > datetime.date.today():
+            self._todays_date = self.usages[-1].date
+
     def add_usage(self, **kwargs):
         new_medication = MedicationUsage(**kwargs)
         for existing_usage in self.usages:
@@ -191,6 +200,7 @@ class Medication(object):
             print('INFO: adding {0} pills used on {1}'.format(new_medication.count, _from_date(new_medication.date, True)))
         self.usages.append(new_medication)
         self.usages.sort()
+        self.update_date()
         self.dirty = True
 
     def update_usage(self, **kwargs):
@@ -200,6 +210,7 @@ class Medication(object):
                 if _is_verbose_output_enabled():
                     print('INFO: updating the usage on {0} to be {1} pills used'.format(_from_date(existing_usage.date, True), new_medication.count))
                 existing_usage.count = new_medication.count
+                self.update_date()
                 self.dirty = True
                 return
         if _is_verbose_output_enabled():
@@ -209,6 +220,7 @@ class Medication(object):
         obj = {}
         obj['name'] = self._name
         obj['count'] = self._count
+        obj['days'] = self._days
         obj['daily_count'] = self._daily_count
         obj['start_date'] = _from_date(self._start_date, False)
         obj['usages'] = []
@@ -219,16 +231,18 @@ class Medication(object):
     @classmethod
     def deserialize(cls, obj):
         data = {'name':obj['name'], 'count':obj['count'], 'daily_count':obj['daily_count'], 'start_date':_to_date(obj['start_date'])}
+        data['days'] = obj['days'] if obj.has_key('days') else 30
         c = cls(**data)
         for obj_usage in obj['usages']:
             c.usages.append(MedicationUsage.deserialize(obj_usage))
         usages = c.usages
         c.usages.sort()
         c.dirty = usages != c.usages
+        c.update_date()
         if c.dirty and _is_verbose_output_enabled():
             print('INFO: serialized data was not sorted on disk')
         return c
-    
+
     @property
     def name(self):
         return self._name
@@ -236,6 +250,10 @@ class Medication(object):
     @property
     def count(self):
         return self._count
+
+    @property
+    def days(self):
+        return self._days
 
     @property
     def daily_count(self):
@@ -267,14 +285,18 @@ class Medication(object):
     @property
     def start_date(self):
         return self._start_date
-    
+
+    @property
+    def todays_date(self):
+        return self._todays_date
+
     @property
     def end_date(self):
-        return self.start_date + datetime.timedelta(days=_DAYS_IN_PRESCRIPTION)
+        return self.start_date + datetime.timedelta(days=self.days)
 
     @property
     def actual_end_date(self):
-        return datetime.date.today() + datetime.timedelta(days=self.days_of_pills_remaining)
+        return self.todays_date + datetime.timedelta(days=self.days_of_pills_remaining)
 
     @property
     def usages(self):
@@ -282,11 +304,13 @@ class Medication(object):
 
     @property
     def days_elapsed(self):
-        return (datetime.date.today() - self.start_date).days + 1
+        elapsed = (self.todays_date - self.start_date).days + 1
+        return elapsed if elapsed <= self.days else self.days
 
     @property
     def days_remaining(self):
-        return (self.end_date - datetime.date.today()).days - 1
+        remaining = (self.end_date - self.todays_date).days - 1
+        return remaining if remaining >= 0 and remaining <= self.days else 0
 
     @property
     def days_of_pills_remaining(self):
@@ -303,6 +327,7 @@ class Medication(object):
     def __str__(self):
         s =  'name:      {0}\n'.format(self.name)
         s += 'count:     {0}\n'.format(self.current_count)
+        s += 'days:      {0}\n'.format(self.days)
         s += 'total:     {0}\n'.format(self.count)
         s += 'pills/day: {0}\n'.format(self.daily_count)
         s += 'start:     {0}\n'.format(_from_date(self.start_date, True))

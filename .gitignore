@@ -1,3 +1,5 @@
 *.py[co]
 *.suo
 .DS_Store
+go/pkg
+go/src/github.com/

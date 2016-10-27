@@ -60,19 +60,25 @@ class NetworkInfo:
     @property
     def valid(self):
         return self.active and self.name != None and self.ip != None and self.mac != None
+    
+    def get_device(self):
+        device = []
+        device.append(('IP Address %s' % self.name, self.ip))
+        device.append(('MAC Address %s' % self.name, self.mac))
+        return device
 
-    def __str__(self):
-        s = ''
-        s += '%-17s %s\n' % ('IP Address {0}:'.format(self.name), self.ip)
-        s += '%-17s %s' % ('MAC Address {0}:'.format(self.name), self.mac)
-        return s
+    #def __str__(self):
+        #s = ''
+        #s += '%-17s %s\n' % ('IP Address {0}:'.format(self.name), self.ip)
+        #s += '%-17s %s' % ('MAC Address {0}:'.format(self.name), self.mac)
+        #return s
 
-def network_info():
+def get_network_info():
     command = 'ifconfig'
     process = subprocess.Popen(command, shell=True, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdoutdata, stderrdata = process.communicate()
     if process.wait() != 0:
-        if False: print('ERROR: while running ifconfig')
+        #print('ERROR: while running ifconfig')
         return []
     device = []
     devices = []
@@ -81,15 +87,42 @@ def network_info():
         if not inside_device:
             network_info = NetworkInfo(device)
             if network_info.valid:
-                devices.append(network_info)
+                devices += network_info.get_device()
             device = []
         device.append(line.strip())
     return devices
 
+def get_hostname_info():
+    command = 'hostname'
+    if not sys.platform.startswith('darwin'):
+        command += ' --fqdn'
+    process = subprocess.Popen(command, shell=True, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    stdoutdata, stderrdata = process.communicate()
+    if process.wait() != 0:
+        #print('ERROR: while running hostname')
+        return None
+    for line in stdoutdata.decode('ascii').split('\n'):
+        if len(line.strip()) > 0:
+            return ('Hostname', line.strip())
+    return None
+
+def get_system_info():
+    hostname = get_hostname_info()
+    networks = get_network_info()
+    infos = []
+    if hostname:
+        infos.append(hostname)
+    #for network in networks:
+    #    infos.append(network)
+    #print(networks)
+    return infos + networks
+
 def main():
     try:
-        for device in network_info():
-            print(device)
+        infos = get_system_info()
+        name_width = max([len(info[0]) for info in infos])
+        for info in infos:
+            print(('%-' + str(name_width) + 's: %s') % (info[0], info[1]))
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)

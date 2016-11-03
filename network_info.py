@@ -67,11 +67,6 @@ class NetworkInfo:
         device.append(('MAC Address %s' % self.name, self.mac))
         return device
 
-    #def __str__(self):
-        #s = ''
-        #s += '%-17s %s\n' % ('IP Address {0}:'.format(self.name), self.ip)
-        #s += '%-17s %s' % ('MAC Address {0}:'.format(self.name), self.mac)
-        #return s
 
 def get_network_info():
     command = 'ifconfig'
@@ -112,9 +107,6 @@ def get_system_info():
     infos = []
     if hostname:
         infos.append(hostname)
-    #for network in networks:
-    #    infos.append(network)
-    #print(networks)
     return infos + networks
 
 def main():
@@ -122,7 +114,7 @@ def main():
         infos = get_system_info()
         name_width = max([len(info[0]) for info in infos])
         for info in infos:
-            print(('%-' + str(name_width) + 's: %s') % (info[0], info[1]))
+            print(('%-' + str(name_width) + 's : %s') % (info[0], info[1]))
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)

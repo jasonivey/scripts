@@ -39,7 +39,8 @@ class NetworkInfo:
         if match:
             self.name = match.group('name')
         for i in buf:
-            match = re.search(r'HWaddr\s+(?P<ether>[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2})', i.strip())
+            # this matches windows ubuntu: 'Link encap:UNSPEC  HWaddr 54-35-30-1F-62-A9-00-00-00-00-00-00-00-00-00-00' 
+            match = re.search(r'HWaddr\s+(?P<ether>(?:[\da-fA-F]{2}[-:]){5}[\da-fA-F]{2})(?:(?:[-:][\da-fA-F]{2}){5})?', i.strip())
             if match:
                 self.mac = match.group('ether')
                 continue

@@ -39,6 +39,59 @@ def _parse_args():
     handle_all_destinations(args.audio, args.movies, args.television)
     return args.verbose, args.audio, args.movies, args.television, args.find_prerelease
 
+class Subtitle(object):
+    def __init__(self, path, name, year, release_type):
+        _path = path
+        _name = name
+        _year = year
+        _release_type = release_type
+
+class Movie(object):
+    def __init__(self, path, name, year, release_type):
+        _path = path
+        _name = name
+        _year = year
+        _release_type = release_type
+        _subtitles = []
+
+    def AddSubtitle(self, subtitle):
+        _subtitles.append(subtitle)
+
+
+class TelevisionShow(object):
+    def __init__(self, path, name):
+        _path = path
+        _name = name
+
+class TelevisionSeason(object):
+    def __init__(self, path, name):
+        _path = path
+        _name = name
+
+class TelevisionEpisode(object):
+    def __init__(self, path, name, season, episode, subname):
+        _path = path
+        _name = name
+        _season = season
+        _episode = episode
+        _subname = subname
+
+class AudioArtist(object):
+    def __init__(self, path, name):
+        _path = path
+        _name = name
+
+class AudioAlbum(object):
+    def __init__(self, path, name):
+        _path = path
+        _name = name
+
+class AudioSong(object):
+    def __init__(self, path, name):
+        _path = path
+        _name = name
+
+
 def _walk_directory(directory):
     entries = []
     for root, dirs, files in os.walk(directory):
@@ -53,6 +106,7 @@ def _split_file_extension(filename):
     return filename[:index], filename[index:]
 
 VALID_VIDEO_EXTENSIONS = ['.mkv', '.mp4', '.m4v', '.avi', '.srt', '.idx', '.sub', '.smi']
+VALID_SUBTITLE_EXTENSIONS = ['.srt', '.idx', '.sub', '.smi']
 VALID_AUDIO_EXTENSIONS = ['.mp3', '.wma', '.ogg', '.m4a', '.m4b']
 INVALID_OS_FILES = ['.DS_Store', '._.DS_Store']
 INVALID_AUDIO_FILES = ['.directory', '.folder.png', 'folder.jpg', 'Folder.jpg']
@@ -70,18 +124,27 @@ def _is_audio_meta_file(filename):
     basename, ext = _split_file_extension(name)
     return name in INVALID_AUDIO_FILES
 
-def _parse_tv_data(match, filename):
-    #regex = r'(?:(?P<name>.*)\s-\s)?s(?P<season>\d{2})e(?P<episode>\d{2})(?:\s-\s(?P<subname>.*))?'
+def _parse_tv_data(match, filename, tv_data):
+    #regex = r'(?P<show>[^/]+)/(?P<season>[^/]+|Specials)/(?:(?P<name>.*)\s-\s)?s(?P<season_num>\d{2})e(?P<episode_num>\d{2})(?:\s-\s(?P<subname>.*))?'
+    show = match.group('show')
+    season = match.group('season')
     name = match.group('name')
-    season = int(match.group('season'))
-    episode = int(match.group('episode'))
+    season_num = int(match.group('season_num'))
+    episode_num = int(match.group('episode_num'))
     subname = '' if not match.group('subname') else match.group('subname')
+    
     data = {}
     data['name'] = name
-    data['season'] = season
-    data['episode'] = episode
+    data['season'] = season_num
+    data['episode'] = episode_num
     data['subname'] = subname
-    return filename, data
+    data['path'] = filename
+    if show not in tv_data:
+        tv_data[show] = {}
+    if season not in tv_data[show]:
+        tv_data[show][season] = []
+    tv_data[show][season].append(data)
+    return tv_data
 
 def _parse_movie_data(match, filename):
     #regex = r'(?P<name>[^)]+)\((?P<year>\d{4})\)(?:\s-\s(?P<type>.*))?' 
@@ -94,6 +157,29 @@ def _parse_movie_data(match, filename):
     data['release_type'] = release_type 
     return filename, data
 
+def _parse_audio_data(match, filename):
+    data = {}
+    data['artist'] = match.group('artist')
+    data['album'] = match.group('album')
+    data['name'] = match.group('name')
+    data['type'] = match.group('ext')
+    return filename, data
+
+def _is_valid_file_type(filename, media_type):
+    if _is_system_file(filename):
+        return False
+    _, ext = _split_file_extension(filename)
+    if media_type == MediaType.AUDIO:
+        if _is_audio_meta_file(filename):
+            return False
+        if ext not in VALID_AUDIO_EXTENSIONS:
+            return False
+    else:
+        if ext not in VALID_VIDEO_EXTENSIONS and ext not in VALID_SUBTITLE_EXTENSIONS:
+            return False
+
+    return True
+
 # TODO: TV and Music both need consolidation.  No entry for each file at the highest level
 # TODO: subtitle files should be a property of the MOVIE/TV
 def _scan_media_directory_impl(directory, regex, media_type, verbose, find_prerelease=False):
@@ -101,86 +187,53 @@ def _scan_media_directory_impl(directory, regex, media_type, verbose, find_prere
     errors_found = 0
     bad_extensions = []
     for fullname in _walk_directory(directory):
-        basename, ext = _split_file_extension(fullname)
-        if _is_system_file(fullname):
+        if not _is_valid_file_type(fullname, media_type)
             if verbose > 1:
                 print('Found invalid name: %s' % fullname)
             continue
-        if ext not in VALID_VIDEO_EXTENSIONS and ext not in bad_extensions:
-            bad_extensions.append(ext)
-            print('Found unknown extension: %s (%s)' % (ext, fullname))
-            errors_found += 1
-            continue
+
         if os.path.isdir(fullname):
             continue
 
-        match = re.match(regex, os.path.split(basename)[1])
+        relative_name = fullname[len(directory) + 1:]
+        match = re.match(regex, relative_name)
         if not match:
             print('Found unknown file naming convention: %s' % fullname) 
             errors_found += 1
             continue
 
         if media_type == MediaType.TV:
-            key, value = _parse_tv_data(match, fullname[len(directory) + 1:])
+            json_data = _parse_tv_data(match, relative_name, json_data)
         elif media_type == MediaType.MOVIES:
-            key, value = _parse_movie_data(match, fullname[len(directory) + 1:])
+            key, value = _parse_movie_data(match, relative_name)
+            if key in json_data:
+                print('ERROR: already processed %s' % key)
+                errors_found += 1
+                continue
+            json_data[key] = value
         else:
             assert media_type == MediaType.AUDIO
-            key, value = _parse_audio_data(match)
-
-        if key in json_data:
-            print('ERROR: already processed %s' % key)
-            errors_found += 1
-            continue
-
-        json_data[key] = value
+            key, value = _parse_audio_data(match, relative_name)
+            if key in json_data:
+                print('ERROR: already processed %s' % key)
+                errors_found += 1
+                continue
+            json_data[key] = value
 
     return errors_found, json_data 
 
 def _scan_media_directory(directory, media_type, verbose, find_prerelease=False):
     if media_type == MediaType.TV:
-        regex = r'(?:(?P<name>.*)\s-\s)?s(?P<season>\d{2})e(?P<episode>\d{2})(?:\s-\s(?P<subname>.*))?'
+        regex = r'(?P<show>[^/]+)/(?P<season>[^/]+|Specials)/(?:(?P<name>.*)\s-\s)?s(?P<season_num>\d{2})e(?P<episode_num>\d{2})(?:\s-\s(?P<subname>.*))?'
+        #regex = r'(?:(?P<name>.*)\s-\s)?s(?P<season>\d{2})e(?P<episode>\d{2})(?:\s-\s(?P<subname>.*))?'
         return _scan_media_directory_impl(directory, regex, media_type, verbose, find_prerelease)
-    if media_type == MediaType.MOVIES:
+    elif media_type == MediaType.MOVIES:
         regex = r'(?P<name>[^)]+)\((?P<year>\d{4})\)(?:\s-\s(?P<type>.*))?' 
         return _scan_media_directory_impl(directory, regex, media_type, verbose, find_prerelease)
-
-# TODO: must find a way to pull the year, title, song artist
-def _scan_audio_directory(directory, verbose):
-    REGEX = r'(?P<artist>[^/]+)/(?P<album>[^/]+)/(?P<name>[^.]+)\.(?P<ext>.*)'
-    data = {}
-    errors_found = 0
-    bad_extensions = []
-    for fullname in _walk_directory(directory):
-        basename, ext = _split_file_extension(fullname)
-        if _is_system_file(fullname) or _is_audio_meta_file(fullname):
-            if verbose > 1:
-                print('Found invalid name: %s' % fullname)
-        elif ext not in VALID_AUDIO_EXTENSIONS and ext not in bad_extensions:
-            bad_extensions.append(ext)
-            print('Found unknown extension: %s (%s)' % (ext, fullname))
-            errors_found += 1
-        elif not os.path.isdir(fullname):
-            relative_name = fullname[len(directory) + 1:]
-            if verbose > 1:
-                print('Using relative name: %s' % relative_name)
-            match = re.match(REGEX, relative_name)
-            if not match:
-                print('Found unknown file naming convention: %s' % fullname) 
-                errors_found += 1
-            else:
-                if relative_name in data:
-                    print('Already processed %s' % fullname)
-                    errors_found += 1
-                else:
-                    audio_data = {}
-                    audio_data['artist'] = match.group('artist')
-                    audio_data['album'] = match.group('album')
-                    audio_data['name'] = match.group('name')
-                    audio_data['type'] = match.group('ext')
-                    data[relative_name] = audio_data
-
-    return errors_found, data
+    else:
+        assert media_type == MediaType.AUDIO
+        regex = r'(?P<artist>[^/]+)/(?P<album>[^/]+)/(?P<name>[^.]+)\.(?P<ext>.*)'
+        return _scan_media_directory_impl(directory, regex, media_type, verbose, find_prerelease)
 
 def _print_results(error_count, name):
     print('%s scan errors: %d' % (name, error_count))
@@ -199,7 +252,7 @@ def main():
             _print_results(errors, 'movie')
             media['movies'] = movies
         if audio_dir:
-            errors, audio = _scan_audio_directory(audio_dir, verbose)
+            errors, audio = _scan_media_directory(audio_dir, MediaType.AUDIO, verbose)
             _print_results(errors, 'audio')
             media['audio'] = audio
         with open('/tmp/media.json', 'w') as media_file:

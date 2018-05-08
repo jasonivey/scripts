@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
 from __future__ import print_function
 import argparse
 import os
@@ -106,7 +107,7 @@ def _get_all_sources(sources):
 class Compiler(object):
     def __init__(self, compiler, stdlib=None, preprocessor=False, options_file=None, options=None, keep=False):
         self._compiler = compiler
-        self._options = ['-std=c++11']
+        self._options = ['-std=c++17']
         self._preprocessor = preprocessor
         self._keep = keep
         self._errors = None
@@ -134,22 +135,27 @@ class Compiler(object):
             self._options.remove(name)
 
     def _parse_compiler_options(self, filename):
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-        for line in lines:
-            option = line.strip()
-            verbose_print(Verbosity.DEBUG, 'adding option: %s' % option)
-            if option.startswith('-std='):
+        g = l = {}
+        execfile(filename, g, l)
+        if 'flags' in l:
+            for flag in l['flags']:
+                self._options.append(flag)
+        # with open(filename, 'r') as f:
+        #     lines = f.readlines()
+        # for line in lines:
+        #     option = line.strip()
+        #     verbose_print(Verbosity.DEBUG, 'adding option: %s' % option)
+        #     if option.startswith('-std='):
                 #self._remove_option('-std=')
-                continue
-            if option.startswith('-stdlib='):
+        #         continue
+        #     if option.startswith('-stdlib='):
                 #self._remove_option('-stdlib=')
-                continue
-            if option.startswith('-iquote'):
-                option = '-iquote{0}'.format(os.path.abspath(os.path.join(os.path.dirname(filename), option[7:])))
-            if option.startswith('-I'):
-                option = '-I{0}'.format(os.path.abspath(os.path.join(os.path.dirname(filename), option[2:])))
-            self._options.append(option)
+        #         continue
+        #     if option.startswith('-iquote'):
+        #         option = '-iquote{0}'.format(os.path.abspath(os.path.join(os.path.dirname(filename), option[7:])))
+        #     if option.startswith('-I'):
+        #         option = '-I{0}'.format(os.path.abspath(os.path.join(os.path.dirname(filename), option[2:])))
+        #     self._options.append(option)
 
     #def add_include_path(self, path):
     #    self._options.append('-I{0}'.format(os.path.abspath(path)))

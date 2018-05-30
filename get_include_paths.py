@@ -76,7 +76,7 @@ def _parse_system_include_path(input_str):
     verbose_print(Verbosity.DEBUG, 'the input str {} did not contain a valid path'.format(input_str))
     return None
 
-def _find_system_include_paths(compiler, stdlib=None):
+def find_system_include_paths(compiler, stdlib=None):
     if stdlib:
         command = '{0} -stdlib={1} -E -x c++ - -v < /dev/null'.format(compiler, stdlib)
     else:

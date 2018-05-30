@@ -8,6 +8,8 @@ import re
 import sys
 import traceback
 
+from get_include_paths import find_system_include_paths
+
 def _is_valid_directory(dirname):
     dirname = os.path.expandvars(dirname)
     if not os.path.isdir(dirname):
@@ -19,6 +21,7 @@ def _is_valid_directory(dirname):
 def _parse_args():
     description = 'Update the CMake generated compile_commands.json to work on the local machine instead of a docker container'
     parser = argparse.ArgumentParser(description=description)
+    #parser.add_argument('-c', '--compiler', type=str, required=False, default='/usr/bin/clang++', help='name and path of compiler to use')
     parser.add_argument('-c', '--compiler', type=str, required=False, default='/usr/local/opt/llvm/bin/clang++', help='name and path of compiler to use')
     parser.add_argument('-t', '--omniture', type=_is_valid_directory, required=False, default='$HOME/tools/omniture', help='local directory where omniture is located')
     parser.add_argument('-m', '--mysql', type=_is_valid_directory, required=False, default='$HOME/tools/mysql', help='local directory where mysql is located')
@@ -43,14 +46,15 @@ def _find_compile_commands_file(dirname):
         else:
             return _find_compile_commands_file(new_dir)
 
-def _update_compile_command(command, dirname, compiler_path, omniture_dir, mysql_dir, openssl_dir, boost_dir):
-    command = re.sub(r'/source/', dirname, command)
-
+def _update_compile_command(command, dirname, compiler_path, omniture_dir, mysql_dir, openssl_dir, boost_dir, system_includes):
     if compiler_path:
-        command = re.sub(r'(?P<compiler_path>.*/)(?P<compiler>clang\+\+|clang|g\+\+|gcc|icc) ', r'%s ' % compiler_path, command)
+        command = re.sub(r'(?P<compiler_path>.*/)(?P<compiler>clang\+\+|clang|g\+\+|gcc|icc) ', r'%s' % compiler_path, command)
     else:
         # Default to using g++/clang++/gcc/clang/icc (i.e. strip the path) 
         command = re.sub(r'(?P<compiler_path>.*/)(?P<compiler>clang\+\+|clang|g\+\+|gcc|icc) ', r'\2 ', command)
+
+    if compiler_path.find('clang'):
+        command = re.sub(r'\s+-g\s+', r' -stdlib=libc++ -g ', command)
 
     if omniture_dir:
         # This points to the container /home/omniture/ various directories
@@ -67,13 +71,22 @@ def _update_compile_command(command, dirname, compiler_path, omniture_dir, mysql
         # Boost 1.41.0 has been pre-installed in the container to a standard include area
         command = re.sub(r'\s+-g\s+', r' -g -isystem %s ' % boost_dir, command)
 
+    if sys.platform == 'darwin':
+        command = re.sub(r'\s+-o\s+', r' %s -o ' % system_includes, command)
+
     return command
+
+def _update_path(value, dirname):
+    return re.sub(r'/source/', dirname, value)
 
 def update_compile_commands(compiler_path, omniture_dir, mysql_dir, openssl_dir, boost_dir):
     compile_commands_filename = _find_compile_commands_file(os.getcwd())
     compile_commands_dirname = os.path.abspath(os.path.dirname(compile_commands_filename))
     if not compile_commands_dirname.endswith(os.path.sep):
         compile_commands_dirname += '/'
+
+    includes = find_system_include_paths(compiler_path, 'libc++' if compiler_path.find('clang') else 'libstdc++')
+    system_includes = ' '.join(['-isystem {0}'.format(include) for include in includes])
 
     # Read in the compile_commands.json
     with open(compile_commands_filename, 'r') as compile_commands_file:
@@ -83,13 +96,16 @@ def update_compile_commands(compiler_path, omniture_dir, mysql_dir, openssl_dir,
     for compile_command in compile_commands:
         new_command = {}
         for key, value in compile_command.iteritems():
-            new_value = _update_compile_command(value,
-                                                compile_commands_dirname,
-                                                compiler_path,
-                                                omniture_dir,
-                                                mysql_dir,
-                                                openssl_dir,
-                                                boost_dir)
+            new_value = _update_path(value, compile_commands_dirname)
+            if key == 'command':
+                new_value = _update_compile_command(new_value,
+                                                    compile_commands_dirname,
+                                                    compiler_path,
+                                                    omniture_dir,
+                                                    mysql_dir,
+                                                    openssl_dir,
+                                                    boost_dir,
+                                                    system_includes)
             new_command[key] = new_value
         new_commands.append(new_command)
             

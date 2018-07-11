@@ -92,7 +92,7 @@ def find_system_include_paths(compiler, stdlib=None):
 def main():
     compiler, stdlib, single_line = _parse_args()
     try:
-        paths = _find_system_include_paths(compiler, stdlib)
+        paths = find_system_include_paths(compiler, stdlib)
         if single_line:
             print(os.pathsep.join(paths))
         else:

@@ -48,7 +48,7 @@ def _find_compile_commands_file(dirname):
 
 def _update_compile_command(command, dirname, compiler_path, omniture_dir, mysql_dir, openssl_dir, boost_dir, system_includes):
     if compiler_path:
-        command = re.sub(r'(?P<compiler_path>.*/)(?P<compiler>clang\+\+|clang|g\+\+|gcc|icc) ', r'%s' % compiler_path, command)
+        command = re.sub(r'(?P<compiler_path>.*/)(?P<compiler>clang\+\+|clang|g\+\+|gcc|icc) ', r'%s ' % compiler_path, command)
     else:
         # Default to using g++/clang++/gcc/clang/icc (i.e. strip the path) 
         command = re.sub(r'(?P<compiler_path>.*/)(?P<compiler>clang\+\+|clang|g\+\+|gcc|icc) ', r'\2 ', command)

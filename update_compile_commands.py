@@ -54,7 +54,7 @@ def _update_compile_command(command, dirname, compiler_path, omniture_dir, mysql
         command = re.sub(r'(?P<compiler_path>.*/)(?P<compiler>clang\+\+|clang|g\+\+|gcc|icc) ', r'\2 ', command)
 
     if compiler_path.find('clang'):
-        command = re.sub(r'\s+-g\s+', r' -stdlib=libc++ -g ', command)
+        command = re.sub(r'\s+-g\s+', r' -nostdinc++ -stdlib=libc++ -D_GNU_SOURCE -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR -g ', command)
 
     if omniture_dir:
         # This points to the container /home/omniture/ various directories

@@ -48,56 +48,66 @@ class Subtitle(object):
 
 class Movie(object):
     def __init__(self, path, name, year, release_type):
-        _path = path
-        _name = name
-        _year = year
-        _release_type = release_type
-        _subtitles = []
+        self.__path = path
+        self.__name = name
+        self.__year = year
+        self.__release_type = release_type
+        self.__subtitles = []
 
     def AddSubtitle(self, subtitle):
-        _subtitles.append(subtitle)
+        self.__subtitles.append(subtitle)
 
 
 class TelevisionShow(object):
     def __init__(self, path, name):
-        _path = path
-        _name = name
+        self.__path = path
+        self.__name = name
+        self.__seasons = {}
+        
+    @property
+    def seasons(self):
+        return self.__seasons
+
+    def add_season(self, path, name):
+        if name not in self.__seasons:
+            self.__seasons[name] = TelevisionSeason(path, name)
+        else:
+            ass
 
 class TelevisionSeason(object):
     def __init__(self, path, name):
-        _path = path
-        _name = name
+        self.__path = path
+        self.__name = name
+        self.__episodes = {}
 
 class TelevisionEpisode(object):
     def __init__(self, path, name, season, episode, subname):
-        _path = path
-        _name = name
-        _season = season
-        _episode = episode
-        _subname = subname
+        self.__path = path
+        self.__name = name
+        self.__season = season
+        self.__episode = episode
+        self.__subname = subname
 
 class AudioArtist(object):
     def __init__(self, path, name):
-        _path = path
-        _name = name
+        self.__path = path
+        self.__name = name
 
 class AudioAlbum(object):
     def __init__(self, path, name):
-        _path = path
-        _name = name
+        self.__path = path
+        self.__name = name
 
 class AudioSong(object):
     def __init__(self, path, name):
-        _path = path
-        _name = name
+        self.__path = path
+        self.__name = name
 
 
 def _walk_directory(directory):
-    entries = []
     for root, dirs, files in os.walk(directory):
         for filename in files:
-            entries.append(os.path.join(root, filename))
-    return entries
+            yield os.path.join(root, filename)
 
 def _split_file_extension(filename):
     index = filename.rfind('.')
@@ -124,7 +134,7 @@ def _is_audio_meta_file(filename):
     basename, ext = _split_file_extension(name)
     return name in INVALID_AUDIO_FILES
 
-def _parse_tv_data(match, filename, tv_data):
+def _parse_tv_data(match, filename, tv_data, shows):
     #regex = r'(?P<show>[^/]+)/(?P<season>[^/]+|Specials)/(?:(?P<name>.*)\s-\s)?s(?P<season_num>\d{2})e(?P<episode_num>\d{2})(?:\s-\s(?P<subname>.*))?'
     show = match.group('show')
     season = match.group('season')
@@ -139,6 +149,10 @@ def _parse_tv_data(match, filename, tv_data):
     data['episode'] = episode_num
     data['subname'] = subname
     data['path'] = filename
+    if show not in shows:
+        shows[show] = TelevisionShow(filename)
+    if season not in shows[show].seasons
+        
     if show not in tv_data:
         tv_data[show] = {}
     if season not in tv_data[show]:
@@ -183,11 +197,12 @@ def _is_valid_file_type(filename, media_type):
 # TODO: TV and Music both need consolidation.  No entry for each file at the highest level
 # TODO: subtitle files should be a property of the MOVIE/TV
 def _scan_media_directory_impl(directory, regex, media_type, verbose, find_prerelease=False):
+    shows = {}
     json_data = {}
     errors_found = 0
     bad_extensions = []
     for fullname in _walk_directory(directory):
-        if not _is_valid_file_type(fullname, media_type)
+        if not _is_valid_file_type(fullname, media_type):
             if verbose > 1:
                 print('Found invalid name: %s' % fullname)
             continue
@@ -203,7 +218,7 @@ def _scan_media_directory_impl(directory, regex, media_type, verbose, find_prere
             continue
 
         if media_type == MediaType.TV:
-            json_data = _parse_tv_data(match, relative_name, json_data)
+            _parse_tv_data(match, relative_name, json_data, shows)
         elif media_type == MediaType.MOVIES:
             key, value = _parse_movie_data(match, relative_name)
             if key in json_data:
@@ -220,7 +235,7 @@ def _scan_media_directory_impl(directory, regex, media_type, verbose, find_prere
                 continue
             json_data[key] = value
 
-    return errors_found, json_data 
+    return errors_found, json_data, shows
 
 def _scan_media_directory(directory, media_type, verbose, find_prerelease=False):
     if media_type == MediaType.TV:
@@ -244,15 +259,15 @@ def main():
     try:
         media = {}
         if tv_dir:
-            errors, tv = _scan_media_directory(tv_dir, MediaType.TV, verbose)
+            errors, tv, shows = _scan_media_directory(tv_dir, MediaType.TV, verbose)
             _print_results(errors, 'TV')
             media['television'] = tv
         if movies_dir:
-            errors, movies = _scan_media_directory(movies_dir, MediaType.MOVIES, verbose, find_prerelease)
+            errors, movies, _ = _scan_media_directory(movies_dir, MediaType.MOVIES, verbose, find_prerelease)
             _print_results(errors, 'movie')
             media['movies'] = movies
         if audio_dir:
-            errors, audio = _scan_media_directory(audio_dir, MediaType.AUDIO, verbose)
+            errors, audio, _ = _scan_media_directory(audio_dir, MediaType.AUDIO, verbose)
             _print_results(errors, 'audio')
             media['audio'] = audio
         with open('/tmp/media.json', 'w') as media_file:

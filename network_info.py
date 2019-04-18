@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+# vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
 from __future__ import print_function
 import argparse
-import exceptions
 import os
 import re
 import subprocess

@@ -2,6 +2,7 @@
 import argparse
 import os
 import hashlib
+from itertools import takewhile
 from pymediainfo import MediaInfo
 import sqlite3
 import shutil
@@ -14,7 +15,7 @@ _EXTENSIONS = ['.webm', '.mpg', '.mp2', '.mpeg',
                '.mpe', '.mpv', '.ogg', '.mp4', 
                '.m4p', '.m4v', '.avi', '.wmv', 
                '.mov', '.qt', '.flv', '.swf', 
-               '.avchd']
+               '.avchd', '.mkv']
 
 def _verbose_print(s):
     if _VERBOSE: print(s)
@@ -34,6 +35,7 @@ def _find_files(input_dir):
 def _parse_args():
     parser = argparse.ArgumentParser(description='Given a directory or list of files it will remove the metadata in various video files')
     parser.add_argument('-v', '--verbose', action="store_true", help='increase output verbosity')
+    parser.add_argument('-r', '--dry-run', action="store_true", help='only perform a dry run to see which files will be affected')
     parser.add_argument('-d', '--dir', default=None, help='specify which directory to find files to remove metadata from')
     parser.add_argument('files', nargs='*', help='specify which files to remove metadata from')
     args = parser.parse_args()
@@ -58,7 +60,7 @@ def _parse_args():
             raise parser.error('the diriectory specified for searching for files for metadata removal must exist')
         input_files += _find_files(input_dir)
 
-    return input_files
+    return input_files, args.dry_run
 
 def _get_mediainfo_track(file_name):
     media_info = MediaInfo.parse(file_name)
@@ -98,17 +100,16 @@ def _has_metadata(file_name):
 def _get_files_with_metadata(file_names):
     files_with_metadata = []
     for i, file_name in enumerate(file_names, start=1):
-        _verbose_print("%d: %s" % (i, file_name))
+        _verbose_print('INFO: {:3}: {}'.format(i, file_name))
         metadata = _has_metadata(file_name)
         if metadata:
             files_with_metadata.append((file_name, metadata))
     if len(files_with_metadata) > 0:
         _verbose_print('')
     for count, i in enumerate(files_with_metadata, start=1):
-        _verbose_print("%d: %s" % (count, i[0]))
-        _verbose_print("  %s" % i[1])
+        _verbose_print('INFO: {:3}: {}'.format(count, i[0]))
+        _verbose_print('  {}'.format(i[1]))
 
-    print(files_with_metadata)
     # return just a list of the paths to the files
     return [i[0] for i in files_with_metadata]
 
@@ -117,38 +118,42 @@ def _create_temp_name(file_name):
     return '{}.new{}'.format(basename, ext)
 
 def _remove_metadata_from_file(file_name):
-    _verbose_print('removing metadata: %s' % file_name)
+    _verbose_print('INFO: removing metadata from: {}'.format(file_name))
     new_file_name = _create_temp_name(file_name)
-    _verbose_print('metadata free file: %s' % new_file_name)
+    _verbose_print('INFO: destination metadata free file: {}'.format(new_file_name))
     command = 'ffmpeg -i "{}" -map_chapters -1 -map_metadata -1 -c:v copy -c:a copy "{}"'.format(file_name, new_file_name)
-    _verbose_print('command: %s' % command)
+    _verbose_print('INFO: command \'{}\''.format(command))
     process = subprocess.Popen(command, shell=True, bufsize=1, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     stdoutdata, stderrdata = process.communicate()
     if process.wait() != 0:
-        print('ERROR: while running command %s' % command)
-        print('DETAILS:\n%s' % stderrdata.decode('utf-8'))
+        print('ERROR: while running command \'{}\''.format(command), file=sys.stderr)
+        print('DETAILS:', file=sys.stderr)
+        print(stderrdata.decode('utf-8'), file=sys.stderr)
         return False
-    _verbose_print('removed metadata: %s' % new_file_name)
+    _verbose_print('INFO: removed metadata: {}'.format(new_file_name))
     shutil.move(new_file_name, file_name)
-    _verbose_print('moved %s over top of %s' % (new_file_name, file_name))
+    _verbose_print('moved new {} over top of old {}'.format(new_file_name, file_name))
     return True
 
 def _remove_metadata_from_files(file_names):
-    print(file_names)
-    for file_name in file_names:
-        if not _remove_metadata_from_file(file_name):
-            return False
-    return True
+    file_names_updated = list(takewhile(_remove_metadata_from_file, file_names))
+    return len(file_names_updated) == len(file_names)
 
 def main():
-    input_files = _parse_args()
+    input_files, dry_run = _parse_args()
+    retval = 0
     try:
         files_with_metadata = _get_files_with_metadata(input_files)
-        return 0  if _remove_metadata_from_files(files_with_metadata) else 1
+        if not dry_run:
+            if not _remove_metadata_from_files(files_with_metadata):
+                retval = 1
+        else:
+            _verbose_print('INFO: dry run enabled -- NO METADATA BEING REMOVED')
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
-        return 1
+        retval = 1
+    return retval
 
 if __name__ == '__main__':
     sys.exit(main())

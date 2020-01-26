@@ -31,12 +31,12 @@ if __name__ == '__main__':
     if len(paths):
         dstDir = paths[0][:os.path.dirname(paths[0]).rfind(' - ')]
         if verbose:
-            print('Using %s as destination.' % dstDir)
+            print(('Using %s as destination.' % dstDir))
         if not os.path.isdir(dstDir):
             if not simulated:
                 os.mkdir(dstDir)
             if verbose:
-                print('Creating directory %s.' % dstDir)
+                print(('Creating directory %s.' % dstDir))
 
     for i, src in enumerate(paths):
         dst = '%03d%s' % (i + 1, src[ src.rfind(os.path.sep) + 3 : ])
@@ -44,4 +44,4 @@ if __name__ == '__main__':
         if not simulated:
             shutil.copyfile(src, dst)
         if verbose:
-            print('Copied %s to %s.' % (src, dst))
+            print(('Copied %s to %s.' % (src, dst)))

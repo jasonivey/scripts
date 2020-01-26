@@ -2,7 +2,7 @@ import os, sys, uuid, unittest, CompileSource
 
 class TestSourceFiles(unittest.TestCase):
     def setUp(self):
-        self.assert_( 'TEMP' in os.environ )    
+        self.assertTrue( 'TEMP' in os.environ )    
         self.mTempDirectory = os.path.join( os.environ['TEMP'], 'VerifySource-%s' % uuid.uuid1() )
         os.mkdir(self.mTempDirectory)
 
@@ -21,7 +21,7 @@ class TestSourceFiles(unittest.TestCase):
     
         for source in sources:
             if source.lower().endswith('.h'):
-                self.assert_( CompileSource.CompileHeader(source, self.mTempDirectory) )
+                self.assertTrue( CompileSource.CompileHeader(source, self.mTempDirectory) )
             else:
                 #CompileSource.CompileCpp(source)
                 pass

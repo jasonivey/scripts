@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
-from __future__ import print_function
+
 import argparse
 import contextlib
 import os
 import sys
 import traceback
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import uuid
 
 def enum(**enums):
@@ -45,9 +45,9 @@ def _parse_args():
 
 def _retreive_data(url):
     try:
-        with contextlib.closing(urllib2.urlopen(url)) as request:
+        with contextlib.closing(urllib.request.urlopen(url)) as request:
             return request.read()
-    except urllib2.HTTPError:
+    except urllib.error.HTTPError:
         verbose_print(Verbosity.ERROR, 'reading data from {}'.format(url))
 
 def _parse_compiler_data(data):
@@ -66,9 +66,9 @@ def _parse_compiler_data(data):
             continue
         args[line_data] = 0 
         #args.append(line_data)
-    verbose_print(Verbosity.INFO, 'Args: {}'.format('\', \''.join(args.keys())))
+    verbose_print(Verbosity.INFO, 'Args: {}'.format('\', \''.join(list(args.keys()))))
     #verbose_print(Verbosity.INFO, 'Args: {}'.format(' '.join(args)))
-    return args.keys()
+    return list(args.keys())
     #return args
 
 def main():

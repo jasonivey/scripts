@@ -31,7 +31,7 @@ class TestAssertionAndError(unittest.TestCase):
         self.assertEqual('\nERROR: %s\n' % input, output, 'Didn\'t write to stderr like expected.')
         
     def testCHECK(self):
-        self.assert_( CHECK(True, 'This should not fail') )
+        self.assertTrue( CHECK(True, 'This should not fail') )
         self.assertRaises( AssertionError, CHECK, False, 'This is going to fail' )
 
 
@@ -39,16 +39,16 @@ class TestCompareIgnoreCase(unittest.TestCase):
     def testCompareIgnoreCase(self):
         str1 = 'tHIS IS a tESt'
         str2 = 'this is a test'
-        self.assert_(CompareIgnoreCase(str1, str2) == 0)
+        self.assertTrue(CompareIgnoreCase(str1, str2) == 0)
         self.assertFalse(cmp(str1, str2) == 0)
         str1 = 'this should fail'
-        self.assert_(CompareIgnoreCase(str1, str2) == 1)
+        self.assertTrue(CompareIgnoreCase(str1, str2) == 1)
         str1 = 'THIS IS ALSO A TEST'
-        self.assert_(CompareIgnoreCase(str1, str1) == 0)
-        self.assert_(cmp(str1, str1) == 0)
+        self.assertTrue(CompareIgnoreCase(str1, str1) == 0)
+        self.assertTrue(cmp(str1, str1) == 0)
         str1 = 'this is also a test'
-        self.assert_(CompareIgnoreCase(str1, str1) == 0)
-        self.assert_(cmp(str1, str1) == 0)
+        self.assertTrue(CompareIgnoreCase(str1, str1) == 0)
+        self.assertTrue(cmp(str1, str1) == 0)
 
 
 class TestFindSandbox(unittest.TestCase):
@@ -80,7 +80,7 @@ class TestFindSandbox(unittest.TestCase):
         curdir = os.path.join(self.mTempDir, 'dir1', 'dir2', 'ws', 'component', 'dev', 'subdir1', 'subdir2')
         os.makedirs(curdir)
         self.CreateFile(sandboxtext, 'sandbox file')
-        self.assert_( FindSandbox(curdir) )
+        self.assertTrue( FindSandbox(curdir) )
         os.remove(sandboxtext)
         os.removedirs(curdir)
     

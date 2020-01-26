@@ -4,7 +4,7 @@ from stat import *
 x = [x for x in sys.path if os.path.isfile(os.path.join(x, 'RaptorBinConfig.txt'))]
 if len( x ):
     RAPTOR_BIN = x[0] 
-    execfile( os.path.join( RAPTOR_BIN, 'RaptorBinConfig.txt' ))
+    exec(compile(open( os.path.join( RAPTOR_BIN, 'RaptorBinConfig.txt' ), "rb").read(), os.path.join( RAPTOR_BIN, 'RaptorBinConfig.txt' ), 'exec'))
 else:
     global P4PORT
     P4PORT = '172.16.79.3:1666'
@@ -17,47 +17,47 @@ def PrintHeader( file ):
 
 
 def PrintHelp():
-    print '\nList all of the changes between two labels provided. The list'
-    print 'of changes will also include all project dependencies.'
-    print '\nUsage:'
-    print '\tListChanges.py -label <beginLabel> <endLabel or \'now\'>'
-    print '\t               -name <Name>'
-    print '\t               [-branch branchName = \'Main\']'
-    print '\t               [-category categoryName = \'Component\']'
-    print '\t               [-out filename.txt]'
-    print '\t               [-difference project]'
-    print '\t               [ -ignore ]'
-    print '\t               [ -verbose ]\n'
+    print('\nList all of the changes between two labels provided. The list')
+    print('of changes will also include all project dependencies.')
+    print('\nUsage:')
+    print('\tListChanges.py -label <beginLabel> <endLabel or \'now\'>')
+    print('\t               -name <Name>')
+    print('\t               [-branch branchName = \'Main\']')
+    print('\t               [-category categoryName = \'Component\']')
+    print('\t               [-out filename.txt]')
+    print('\t               [-difference project]')
+    print('\t               [ -ignore ]')
+    print('\t               [ -verbose ]\n')
     
-    print '\tAll switches can be used with just their first initial.\n'
+    print('\tAll switches can be used with just their first initial.\n')
     
-    print '\tThe \'-label\' switch specifies the two labels to be compared.'
-    print '\tThe labels must be on the same source code project along'
-    print '\twith the same branch and category. Alternatively the endLabel'
-    print '\tcan be specified with the keyword \'now\' which will report'
-    print '\tall changes from the beginning label to the current date/time.\n'
+    print('\tThe \'-label\' switch specifies the two labels to be compared.')
+    print('\tThe labels must be on the same source code project along')
+    print('\twith the same branch and category. Alternatively the endLabel')
+    print('\tcan be specified with the keyword \'now\' which will report')
+    print('\tall changes from the beginning label to the current date/time.\n')
     
-    print '\tThe \'-name\' switch is the name of the project to query.\n'
+    print('\tThe \'-name\' switch is the name of the project to query.\n')
         
-    print '\tThe \'-branch\' switch is the branch that the project'
-    print '\tbelongs to and defaults to \'Main\'\n'
+    print('\tThe \'-branch\' switch is the branch that the project')
+    print('\tbelongs to and defaults to \'Main\'\n')
 
-    print '\tThe \'-category\' switch is the category that the project'
-    print '\tbelongs to and defaults to \'Components\'.\n'
+    print('\tThe \'-category\' switch is the category that the project')
+    print('\tbelongs to and defaults to \'Components\'.\n')
     
-    print '\tThe \'-difference\' switch allows you to tell the script'
-    print '\tto only show the changes which are in the specified project.\n'
+    print('\tThe \'-difference\' switch allows you to tell the script')
+    print('\tto only show the changes which are in the specified project.\n')
 
-    print '\tThe \'-out\' switch specifies where the output should be'
-    print '\tdirected to.  If the out switch is not found then the'
-    print '\toutput is directed to the screen.\n'
+    print('\tThe \'-out\' switch specifies where the output should be')
+    print('\tdirected to.  If the out switch is not found then the')
+    print('\toutput is directed to the screen.\n')
     
-    print '\tWith the \'-ignore\' flag set it will ignore all changes by'
-    print '\tuser \'orem_cm_build\'. These changes don\'t usually include'
-    print '\tany file changes and if they do it is only \'BuildNumber.txt\'.\n'
+    print('\tWith the \'-ignore\' flag set it will ignore all changes by')
+    print('\tuser \'orem_cm_build\'. These changes don\'t usually include')
+    print('\tany file changes and if they do it is only \'BuildNumber.txt\'.\n')
     
-    print '\tThe \'-verbose\' flag will include all the files included in'
-    print '\teach change list.\n'
+    print('\tThe \'-verbose\' flag will include all the files included in')
+    print('\teach change list.\n')
     
 
 def Error( msg ):
@@ -316,7 +316,7 @@ def IsLabelCorrect( labelStr, name, branch ):
             if name != parts[index]:
                 name = parts[index]
         else:
-            print 'ERROR: The label, ' + labelStr + ', does not belong to project ' + name + '.'
+            print('ERROR: The label, ' + labelStr + ', does not belong to project ' + name + '.')
             return False, name, branch
 
         
@@ -325,10 +325,10 @@ def IsLabelCorrect( labelStr, name, branch ):
                 branch = parts[index + 1]
             return True, name, branch
         else:
-            print 'ERROR: The label, ' + labelStr + ', does not belong to branch ' + branch + '.'            
+            print('ERROR: The label, ' + labelStr + ', does not belong to branch ' + branch + '.')            
             return False, name, branch
         
-    print 'ERROR: The label, ' + labelStr + ', does not belong to branch ' + branch + '.'
+    print('ERROR: The label, ' + labelStr + ', does not belong to branch ' + branch + '.')
     return False, name, branch
 
     
@@ -631,7 +631,7 @@ def FindAllProjects( project ):
                 proj = Project()
                 proj.Assign( projects[i] )
                 gQueriedProjects.append( proj )
-                print 'Querying ' + projects[i].mName # debug_info + ', old label: ' + projects[i].mOldLabel + ', new label: ' + projects[i].mNewLabel + '.'
+                print('Querying ' + projects[i].mName) # debug_info + ', old label: ' + projects[i].mOldLabel + ', new label: ' + projects[i].mNewLabel + '.'
                 projects = projects + FindComponentsTxtDependencies( projects[i] )
                 if len( projects ) != count:
                     projects = MakeUnique( projects )        
@@ -721,7 +721,7 @@ def ParseArgs( argv ):
             i = i + 1
         
     if foundRequiredSwitch == False or name == '':
-        print 'ERROR: Invalid command line. Are you specifying labels and the name?'
+        print('ERROR: Invalid command line. Are you specifying labels and the name?')
         PrintHelp()
         sys.exit( 1 )        
 
@@ -744,7 +744,7 @@ if __name__ == '__main__':
         PrintHeader( file )
 
     beginTime = datetime.datetime.now()
-    print 'Started                 :  ' + beginTime.strftime( '%I:%M:%S %p' )
+    print('Started                 :  ' + beginTime.strftime( '%I:%M:%S %p' ))
 
     proj.mName = name.capitalize()
     proj.mOldBranch = branch.capitalize()
@@ -777,9 +777,9 @@ if __name__ == '__main__':
         file.close()
     
     endTime = datetime.datetime.now()
-    print 'Finished                :  ' + endTime.strftime( '%I:%M:%S %p' )
+    print('Finished                :  ' + endTime.strftime( '%I:%M:%S %p' ))
     elapsed = endTime - beginTime
     hours = int( elapsed.seconds / 3600 )
     minutes = int( ( elapsed.seconds % 3600 ) / 60 )
     seconds = int( ( elapsed.seconds % 3600 ) % 60 )
-    print 'Total time for operation:  %02d:%02d:%02d:%03d' % ( hours, minutes, seconds, elapsed.microseconds / 1000 )
+    print('Total time for operation:  %02d:%02d:%02d:%03d' % ( hours, minutes, seconds, elapsed.microseconds / 1000 ))

@@ -59,8 +59,8 @@ if __name__ == '__main__':
     
     total = 0
     for key in list(suites.keys()):
-        print(suites[key])
+        print((suites[key]))
         total += suites[key].GetTotalTime()
         
-    print('Total Time For Tests: %9.6f seconds' % total)
+    print(('Total Time For Tests: %9.6f seconds' % total))
 

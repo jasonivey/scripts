@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 from datetime import datetime
 import os
 import sys
@@ -9,7 +9,7 @@ import string
 import threading
 import traceback
 import time
-import Queue
+import queue
 
 import custom_utils
 import hash_utils
@@ -177,7 +177,7 @@ def main1():
         thread.join()
     #file_queue.join()
     
-    filenames = output.keys()
+    filenames = list(output.keys())
     filenames.sort(key=str.lower)
     for filename in filenames:
         print(output[filename])

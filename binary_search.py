@@ -27,5 +27,5 @@ if __name__ == '__main__':
             max = last - 1
         next = (min + max) / 2
         if last == next:
-            print('It appears that the last working value was \'%d\'' % succeeded)
+            print(('It appears that the last working value was \'%d\'' % succeeded))
             break

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 import argparse
-import ConfigParser
+import configparser
 import os
 import pep8
 import re
@@ -54,7 +54,7 @@ def _delete_directory_entry(path_name):
                 shutil.rmtree(path_name, True)
     
 def _get_targeted_platform(sandbox_root):
-    config = ConfigParser.SafeConfigParser()
+    config = configparser.SafeConfigParser()
     with open(os.path.join(sandbox_root, _SANDBOX_CONF)) as conf_file:
         config.readfp(conf_file)
         for name, value in config.items(_SANDBOX_CONF_SETTINGS_SECTION):

@@ -39,7 +39,7 @@ def ParseArgs(args):
 
         # Print all shelvset names
         if (args[i].startswith('-') or args[i].startswith('/')) and args[i][1:].startswith('p'):
-            print( '\n'.join(Tfs.CmdTfs().GetShelvesetNames()) )
+            print(( '\n'.join(Tfs.CmdTfs().GetShelvesetNames()) ))
             sys.exit()
 
         i += 1
@@ -101,7 +101,7 @@ def MigrateFiles(items, srcServerDir, destLocalDir, shelveset):
         src = item[0]
         type = item[1]
         dst = GetDestinationFilename(src, srcServerDir, destLocalDir)
-        print('Migrating %s' % src)
+        print(('Migrating %s' % src))
         
         if type == 'edit':
             Tfs.CmdTfs().Checkout(dst)
@@ -121,7 +121,7 @@ def MigrateFiles(items, srcServerDir, destLocalDir, shelveset):
 
 if __name__ == '__main__':
     beginTime = datetime.datetime.now()
-    print('Started                 :  ' + beginTime.strftime( '%I:%M:%S %p' ))
+    print(('Started                 :  ' + beginTime.strftime( '%I:%M:%S %p' )))
 
     try:
         destination, shelveset = ParseArgs(sys.argv)
@@ -130,9 +130,9 @@ if __name__ == '__main__':
         MigrateFiles(shelvesetFiles, source, destination, shelveset)
     finally:    
         endTime = datetime.datetime.now()
-        print('Finished                :  ' + endTime.strftime( '%I:%M:%S %p' ))
+        print(('Finished                :  ' + endTime.strftime( '%I:%M:%S %p' )))
         elapsed = endTime - beginTime
         hours = int( elapsed.seconds / 3600 )
         minutes = int( ( elapsed.seconds % 3600 ) / 60 )
         seconds = int( ( elapsed.seconds % 3600 ) % 60 )
-        print('Total time for operation:  %02d:%02d:%02d:%03d' % ( hours, minutes, seconds, elapsed.microseconds / 1000 ))
+        print(('Total time for operation:  %02d:%02d:%02d:%03d' % ( hours, minutes, seconds, elapsed.microseconds / 1000 )))

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 import argparse
 import os
 import shutil
@@ -12,7 +12,7 @@ if os.name != 'nt':
     print('ERROR: Script is only valid on Windows NT platforms!')
     sys.exit(1)
 
-from _winreg import *
+from winreg import *
 from win32con import HWND_BROADCAST
 from win32con import WM_SETTINGCHANGE
 from win32con import SMTO_ABORTIFHUNG
@@ -108,8 +108,8 @@ class RegistryKey(object):
         return False
 
     def equal(self, other):
-        other_values = map(string.lower, other._values)
-        these_values = map(string.lower, self._values)
+        other_values = list(map(string.lower, other._values))
+        these_values = list(map(string.lower, self._values))
 
         these_not_equal = [value for value in these_values if value not in other_values]
         other_not_equal = [value for value in other_values if value not in these_values]
@@ -276,8 +276,8 @@ def edit_environment_variable(registry_hive_ids, variable):
                 return 0
 
     try:
-        answer = raw_input('Environment variables have changed. Update system [y]: ')
-    except SyntaxError, EOFError:
+        answer = input('Environment variables have changed. Update system [y]: ')
+    except SyntaxError as EOFError:
         answer = 'n'
     if len(answer) == 0:
         answer = 'y'
@@ -318,8 +318,8 @@ def parse_command_line():
     parser.add_argument('-f', '--force', default=False, action='store_true', help='forces add or remove to complete if dir does/does\'t exist')
     parser.add_argument('-v', '--variable', metavar='<env var>', default='PATH', help='specifies the environment variable to use -- defaults to PATH')
     
-    registry_choices = [hive for hive in REGISTRY_HIVES.keys()]
-    registry_choices.append('|'.join(REGISTRY_HIVES.keys()))
+    registry_choices = [hive for hive in list(REGISTRY_HIVES.keys())]
+    registry_choices.append('|'.join(list(REGISTRY_HIVES.keys())))
         
     parser.add_argument('--registry', choices=registry_choices, default=registry_choices[-1], help='specifies which registry hive to use')
     

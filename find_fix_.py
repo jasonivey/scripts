@@ -49,6 +49,6 @@ class FindFixes:
 if __name__ == '__main__':
     begin = time.clock()    
     finder = FindFixes(os.getcwd())
-    print(str(finder))
+    print((str(finder)))
     end = time.clock()
-    print('Total time elapsed: %f seconds' % round(end - begin, 3))
+    print(('Total time elapsed: %f seconds' % round(end - begin, 3)))

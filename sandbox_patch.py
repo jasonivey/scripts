@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 import argparse
 import collections
 import exceptions
@@ -187,7 +187,7 @@ def create_patch_files(sandbox_root, src_dir, dst_dir):
     patch_root = _find_patch_root(dst_dir)
     sandbox_vcs = bzr_vcs.BzrSandbox(sandbox_root, _is_verbose_output_enabled())
     with open(os.path.join(patch_root, _SANDBOX_PATCH), 'a') as patch_file:
-        for file_state, path_names in sandbox_vcs.stat().iteritems():
+        for file_state, path_names in sandbox_vcs.stat().items():
             file_state = file_state.rstrip(':')
             for path_name in path_names:
                 if _is_file_in_directory(path_name, src_dir):
@@ -241,7 +241,7 @@ def restore_patch_files(sandbox_root, src_dir):
             file_type, filename = parts[0].strip(), os.path.normpath(os.path.join(patch_root, parts[1].strip()))
             sandbox_files[file_type].append(filename)
 
-    for file_state, path_names in sandbox_files.iteritems():
+    for file_state, path_names in sandbox_files.items():
         for path_name in path_names:
             relative_path = _get_relative_path(path_name, patch_root)
             dst_file = os.path.join(sandbox_root, relative_path)

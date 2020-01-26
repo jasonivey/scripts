@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import os, sys, re, codecs
 from win32api import GetFileVersionInfo, GetLastError, LOWORD, HIWORD
 

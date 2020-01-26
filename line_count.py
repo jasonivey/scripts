@@ -45,7 +45,7 @@ def CountLinesInFile( filename ):
     
 
 def IterateSourceCode( srcDir ):
-    print('Searching for files in ' + srcDir)
+    print(('Searching for files in ' + srcDir))
     dirs = []
     count = 0
     
@@ -143,12 +143,12 @@ class LineCounts:
     
 if __name__ == '__main__':
     beginTime = datetime.datetime.now()
-    print('Started                 :  ' + beginTime.strftime( '%I:%M:%S %p' ))
-    print('%s' % LineCounts(os.getcwd()))
+    print(('Started                 :  ' + beginTime.strftime( '%I:%M:%S %p' )))
+    print(('%s' % LineCounts(os.getcwd())))
     endTime = datetime.datetime.now()
-    print('Finished                :  ' + endTime.strftime( '%I:%M:%S %p' ))
+    print(('Finished                :  ' + endTime.strftime( '%I:%M:%S %p' )))
     elapsed = endTime - beginTime
     hours = int( elapsed.seconds / 3600 )
     minutes = int( ( elapsed.seconds % 3600 ) / 60 )
     seconds = int( ( elapsed.seconds % 3600 ) % 60 )
-    print('Total time for operation:  %02d:%02d:%02d:%03d' % ( hours, minutes, seconds, elapsed.microseconds / 1000 ))
+    print(('Total time for operation:  %02d:%02d:%02d:%03d' % ( hours, minutes, seconds, elapsed.microseconds / 1000 )))

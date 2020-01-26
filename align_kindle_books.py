@@ -27,7 +27,7 @@ if __name__ == '__main__':
             title = books[index][0]
             line = data[match.start() : data.find('\n', match.start())].strip()
             if line.find(title) == -1:
-                print('ERROR: The following title wasn\'t picked up by the search:\n\t%s' % line)
+                print(('ERROR: The following title wasn\'t picked up by the search:\n\t%s' % line))
                 total_missing += 1
             else:
                 index += 1
@@ -57,6 +57,6 @@ if __name__ == '__main__':
                 break;
 
         if index == -1:
-            print('Unable to find %s' % title)
+            print(('Unable to find %s' % title))
     
     

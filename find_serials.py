@@ -297,7 +297,7 @@ def ParseSeuTextFiles(dir):
     lines = 0
     errors = 0
     for name in custom_utils.get_files_in_directory(dir, predicate=IsSEUTextFile):
-        print('Parsing file \'%s\'' % os.path.basename(name))
+        print(('Parsing file \'%s\'' % os.path.basename(name)))
         with open(name) as file:
             data = file.read()
             lines += data.count('\n')
@@ -355,7 +355,7 @@ def CanUseParsedSerials(path):
         elif new_files != old_files:
             for i in range(len(new_files)):
                 if new_files[i] != old_files[i]:
-                    print('%s != %s' % (new_files[i], old_files[i]))
+                    print(('%s != %s' % (new_files[i], old_files[i])))
             os.remove(dirlist)
         elif not os.path.isfile(savedSerials):
             os.remove(dirlist)
@@ -376,7 +376,7 @@ def SaveSerials(path):
 
 if __name__ == '__main__':
     path = FindSerialsPath()
-    print('Using serial directory found in \'%s\'' % path)
+    print(('Using serial directory found in \'%s\'' % path))
     saveSerials = True
     
     if CanUseParsedSerials(path):
@@ -384,21 +384,21 @@ if __name__ == '__main__':
         serials = pickle.load(file)
         file.close()
         print('Loaded Parsed Serials  : serials.dat')
-        print('Serial Numbers Count   : %d' % serials.Count())
+        print(('Serial Numbers Count   : %d' % serials.Count()))
         saveSerials = False
     else:
         serials, lines, errors = ParseSeuTextFiles( path )
         count = serials.Count()
         duplicates = serials.GetDuplicatesCount()
-        print('Serial Numbers Count   : %d' % count)
-        print('Total Errors           : %d' % errors)
-        print('Total Duplicates       : %d' % duplicates)
-        print('Unaccounted Input      : %d' % (lines - count - duplicates - errors))
+        print(('Serial Numbers Count   : %d' % count))
+        print(('Total Errors           : %d' % errors))
+        print(('Total Duplicates       : %d' % duplicates))
+        print(('Unaccounted Input      : %d' % (lines - count - duplicates - errors)))
 
     if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
-            print('\nSearching for string   : %s' % arg)
-            print(serials.Find(arg))
+            print(('\nSearching for string   : %s' % arg))
+            print((serials.Find(arg)))
 
     if saveSerials:
         SaveSerials(path)

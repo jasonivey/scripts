@@ -63,7 +63,7 @@ class CycleFinder:
         for file in self.mFiles:
             if os.path.basename(file.mName) == 'bytes.inl':
                 print('.')
-            print('Processing %s.' % os.path.basename(file.mName))
+            print(('Processing %s.' % os.path.basename(file.mName)))
             file.AnalyzeDependencies()
         
         self.mXmlDocument.appendChild( self.mXml )
@@ -81,7 +81,7 @@ class CycleFinder:
         retfile = None
         file = CppFile(name, [], self)
         if file not in self.mFiles:
-            print('Unable to find existing file %s.' % name)
+            print(('Unable to find existing file %s.' % name))
         else:
             retfile = self.mFiles[self.mFiles.index(file)]
         return retfile
@@ -124,7 +124,7 @@ class CppFile:
             if include and include not in self.mIncludes:
                 self.mIncludes.append( include )
             elif not include and not IsInvalidFile(name):
-                print('ERROR: "%s"\n\tCouldn\'t find "%s".' % (self.mName, name))
+                print(('ERROR: "%s"\n\tCouldn\'t find "%s".' % (self.mName, name)))
     
     def AnalyzeDependencies(self):
         xmlFile = self.mFinder.mXmlDocument.createElement("File")

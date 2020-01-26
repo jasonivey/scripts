@@ -50,7 +50,7 @@ def p4where( file, sandbox=None ):
     else:
         raise Exception( "File not in sandbox" )
         
-        raw_input( 'What do I do with <<%s>>?' % repr( result ) )
+        input( 'What do I do with <<%s>>?' % repr( result ) )
     return ( result[0], " ".join(result[1:-1]), result[-1] )
     
 def p4edit( file, sandbox=None ):
@@ -91,22 +91,22 @@ def p4delete( file, sandbox=None ):
 
 def checkoutFiles( fileInfo, sandbox=None ):
     for file in fileInfo:
-        if not fileInfo[file].has_key('type'):
-            print "This zip was created with an old revision of migrateChanges!"
+        if 'type' not in fileInfo[file]:
+            print("This zip was created with an old revision of migrateChanges!")
             fileInfo[file]['type'] = "edit"
         if fileInfo[file]['type'] == "edit":
             p4edit( fileInfo[file]['p4path'], sandbox )
         elif fileInfo[file]['type'] == "add":
             #p4add( fileInfo[file]['destpath'], sandbox )
-            print "%s will be added after the zip is extracted" % file
+            print("%s will be added after the zip is extracted" % file)
         elif fileInfo[file]['type'] == "delete":
             p4delete( fileInfo[file]['destpath'], sandbox )
         else:
-            print "p4%s action is not supported" % fileInfo[file]['type']
+            print("p4%s action is not supported" % fileInfo[file]['type'])
             
 def addNewFiles( fileInfo, sandbox=None ):
     for file in fileInfo:
-        if fileInfo[file].has_key('type') and fileInfo[file]['type'] == "add":
+        if 'type' in fileInfo[file] and fileInfo[file]['type'] == "add":
             p4add( fileInfo[file]['destpath'], sandbox )
 
 def markFilesAlreadyCheckedOut( fileInfo, zipFileName, sandbox=None ):
@@ -114,19 +114,19 @@ def markFilesAlreadyCheckedOut( fileInfo, zipFileName, sandbox=None ):
     
     for fileType in filesOpened:
         for file in filesOpened[fileType]:
-            if file in fileInfo.keys():
+            if file in list(fileInfo.keys()):
                 selection = 3
                 while selection == 3:
-                    print "%s is already opened in this sandbox." % file
-                    print "What would you like to do?"
-                    print "    1) Keep the version in this sandbox"
-                    print "    2) Use the version from the zip file"
-                    print "    3) Show me a diff, then I'll decide"
-                    print "    4) Abort.  I need to resolve this manually before"
-                    print "           I can migrate this changes zip file."
+                    print("%s is already opened in this sandbox." % file)
+                    print("What would you like to do?")
+                    print("    1) Keep the version in this sandbox")
+                    print("    2) Use the version from the zip file")
+                    print("    3) Show me a diff, then I'll decide")
+                    print("    4) Abort.  I need to resolve this manually before")
+                    print("           I can migrate this changes zip file.")
                     
                     try:
-                        selection = int( raw_input( "Your Selection(1-4): " ) )
+                        selection = int( input( "Your Selection(1-4): " ) )
                     except:
                         selection = "Bad Input"
                         
@@ -140,12 +140,12 @@ def markFilesAlreadyCheckedOut( fileInfo, zipFileName, sandbox=None ):
                         fileA = open( fileInfo[file]['destpath'], 'r' ).readlines()
                         fileB = zipFile.read( fileInfo[file]['zippath'] ).split('\n')
                         for item in differ.compare( fileA, fileB ):
-                            print item.strip()
+                            print(item.strip())
                     elif selection == 4:
-                        print "Aborting."
+                        print("Aborting.")
                         sys.exit(0)
                     else:
-                        print "I did not understand that input, try again."
+                        print("I did not understand that input, try again.")
                         selection = 3
                         
     return fileInfo
@@ -157,11 +157,11 @@ def makeZip( fileInfo, zipFileName ):
         zipFile = zipfile.ZipFile( zipFileName, 'w', zipfile.ZIP_DEFLATED )
         
     for file in fileInfo:
-        if fileInfo[file].has_key('type') and fileInfo[file]['type'] != "delete":
+        if 'type' in fileInfo[file] and fileInfo[file]['type'] != "delete":
             if os.path.isfile( fileInfo[file]['sourcepath'] ):
                 zipFile.write( fileInfo[file]['sourcepath'], fileInfo[file]['zippath'] )
             else:
-                print "File %s (opened for %s) does not exist and will not be in the zip file" % ( fileInfo[file]['sourcepath'], fileInfo[file]['type'] )
+                print("File %s (opened for %s) does not exist and will not be in the zip file" % ( fileInfo[file]['sourcepath'], fileInfo[file]['type'] ))
         
     zipFile.writestr( INDEX_FILE, repr(fileInfo) )
         
@@ -178,7 +178,7 @@ def extractZip( fileInfo, zipFileName ):
                 fileHandle.write( zipFile.read( fileInfo[file]['zippath'] ) )
                 fileHandle.close()
             except:
-                print "Error reading %s from zip, assuming it was never included" % fileInfo[file]['zippath']
+                print("Error reading %s from zip, assuming it was never included" % fileInfo[file]['zippath'])
     zipFile.close()
     
 def getFileInfo( file, sandbox, type, zipPaths ):
@@ -225,7 +225,7 @@ def readFileInfo( changeFileName, sandbox=None ):
         zipFile.close()
         fileInfo = eval( fileInfoStr )
     except:
-        print "This is not a valid change migration zip file."
+        print("This is not a valid change migration zip file.")
         raise AssertionError( "Invalid change migration zip file", changeFileName )
     
     for file in fileInfo:
@@ -253,10 +253,10 @@ def extractChangeFile( changeFileName, sandbox=None ):
 
 if __name__ == "__main__":
     if len( sys.argv ) != 3 and len( sys.argv ) != 5:
-        print "Usage:"
-        print "    To create a changes zipfile to migrate: migrateChanges.py -c <new zip file name>"
-        print "    To extract a changes zipfile to your sandbox: migrateChanges.py -x <existing zip file name>"
-        print "    There is a parameter -s to specify the sandbox directory if it is different from your current directory"
+        print("Usage:")
+        print("    To create a changes zipfile to migrate: migrateChanges.py -c <new zip file name>")
+        print("    To extract a changes zipfile to your sandbox: migrateChanges.py -x <existing zip file name>")
+        print("    There is a parameter -s to specify the sandbox directory if it is different from your current directory")
         
     elif len( sys.argv ) == 3:
         if sys.argv[1] == '/c' or sys.argv[1] == '-c':

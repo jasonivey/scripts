@@ -1,5 +1,5 @@
 from contextlib import closing
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from lxml import etree
 import re
 
@@ -10,7 +10,7 @@ def _get_links_in_html_page(doc):
         def start(self, tag, attrib):
             #print('len of links: {0}'.format(len(self.links)))
             if tag == '{http://www.w3.org/1999/xhtml}a':
-                if attrib.has_key('href'):
+                if 'href' in attrib:
                     self.links.append(attrib['href'])
             #print("start %s %r" % (tag, dict(attrib)))
         def end(self, tag):
@@ -32,7 +32,7 @@ def _get_links_in_html_page(doc):
 def _get_streams_ids(ipaddr, verbose):
     ids = []
     url = 'http://{0}'.format(ipaddr)
-    with closing(urllib.urlopen(url)) as site:
+    with closing(urllib.request.urlopen(url)) as site:
         for link in _get_links_in_html_page(site.read()):
             match = re.match(r'^(?P<id>[\dA-F]{32})/$', link)
             if match:
@@ -57,7 +57,7 @@ class StreamSize(object):
         return average / float(len(self.sizes))
     def process(self):
         for url in self.urls:
-            with closing(urllib.urlopen(url)) as site:
+            with closing(urllib.request.urlopen(url)) as site:
                 meta = site.info()
                 self.sizes.append(float(meta.getheaders("Content-Length")[0]))
     def __str__(self):
@@ -74,7 +74,7 @@ class StreamSize(object):
 def get_asset_ids(ipaddr, verbose):
     asset_ids = []
     url = 'http://{0}/m3u8/'.format(ipaddr)
-    with closing(urllib.urlopen(url)) as site:
+    with closing(urllib.request.urlopen(url)) as site:
         for link in _get_links_in_html_page(site.read()):
             match = re.match(r'^(?P<asset>[\dA-Fa-f]{8}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{4}-[\dA-Fa-f]{12})/$', link)
             if match:
@@ -84,7 +84,7 @@ def get_asset_ids(ipaddr, verbose):
 def _get_m3u8_files(ipaddr, asset_id, verbose):
     m3u8s = []
     url = 'http://{0}/m3u8/{1}'.format(ipaddr, asset_id)
-    with closing(urllib.urlopen(url)) as site:
+    with closing(urllib.request.urlopen(url)) as site:
         for link in _get_links_in_html_page(site.read()):
             match = re.match(r'^(?P<m3u8>.*\.m3u8$', link)
             if match:
@@ -107,7 +107,7 @@ def get_stream_ids(ipaddr, asset_id, verbose):
         return []
     stream_ids = []
     url = 'http://{0}/m3u8/{1}/{2}'.format(ipaddr, asset_id, m3u8)
-    with closing(urllib.urlopen(url)) as site:
+    with closing(urllib.request.urlopen(url)) as site:
         for line in site.read().split('\n'):
             match = re.match(r'\.\./\.\./(?P<stream_id>[^/]+)/.*\.ts', line)
             if match and match.group('stream_id') not in stream_ids:
@@ -117,7 +117,7 @@ def get_stream_ids(ipaddr, asset_id, verbose):
 def get_stream_partitions(ipaddr, stream, verbose):
     partitions = []
     url = 'http://{0}/{1}/'.format(ipaddr, stream)
-    with closing(urllib.urlopen(url)) as site:
+    with closing(urllib.request.urlopen(url)) as site:
         for link in _get_links_in_html_page(site.read()):
             match = re.match(r'^(?P<partition>[\dA-F]{4})/$', link)
             if match:
@@ -127,7 +127,7 @@ def get_stream_partitions(ipaddr, stream, verbose):
 def get_stream_files(ipaddr, stream, partition, verbose):
     stream_files = []
     url = 'http://{0}/{1}/{2}/'.format(ipaddr, stream, partition)
-    with closing(urllib.urlopen(url)) as site:
+    with closing(urllib.request.urlopen(url)) as site:
         for link in _get_links_in_html_page(site.read()):
             match = re.match(r'^(?P<stream>[\dA-F]{32})_(?P<profile>\d{2})(?P<number>[\dA-F]{8})\.ts$', link)
             if match:
@@ -140,13 +140,13 @@ def get_stream_files(ipaddr, stream, partition, verbose):
 def get_stream_files_sizes(ipaddr, stream, partition, verbose):
     streams = {}
     url = 'http://{0}/{1}/{2}/'.format(ipaddr, stream, partition)
-    with closing(urllib.urlopen(url)) as site:
+    with closing(urllib.request.urlopen(url)) as site:
         for link in _get_links_in_html_page(site.read()):
             match = re.match(r'^(?P<stream>[\dA-F]{32})_(?P<profile>\d{2})(?P<id>[\dA-F]{8})\.ts$', link)
             if match:
                 id = int(match.group('id'), 16)
                 name = '%s_XX%08X.ts' % (match.group('stream'), id)
-                if streams.has_key(id):
+                if id in streams:
                     streams[id].add_url(url + match.group())
                 else:
                     streams[id] = StreamSize(name, url + match.group())

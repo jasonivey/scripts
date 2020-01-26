@@ -10,5 +10,5 @@ if __name__ == '__main__':
     files = Utils.RecurseDirectory( os.getcwd(), IsNotReadOnly, False )
     files.sort()
     for file in files:
-        print('Changing %s to read-only' % file)
+        print(('Changing %s to read-only' % file))
         os.chmod(file, S_IREAD)

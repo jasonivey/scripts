@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import argparse
 import datetime
 import json
@@ -44,10 +44,10 @@ def _is_date(date_str):
         raise argparse.ArgumentTypeError('date value is invalid')
 
 def _print_args(commands):
-    for key, value in commands.items():
+    for key, value in list(commands.items()):
         if isinstance(value, dict):
             values = ''
-            for subkey, subvalue in value.items():
+            for subkey, subvalue in list(value.items()):
                 if isinstance(subvalue, datetime.date):
                     values += '{0}: {1}, '.format(subkey, _from_date(subvalue, True))
                 else:
@@ -235,7 +235,7 @@ class Medication(object):
         data = {}
         data['name'] = obj['name']
         data['count'] = obj['count']
-        data['days'] = obj['days'] if obj.has_key('days') else 30
+        data['days'] = obj['days'] if 'days' in obj else 30
         data['daily_count'] = obj['daily_count']
         data['start_date'] = _to_date(obj['start_date'])
         c = cls(**data)

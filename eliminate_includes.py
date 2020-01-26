@@ -33,7 +33,7 @@ class Project:
         file = open(self.mBuildLog, 'r')
         data = FixupBuildLog( file.read() )
         if not re.search( r' - 0 error\(s\), 0 warning\(s\)', data ):
-            print('ERROR: Build log found for project %s was not successful.' % self.mPath)
+            print(('ERROR: Build log found for project %s was not successful.' % self.mPath))
         file.close()
         return data
     
@@ -166,4 +166,4 @@ if __name__ == '__main__':
         c.EliminateIncludes()
         
     end = time.clock()
-    print('Elapsed Time: %0.03f Seconds' % ( end - start ))
+    print(('Elapsed Time: %0.03f Seconds' % ( end - start )))

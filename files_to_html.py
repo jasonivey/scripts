@@ -5,7 +5,7 @@ def CompareIgnoreCase( x, y ):
     return cmp( x.lower(), y.lower() )
 
 def CreateHtml( name, dir ):
-    print '.'
+    print('.')
 
     dir = dir.replace( 'media/', '' )
     if dir == 'media':
@@ -92,7 +92,7 @@ def RecurseDirectory( dir, name, count ):
         
     CloseHtml( outfile )
 
-    keys = dirs.keys()
+    keys = list(dirs.keys())
     keys.sort()
     for k in keys:
         count = RecurseDirectory( dirs[k], ('dir%d.php' % k), count )

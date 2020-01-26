@@ -39,11 +39,11 @@ if __name__ == '__main__':
     else:
         match = regex.match(view)
         if not match:
-            print('ERROR: Not a valid label.  The view was invalid (%s)!' % view)
+            print(('ERROR: Not a valid label.  The view was invalid (%s)!' % view))
         else:
             createDate = GetCreateDate(view[:-4], label)
             if createDate == datetime.datetime.max:
                 print('ERROR: While trying to retrieve the labels creation date.')
             else:
-                print('Created: %s' % createDate.strftime('%Y/%m/%d %H:%M:%S'))
+                print(('Created: %s' % createDate.strftime('%Y/%m/%d %H:%M:%S')))
 

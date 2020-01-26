@@ -63,7 +63,7 @@ def ParseIncludes( filename ):
                 includes[index].IncInstance()
                 
         elif str.find( 'using namespace' ) != -1 and filename.lower().endswith('.h'):
-            print 'File: ' + filename + ': ' + str.strip()
+            print('File: ' + filename + ': ' + str.strip())
 
 
 def RecurseDirectory( dir, dirList ):

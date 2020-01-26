@@ -34,9 +34,9 @@ def StopService(serviceName):
         service = win32service.OpenService(manager, serviceName, win32service.SERVICE_STOP | win32service.SERVICE_QUERY_STATUS)
         status = win32service.QueryServiceStatus(service)
         if status[1] == win32service.SERVICE_STOP_PENDING or status[1] == win32service.SERVICE_STOPPED:
-            print('Service %s is already stopped (%s)' % (serviceName, GetCurrentStateStr(state)[0]))
+            print(('Service %s is already stopped (%s)' % (serviceName, GetCurrentStateStr(state)[0])))
         else:
-            print('Stopping service %s' % serviceName)
+            print(('Stopping service %s' % serviceName))
             if win32service.ControlService(service, win32service.SERVICE_CONTROL_STOP):
                 win32api.Sleep(1000)
                 stopped = False
@@ -54,9 +54,9 @@ def StopService(serviceName):
             number = inst.args[0]
             function = inst.args[1]
             message = inst.args[2]
-            print('ERROR stopping service: %#08x (%s): %s' % ( number, function, message ))
+            print(('ERROR stopping service: %#08x (%s): %s' % ( number, function, message )))
         else:
-            print('ERROR stopping service: %s' % inst)
+            print(('ERROR stopping service: %s' % inst))
     finally:
         if service:
             win32service.CloseServiceHandle(service)
@@ -74,9 +74,9 @@ def StartService(serviceName):
         service = win32service.OpenService(manager, serviceName, win32service.SERVICE_START | win32service.SERVICE_QUERY_STATUS)
         status = win32service.QueryServiceStatus(service)
         if status[1] == win32service.SERVICE_RUNNING or status[1] == win32service.SERVICE_START_PENDING:
-            print('Service %s is already started (%s)' % (serviceName, GetCurrentStateStr(state)[0]))
+            print(('Service %s is already started (%s)' % (serviceName, GetCurrentStateStr(state)[0])))
         else:
-            print('Starting service %s' % serviceName)
+            print(('Starting service %s' % serviceName))
             if win32service.StartService(service, None):
                 started = False
                 slept = 0
@@ -93,9 +93,9 @@ def StartService(serviceName):
             number = inst.args[0]
             function = inst.args[1]
             message = inst.args[2]
-            print('ERROR starting service: %#08x (%s): %s' % ( number, function, message ))
+            print(('ERROR starting service: %#08x (%s): %s' % ( number, function, message )))
         else:
-            print('ERROR starting service: %s' % inst)
+            print(('ERROR starting service: %s' % inst))
     finally:
         if service:
             win32service.CloseServiceHandle(service)
@@ -119,15 +119,15 @@ def ListServices(filter):
             if filter and not fnmatch.fnmatch(service[0], filter):
                 continue
             status = GetCurrentStateStr(service[2][1])
-            print(format % (service[0], '"' + service[1] + '"', status[0]))
+            print((format % (service[0], '"' + service[1] + '"', status[0])))
     except Exception as inst:
         if len( inst.args ) == 3:
             number = inst.args[0]
             function = inst.args[1]
             message = inst.args[2]
-            print('ERROR enumerating services: %#08x (%s): %s' % ( number, function, message ))
+            print(('ERROR enumerating services: %#08x (%s): %s' % ( number, function, message )))
         else:
-            print('ERROR enumerating services: %s' % inst)
+            print(('ERROR enumerating services: %s' % inst))
     finally:
         if manager:
             win32service.CloseServiceHandle(manager)

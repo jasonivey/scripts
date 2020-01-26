@@ -17,7 +17,7 @@ class DelayedApply:
 
         data = self.ConvertFile(data)
         self.Parse(data)
-        print(str(self))
+        print((str(self)))
         
     def ConvertFile(self, data):
         new_data = []
@@ -145,4 +145,4 @@ if __name__ == '__main__':
         sys.exit(2)
     
     delayed_apply = DelayedApply(sys.argv[1])
-    print(str(delayed_apply))
+    print((str(delayed_apply)))

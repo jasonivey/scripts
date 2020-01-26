@@ -23,7 +23,7 @@ def rename_files(files, dest_dir, name_pattern, execute):
         dir, oldname = os.path.split(filename)
         newpath = _get_new_name(oldname, name_pattern, dest_dir, i, len(files))
         index = len(os.path.dirname(dest_dir)) + 1
-        print('mv "{0}" "{1}"'.format(filename[index:], newpath[index:]))
+        print(('mv "{0}" "{1}"'.format(filename[index:], newpath[index:])))
         if execute:
             os.rename(filename, newpath)
 

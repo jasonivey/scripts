@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 import json
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import os
 import sys
 import argparse
@@ -38,7 +38,7 @@ def _parse_command_line():
 
 def _get_channel_ids(zipcode):
     channels = []
-    ota_channel_catalog = urllib2.urlopen('http://bbtv.qa.movetv.com/cms/publish3/channel/ota_channel_catalog/{0}.json'.format(zipcode)).read()
+    ota_channel_catalog = urllib.request.urlopen('http://bbtv.qa.movetv.com/cms/publish3/channel/ota_channel_catalog/{0}.json'.format(zipcode)).read()
     channel_catalog = json.loads(ota_channel_catalog)
     for channel in channel_catalog['channels']:
         callsign = channel['service_info']['network_affiliate_name']
@@ -61,7 +61,7 @@ def _is_asset_within_range(asset_time, begin_time, end_time):
     
 def _get_assets_to_schedule(verbose, url, lsdvr, begin_time, end_time):
     assets_urls = []
-    qvt_json = urllib2.urlopen(url).read()
+    qvt_json = urllib.request.urlopen(url).read()
     qvt = json.loads(qvt_json)
     for show in qvt['shows']:
         clips_url = show['clips_url']
@@ -95,8 +95,8 @@ def main():
             if not simulated:
                 output = ''
                 try:
-                    output = urllib2.urlopen(url).read()
-                except urllib2.HTTPError as e:
+                    output = urllib.request.urlopen(url).read()
+                except urllib.error.HTTPError as e:
                     print(e)
                 if verbose and len(output) != 0:
                     print(output)

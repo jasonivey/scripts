@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 import argparse
 import collections
-import ConfigParser
+import configparser
 import exceptions
 import io
 from lxml import etree
@@ -51,18 +51,18 @@ def _get_platform_id():
 
 class Components(dict):
     def __contains__(self, component):
-        return str(component) in self.keys()
+        return str(component) in list(self.keys())
 
     def has_unparsed_components(self):
-        unparsed = [comp for comp in self.itervalues() if not comp.metadata_parsed]
+        unparsed = [comp for comp in self.values() if not comp.metadata_parsed]
         return len(unparsed) > 0
         
     def get_unparsed_component(self):
-        unparsed = [comp for comp in self.itervalues() if not comp.metadata_parsed]
+        unparsed = [comp for comp in self.values() if not comp.metadata_parsed]
         return unparsed[0]
 
     def add_component(self, component, container_type=None):
-        if str(component) in self.keys():
+        if str(component) in list(self.keys()):
             if _is_verbose_output_enabled():
                 print('Not adding duplicate {0}dependency: {1}'.format(container_type + ' ' if container_type else '', component))
         else:
@@ -101,7 +101,7 @@ class Component(object):
         self._dependencies = value
 
     def display_dependents(self, indent='', sep='\n', output_file=sys.stdout):
-        for name, dependent in self.dependents.iteritems():
+        for name, dependent in self.dependents.items():
             print('{0}{1}{2}'.format(indent, name, sep), file=output_file)
             dependent.display_dependents(indent + '  ', sep, output_file)
 
@@ -113,7 +113,7 @@ class Component(object):
             parent.append(etree.Element('component', name=self.name, component_type='Tool', tool_type=self.tool_type, version=self.version))
 
     def output_dependents_xml(self, parent):
-        components = self.dependents.values()
+        components = list(self.dependents.values())
         components.sort(key=lambda component: component.name.lower())
         for dependent in components:
             dependent.output_xml(parent)
@@ -218,7 +218,7 @@ class DependencyWalker(object):
     def _get_metadata_section(metadata, section_name):
         try:
             return metadata.items(section_name)
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             return None
 
     def _parse_components(self, metadata, component):
@@ -248,13 +248,13 @@ class DependencyWalker(object):
         else:
             if _is_extra_verbose_output_enabled():
                 print('\nFile: {0}/metadata.txt\n{1}\n'.format(component, metadata))
-            config = ConfigParser.SafeConfigParser()
+            config = configparser.SafeConfigParser()
             config.optionxform = str
             config.readfp(io.BytesIO(metadata))
             return config
 
     def _update_dependents(self, component):
-        for dependent_name, dependent in component.dependents.iteritems():
+        for dependent_name, dependent in component.dependents.items():
             assert dependent_name in self.dependents_list
             master_dependent = self.dependents_list[dependent_name]
             dependent.dependents = master_dependent.dependents
@@ -276,7 +276,7 @@ class DependencyWalker(object):
 
         self._parse_components(root_metadata, self.root_component)
         self._parse_tools(root_metadata, self.root_component)
-        for dependent in self.root_component.dependents.itervalues():
+        for dependent in self.root_component.dependents.values():
             self.dependents_list.add_component(dependent, 'sandbox')
 
         while self.dependents_list.has_unparsed_components():
@@ -294,7 +294,7 @@ class DependencyWalker(object):
             if metadata:
                 self._parse_components(metadata, component)
                 self._parse_tools(metadata, component)
-                for dependency in component.dependents.itervalues():
+                for dependency in component.dependents.values():
                     self.dependents_list.add_component(dependency, 'sandbox')
             else:
                 print('ERROR: Unable to read {0} metadata.txt file.'.format(component))
@@ -304,7 +304,7 @@ class DependencyWalker(object):
 
     def _get_components_from_all(self):
         components = []
-        for name, component in self.dependents_list.iteritems():
+        for name, component in self.dependents_list.items():
             if type(component) is Dependency:
                 components.append(component)
         components.sort(key=lambda component: component.name.lower())
@@ -312,7 +312,7 @@ class DependencyWalker(object):
 
     def _get_tool_from_all(self):
         tools = []
-        for name, component in self.dependents_list.iteritems():
+        for name, component in self.dependents_list.items():
             if type(component) is Tool:
                 tools.append(component)
         tools.sort(key=lambda tool: tool.name.lower())

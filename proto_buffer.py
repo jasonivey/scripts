@@ -19,7 +19,7 @@ def parse_proto_buffer(buf):
         length = ord(buf[index])
         index += 1
         s = buf[index:index + length]
-        print("field {0}: '{1}'".format(field, s))
+        print(("field {0}: '{1}'".format(field, s)))
         index += length
         field += 1
 
@@ -73,7 +73,7 @@ def _FindProviderInRequestBody(buf):
         if ord(buf[index]) == len(PROVIDER) and \
            PROVIDER == buf[index + 1 : index + 1 + len(PROVIDER)] and \
            index > 1:
-                print('found everything returning %d' % index)
+                print(('found everything returning %d' % index))
                 return index - 1
         index += 1
     return -1

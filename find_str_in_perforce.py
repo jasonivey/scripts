@@ -62,16 +62,16 @@ def GetFiles(dir, recursive):
         command = GetPerforceCommand('files %s/%s/%s' % (P4_PREFIX_PATH, dir, suffix))
     else:
         command = GetPerforceCommand('files %s/%s' % (P4_PREFIX_PATH, suffix))
-    print('Running command %s' % command)
+    print(('Running command %s' % command))
     p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = p.stdout.read()
-    print('Output: %s' % output[0:200])
+    print(('Output: %s' % output[0:200]))
     pattern = r'(?P<name>%s[^#]+)#\d+ *- *(add|edit|integrate|branch) *change *\d+ *\(text\)\n' % P4_PREFIX_PATH
     files = []
     for i in re.finditer(pattern, output, re.S):
         files.append( i.group('name') )
         
-    print('Found %d files.' % len(files))
+    print(('Found %d files.' % len(files)))
     return files
 
 
@@ -102,11 +102,11 @@ def ParseArgs(args):
                     dir = pattern[:index + 1].strip('/')
                     pattern = pattern[index + 1:]
             else:
-                print('ERROR: Invalid command line argument "%s".' % arg)
+                print(('ERROR: Invalid command line argument "%s".' % arg))
                 sys.exit(1)
                 
     if not pattern or not searchStr:
-        print 'ERROR: A search string and depot folder must be specified.'
+        print('ERROR: A search string and depot folder must be specified.')
         sys.exit(1)
     
     print(searchStr)
@@ -132,6 +132,6 @@ if __name__ == '__main__':
     
     files = GetFiles(dir, recursive)
     for file in fnmatch.filter( files, pattern ):
-        print('Searching file: %s' % file)
+        print(('Searching file: %s' % file))
         for match in SearchFile(file, searchStr, insensitve, not lineNumbers):
-            print match
+            print(match)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 import argparse
 import collections
 import exceptions
@@ -257,13 +257,13 @@ def main():
         if cat_path:
             print(cat(cat_path))
         if stat_path:
-            for key, values in stat(stat_path).iteritems():
+            for key, values in stat(stat_path).items():
                 print(key)
                 for value in values:
                     print('  {0}'.format(value))
         if stat_sandbox_path:
             bzr_sandbox = BzrSandbox(stat_sandbox_path)
-            for key, values in bzr_sandbox.stat().iteritems():
+            for key, values in bzr_sandbox.stat().items():
                 print(key)
                 for value in values:
                     print('  {0}'.format(value))

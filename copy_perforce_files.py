@@ -40,7 +40,7 @@ def MakeRecursiveDir( dir ):
 def CreateDestination(dir):
     if os.path.exists( dir ):
         if len( os.listdir(dir) ):
-            print('Destination directory, %s must not exist or be empty.' % dir)
+            print(('Destination directory, %s must not exist or be empty.' % dir))
             sys.exit(1)
     else:
         os.mkdir( dir )
@@ -65,7 +65,7 @@ def CopyOpenedFile( perforce, src, sandbox, dir, include_diff ):
     shutil.copy( src, dst )
     if include_diff:
         CopyDifferences(perforce, src, os.path.join(dst, basename))
-    print('Copied %s to %s successfully' % ( src, dst ))
+    print(('Copied %s to %s successfully' % ( src, dst )))
 
 
 def CopyFileToWorkspace( perforce, src, dir, sandbox ):
@@ -75,7 +75,7 @@ def CopyFileToWorkspace( perforce, src, dir, sandbox ):
     #perforce.OpenForEdit( dst )
     CHECK( perforce.OpenForEdit( dst ), 'Error while opening the file, %s, for edit' % dst )
     shutil.copyfile( src, dst )
-    print('Copied %s to %s successfully' % ( src, dst ))
+    print(('Copied %s to %s successfully' % ( src, dst )))
 
 
 def ParseArgs( argv ):

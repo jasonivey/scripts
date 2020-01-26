@@ -18,8 +18,8 @@ if __name__ == '__main__':
                     newName = os.path.join( root, originalDateTime.strftime('%Y-%m-%d - ') + f )
                     if oldName != newName:
                         os.rename( oldName, newName )
-                        print('Renaming %s to %s.' % ( oldName, newName ))
+                        print(('Renaming %s to %s.' % ( oldName, newName )))
                     else:
-                        print('Both old and new names are identical, %s.' % oldName)
+                        print(('Both old and new names are identical, %s.' % oldName))
                 else:
-                    print('Photo %s did not have an original date/time attribute.' % oldName)
+                    print(('Photo %s did not have an original date/time attribute.' % oldName))

@@ -21,7 +21,7 @@ def GetFiles(dir, files, outfile):
             chksum = hash_utils.md5sum(pathname)
             if chksum in files:
                 filestr = pathname[2:len(pathname)] + ' == ' + (files[chksum])[2:len( (files[chksum]) )]
-                print filestr
+                print(filestr)
                 outfile.write( filestr + '\n' )
             else:
                 files[chksum] = pathname
@@ -37,8 +37,8 @@ def FindDuplicates( dir, recurse, files, outfile ):
 
 if __name__ == '__main__':
     if( len( sys.argv ) < 2 or sys.argv[1].startswith('-') ):
-        print 'DumpDir <output file name> [-norecurse]'
-        print '\tBy default recursing directories is on'
+        print('DumpDir <output file name> [-norecurse]')
+        print('\tBy default recursing directories is on')
         sys.exit(1)
 
     filename = sys.argv[1]

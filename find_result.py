@@ -73,12 +73,12 @@ if __name__ == '__main__':
     #match = facilityRegex.search(data)
     match = stringFacilityRegex.search(data)
     assert(match)
-    print('Found facility: %s, %d, %s, %d' % ( match.group('facility'), int(match.group('number')), match.group('description'), int(match.group('pool')) ))
+    print(('Found facility: %s, %d, %s, %d' % ( match.group('facility'), int(match.group('number')), match.group('description'), int(match.group('pool')) )))
     
     facility = int(match.group('number'))
     results = Results()
     #for i in resultRegex.finditer(data):
     #    print 'Result: %s - %d' % ( i.group('id'), results.MakeResultCode( i.group('severity'), facility, int( i.group('number') ) ) )
     count = len( stringRegex.findall(data) )
-    print('Found %d string definitions in the file' % count)
+    print(('Found %d string definitions in the file' % count))
         

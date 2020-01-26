@@ -65,11 +65,11 @@ def create_compile_commands(command_line, directory, sources):
 def main():
     command, sources, directory, output = _parse_args()
     try:
-        print('command: %s' % command)
+        print(('command: %s' % command))
         print('sources:')
         for i in sources:
             print(i)
-        print('sources: %s' % type(sources))
+        print(('sources: %s' % type(sources)))
         output.write(create_compile_commands(command, directory, sources))
         return 0
     except:

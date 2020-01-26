@@ -26,7 +26,7 @@ def get_verbosity(verbosity):
 def _verbose_print(verbosity, msg):
     if verbosity > _VERBOSE_LEVEL:
         return
-    print('{0}: {1}'.format(get_verbosity(verbosity), msg))
+    print(('{0}: {1}'.format(get_verbosity(verbosity), msg)))
 
 def _is_source_type(path):
     return path.endswith('.cpp') or path.endswith('.h')

@@ -39,7 +39,7 @@ class Session:
         else:
             if len( self.mFiles ) + 1 == MAX_FILES:
                 self.mFiles.pop()
-                print('Maximum files hit for %s\\%s' % ( self.mHost, self.mUser ))
+                print(('Maximum files hit for %s\\%s' % ( self.mHost, self.mUser )))
                 
             before = len( self.mFiles )
             self.mFiles.insert(0, file)
@@ -168,9 +168,9 @@ if __name__ == '__main__':
         ExportLog( logfile, sessions )
     
         for session in sessions:
-            print(session.mHost + '\\' + session.mUser)
+            print((session.mHost + '\\' + session.mUser))
             for file in session.mFiles:
-                print('\t%s - %s' % ( file.mDate, file.mName ))
+                print(('\t%s - %s' % ( file.mDate, file.mName )))
             print('')
             
         print('Waiting for 1 minute to check again.')

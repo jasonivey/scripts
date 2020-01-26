@@ -73,13 +73,13 @@ if __name__ == '__main__':
     for platform in platforms:
         for file in files:
             command = '%s %s %s -platform %s' % (os.path.join(dir, 'pyrun'), file, ' '.join(args), platform)
-            print('Running %s %s -platform %s' % (file, ' '.join(args), platform))
+            print(('Running %s %s -platform %s' % (file, ' '.join(args), platform)))
             for line in os.popen4( command, 't' )[1].readlines():
                 sys.stdout.write( line )
             print('')
 
     command = '%s %s %s' % (os.path.join(dir, 'pyrun'), r'Raptor\Dev\Rebrand.py', ' '.join(orig_args))
-    print(r'Running Raptor\Dev\Rebrand.py %s' % ' '.join(orig_args))
+    print((r'Running Raptor\Dev\Rebrand.py %s' % ' '.join(orig_args)))
     for line in os.popen4( command, 't' )[1].readlines():
         sys.stdout.write( line )
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
-from __future__ import print_function
+
 import argparse
 import contextlib
 import exceptions
@@ -10,7 +10,7 @@ import logging.handlers
 import json
 import re
 import sys
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import uuid
 import traceback
 
@@ -64,9 +64,9 @@ class Asset(object):
     def _request_http_data(url, title):
         try:
             _log.info('requesting %s' % url)
-            with contextlib.closing(urllib2.urlopen(url)) as request:
+            with contextlib.closing(urllib.request.urlopen(url)) as request:
                 return request.read()
-        except urllib2.HTTPError as err:
+        except urllib.error.HTTPError as err:
             _log.error('unable to request %s from url %s: %s', title, url, err)
         return None
 

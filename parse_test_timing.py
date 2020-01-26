@@ -131,6 +131,6 @@ if __name__ == '__main__':
             total_count += 1
         
         if test_count != total_count:
-            print('Test count (%d) didn\'t match regex iterator count (%d) in file %s' % (count, total, name))
+            print(('Test count (%d) didn\'t match regex iterator count (%d) in file %s' % (count, total, name)))
 
     print(tests)

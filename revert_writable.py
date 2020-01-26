@@ -12,7 +12,7 @@ def IsReadOnly( file ):
 
 
 def SetAttributes( dir, openedFiles ):
-    print('Searching for files in ' + dir)
+    print(('Searching for files in ' + dir))
     dirs = []
     
     regex = re.compile( r'^.*\.(?:c|cpp|h|hpp|inl)$', re.I )
@@ -21,7 +21,7 @@ def SetAttributes( dir, openedFiles ):
             pathname = os.path.join( root, file )
             if regex.match(pathname) and not IsReadOnly( pathname ) and IsFileInDepot( pathname ) and not pathname.lower() in openedFiles:
                 win32api.SetFileAttributes( file, win32file.FILE_ATTRIBUTE_READONLY )
-                print('Setting file ' + file + ' to be read-only')
+                print(('Setting file ' + file + ' to be read-only'))
 
 
 def GetOpenedFiles( dir, sandbox ):

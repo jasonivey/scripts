@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 import json
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import os
 import sys
 import argparse
@@ -14,28 +14,28 @@ def _parse_command_line():
     return args.asset_id
 
 def _parse_asset_id(asset_id):
-    input_str = urllib2.urlopen('http://bbtv.qa.movetv.com/cms/publish3/asset/info/{0}.json'.format(asset_id)).read()
+    input_str = urllib.request.urlopen('http://bbtv.qa.movetv.com/cms/publish3/asset/info/{0}.json'.format(asset_id)).read()
     values = json.loads(input_str)
-    if values.has_key('title'):
+    if 'title' in values:
         print('title: {0}'.format(values['title']))
-    if values.has_key('metadata'):
+    if 'metadata' in values:
         metadata = values['metadata']
-        if metadata.has_key('description'):
+        if 'description' in metadata:
             print('description: {0}'.format(metadata['description']))
-        if metadata.has_key('episode_title'):
+        if 'episode_title' in metadata:
             print('episode: {0}'.format(metadata['episode_title']))
-        if metadata.has_key('episode_season'):
+        if 'episode_season' in metadata:
             print('season: {0}'.format(metadata['episode_season']))
-        if metadata.has_key('episode_number'):
+        if 'episode_number' in metadata:
             print('number: {0}'.format(metadata['episode_number']))
-        if metadata.has_key('tv_rating'):
+        if 'tv_rating' in metadata:
             print('rating: {0}'.format(metadata['tv_rating']))
-        if metadata.has_key('cast'):
+        if 'cast' in metadata:
             cast_str = ''
             for cast in metadata['cast']:
                 cast_str += cast + ', '
             print('cast: {0}'.format(cast_str.rstrip(', ')))
-        if metadata.has_key('genre'):
+        if 'genre' in metadata:
             genre_str = ''
             for genre in metadata['genre']:
                 genre_str += genre + ', '

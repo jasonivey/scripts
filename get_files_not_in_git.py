@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
-from __future__ import print_function
+
 import argparse
 import datetime
 import git
@@ -101,11 +101,11 @@ def get_files_not_in_repo(directory):
     files = []
     repo_files = _get_repository_files(directory)
     filesystem_files = _get_all_files(directory)
-    for dirname in filesystem_files.keys():
+    for dirname in list(filesystem_files.keys()):
         dir_entries = filesystem_files[dirname]
         new_files = []
-        for filehash, filename in dir_entries.iteritems():
-            if filehash not in repo_files.keys():
+        for filehash, filename in dir_entries.items():
+            if filehash not in list(repo_files.keys()):
                 new_files.append(filename)
         if len(new_files) != len(dir_entries):
             files += new_files

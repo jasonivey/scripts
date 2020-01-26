@@ -20,4 +20,4 @@ if __name__ == '__main__':
                 names[name] = 1
                 
     for name, count in list(names.items()):
-        print('%10d : %s' % (count, name))
+        print(('%10d : %s' % (count, name)))

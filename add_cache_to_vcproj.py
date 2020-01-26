@@ -79,7 +79,7 @@ def UpdateVcProj(filename, regex, analyze):
     cache = FindCachePath(filename)
     new_text = UpdateCompilerSettings(new_text, cache, regex)
     if new_text != org_text:
-        print('Updating %s' % filename)
+        print(('Updating %s' % filename))
         if analyze:
             return
         CHECK( OpenForEdit(filename), 'Unable to open %s for editing' % filename )

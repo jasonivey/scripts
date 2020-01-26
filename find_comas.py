@@ -10,7 +10,7 @@ def RecurseDirectory( dir ):
 
         if oldname.find( ',' ) != -1:
 	    newname = string.replace( oldname, ',', ' -' )
-            print f
+            print(f)
 
         if len( newname ) != 0:
             os.rename( oldname, newname )

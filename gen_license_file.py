@@ -3,15 +3,15 @@ import os, string, sys, shutil
 if __name__ == '__main__':
 
     if( len( sys.argv ) < 2 or sys.argv[1].startswith('-') ):
-        print 'GenLicenseFile <output file name>'
+        print('GenLicenseFile <output file name>')
         sys.exit(1)
 
-    company = raw_input( "Company Name: " )
-    serialNumber = raw_input( "Serial Number: " )
-    systemCount = raw_input( "System Count: " )
-    expireDate = raw_input( "Expiration Date (mm/dd/yyyy): " )
-    product = raw_input( "Product Code: " )
-    version = raw_input( "Product Version: " )    
+    company = input( "Company Name: " )
+    serialNumber = input( "Serial Number: " )
+    systemCount = input( "System Count: " )
+    expireDate = input( "Expiration Date (mm/dd/yyyy): " )
+    product = input( "Product Code: " )
+    version = input( "Product Version: " )    
 
     filename = sys.argv[1]
     outfile = file( filename, 'w' )

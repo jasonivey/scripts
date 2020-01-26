@@ -180,13 +180,13 @@ def main():
     try:
         for input_file in input_files:
             if calc_md5sum:
-                print('%s %s' % (md5sum(input_file), os.path.abspath(input_file)))
+                print(('%s %s' % (md5sum(input_file), os.path.abspath(input_file))))
             if calc_md5sum_shell:
-                print('%s %s' % (md5sum_shell(input_file), os.path.abspath(input_file)))
+                print(('%s %s' % (md5sum_shell(input_file), os.path.abspath(input_file))))
             if calc_crc32:
-                print('%s %s' % (crc32(input_file), os.path.abspath(input_file)))
+                print(('%s %s' % (crc32(input_file), os.path.abspath(input_file))))
             if calc_crc32_shell:
-                print('%s %s' % (crc32_shell(input_file), os.path.abspath(input_file)))
+                print(('%s %s' % (crc32_shell(input_file), os.path.abspath(input_file))))
         return 0
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()

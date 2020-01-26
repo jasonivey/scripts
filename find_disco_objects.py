@@ -37,7 +37,7 @@ if __name__ == '__main__':
                     if re.search('\\b%s\\b' % parent, definition) and class_name not in classes:
                         classes.append(class_name)
         
-    print('Took %d times through the directory to find all the objects' % loopCount)
+    print(('Took %d times through the directory to find all the objects' % loopCount))
     print('All Disco Objects:')
     for i in range(1, len(classes)):
-        print('\t%s' % classes[i])
+        print(('\t%s' % classes[i]))

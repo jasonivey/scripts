@@ -33,9 +33,9 @@ def DecryptAzwBook(src, dst):
         book = mobidedrm.MobiBook(src)
         book.processBook(pidlist)
         file(dst, 'wb').write(book.mobi_data)
-        print 'Decrypted %s successfully' % src
-    except mobidedrm.DrmException, e:
-        print 'Error in %s: %s' % (src, e)
+        print('Decrypted %s successfully' % src)
+    except mobidedrm.DrmException as e:
+        print('Error in %s: %s' % (src, e))
 
 def DecryptBooks(dir):
     paths = []

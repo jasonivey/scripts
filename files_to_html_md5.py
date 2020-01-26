@@ -32,7 +32,7 @@ if __name__ == '__main__':
                 continue
             if os.path.isdir(f):
                 md5str = hash_utils.md5sum(f)
-                print f + ' - ' + md5str
+                print(f + ' - ' + md5str)
                 outfile.write( '\t<tr>\n' )
                 outfile.write( '\t\t<td align=center><a href="' + f + '">' + f + '</a></td>\n' )
                 outfile.write( '\t\t<td align=center>' + md5str + '</td>\n' )

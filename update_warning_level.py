@@ -8,11 +8,11 @@ def IsProjectFile(file):
 
 def FlushFile(filename, old_text, new_text):
     if old_text != new_text:
-        print 'Updating %s' % filename
+        print('Updating %s' % filename)
         with open(filename, 'w') as file:
             file.write(new_text)
     else:
-        print 'Did not update %s' % filename
+        print('Did not update %s' % filename)
     
 def AddIgnoreWarning(filename, warning_level):
     with open(filename, 'r') as file:

@@ -102,10 +102,10 @@ def FixBinaryTypeInCMake(code_dir, rel_path):
         pattern = r'(add_executable\s*\(\s*%s\s+)(\$\{SOURCES\}\s+\$\{HEADERS\}\s+\))' % os.path.basename(os.path.dirname(filename))
         match = re.search(pattern, data, re.MULTILINE | re.IGNORECASE)
         if not match:
-            print('ERROR: unable to update %s since \'add_executable\' wasn\'t found' % rel_path)
+            print(('ERROR: unable to update %s since \'add_executable\' wasn\'t found' % rel_path))
             return False
         else:
-            print('INFO: %s has already been updated' % rel_path)
+            print(('INFO: %s has already been updated' % rel_path))
             return True
     
     new_data = re.sub(pattern, r'\1\2', data)

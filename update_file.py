@@ -13,7 +13,7 @@ def GetSvnStatus(client, path):
         for status in statuss:
             if status.path == path:
                 return status
-    except pysvn.ClientError, e:
+    except pysvn.ClientError as e:
         return None
     assert False, 'Unknown SVN status'
 
@@ -68,13 +68,13 @@ def main(args):
             dstFile = os.path.join(root, file)
             if IsSameFile(srcFile, dstFile) and not IsSamePath(srcFile, dstFile):
                 if DoesExistInSvn(client, dstFile):
-                    print('Skipping %s because its part of source control!' % dstFile)
+                    print(('Skipping %s because its part of source control!' % dstFile))
                 elif not IsModifiedDateNewerOrSame(srcFile, dstFile):
                     srcFileModifcationDate = datetime.datetime.fromtimestamp(os.stat(srcFile)[stat.ST_MTIME]).strftime('%b %d, %Y  %I:%M:%S %p')
                     dstFileModifcationDate = datetime.datetime.fromtimestamp(os.stat(dstFile)[stat.ST_MTIME]).strftime('%b %d, %Y  %I:%M:%S %p')
-                    print('Not copying to %s because of modification dates\n\tSrc: %s\n\tDst: %s' % (dstFile, srcFileModifcationDate, dstFileModifcationDate))
+                    print(('Not copying to %s because of modification dates\n\tSrc: %s\n\tDst: %s' % (dstFile, srcFileModifcationDate, dstFileModifcationDate)))
                 else:
-                    print('Copying to %s' % root)
+                    print(('Copying to %s' % root))
                     CopySourceAndSymbols(srcFile, dstFile)
     return 0
 

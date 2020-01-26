@@ -8,10 +8,10 @@ def OpenImage( filename ):
     for line in lines:
         sys.stdout.write(line)
     if os.path.isfile(tracerfile):
-        print('Opening image %s failed' % filename)
+        print(('Opening image %s failed' % filename))
         return False
     else:
-        print('Opening image %s succeeded' % filename)
+        print(('Opening image %s succeeded' % filename))
         return True
 
 
@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     while min != max and last != next:
         filename = GetName(next)
-        print('Attempting to open image %s' % filename)
+        print(('Attempting to open image %s' % filename))
         success = OpenImage(filename)
         last = next
         if success:
@@ -42,5 +42,5 @@ if __name__ == '__main__':
             max = last - 1
         next = (min + max) / 2
         if last == next:
-            print('It appears that the last working value was \'%d\'' % succeeded)
+            print(('It appears that the last working value was \'%d\'' % succeeded))
             break

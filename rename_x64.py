@@ -17,7 +17,7 @@ def UpdateVCProj( filename ):
     if Perforce.OpenForEdit( filename ) == False:
         return                
     
-    print('Processing file "' + basename + '"')
+    print(('Processing file "' + basename + '"'))
     file = open( filename, 'w' )
     
     insideConfig = False

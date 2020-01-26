@@ -73,7 +73,7 @@ def UpdateVcProj(filename, compilerRegex, linkerRegex):
     new_text = UpdateCompilerSettings(new_text, boost, compilerRegex)
     new_text = UpdateLinkerSettings(new_text, boost, linkerRegex)
     if new_text != org_text:
-        print('Updating %s' % filename)
+        print(('Updating %s' % filename))
         Perforce.OpenForEdit(filename)
         file = open( filename, 'w' )
         file.write(new_text)

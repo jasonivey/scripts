@@ -73,7 +73,7 @@ if __name__ == '__main__':
                     continue
                 if not printHeader:
                     printHeader = True
-                    print('%s:' % filename)
-                print('\t%s' % line.strip('\n'))
+                    print(('%s:' % filename))
+                print(('\t%s' % line.strip('\n')))
         os.remove(output_file_name)
 

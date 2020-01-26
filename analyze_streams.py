@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 import datetime
 import os
 import sys
@@ -20,15 +20,15 @@ class TsFileSet:
         self.timestamp = {}
 
     def add_profile(self, profile, timestamp):
-        assert not self.timestamp.has_key(profile)
+        assert profile not in self.timestamp
         self.timestamp[profile] = timestamp
 
     def _calc_drift(self):
-        if len(self.timestamp.keys()) <= 1:
+        if len(list(self.timestamp.keys())) <= 1:
             return 0
         diffs = [0]
-        for index, timestamp in enumerate(self.timestamp.itervalues()):
-            for other_index, other_timestamp in enumerate(self.timestamp.itervalues()):
+        for index, timestamp in enumerate(self.timestamp.values()):
+            for other_index, other_timestamp in enumerate(self.timestamp.values()):
                 if index == other_index or timestamp == other_timestamp:
                     continue
                 diff = timestamp - other_timestamp if timestamp >= other_timestamp else other_timestamp - timestamp
@@ -99,12 +99,12 @@ class TsFiles:
             if not filename:
                 continue
             unique_name = '{0}_{1:08X}.ts'.format(stream_uuid, ts_number)
-            if not self.files.has_key(unique_name):
+            if unique_name not in self.files:
                 self.files[unique_name] = TsFileSet(unique_name, stream_uuid, ts_number)
             self.files[unique_name].add_profile(profile, timestamp)
 
     def analyze(self):
-        files = self.files.values()
+        files = list(self.files.values())
         if self.filename_sort:
             files.sort()
         elif self.drift_sort:

@@ -64,6 +64,6 @@ if __name__ == '__main__':
         basename = os.path.basename(file)
         if not projects[projectName].HasFile(basename):
             total += 1
-            print('%s not found in %s' % (basename, os.path.basename(os.path.abspath(projectName))))
+            print(('%s not found in %s' % (basename, os.path.basename(os.path.abspath(projectName)))))
             
-    print('\n%d files not found' % total)
+    print(('\n%d files not found' % total))

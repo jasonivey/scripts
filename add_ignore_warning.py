@@ -62,11 +62,11 @@ def UpdateVcProj(filename, compilerRegex):
     file.close()
     new_text = org_text
     
-    print('Updating %s' % filename)
+    print(('Updating %s' % filename))
     new_text = UpdateCompilerSettings(new_text, compilerRegex)
 
     if new_text != org_text:
-        print('Updating %s' % filename)
+        print(('Updating %s' % filename))
         CHECK( OpenForEdit(filename), 'Unable to open %s for editing' % filename )
         file = open( filename, 'w' )
         file.write(new_text)

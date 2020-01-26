@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
-from __future__ import print_function
+
 import argparse
 import os
 import sys
@@ -136,7 +136,7 @@ class Compiler(object):
 
     def _parse_compiler_options(self, filename):
         g = l = {}
-        execfile(filename, g, l)
+        exec(compile(open(filename, "rb").read(), filename, 'exec'), g, l)
         if 'flags' in l:
             for flag in l['flags']:
                 self._options.append(flag)

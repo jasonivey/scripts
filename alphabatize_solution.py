@@ -71,7 +71,7 @@ class Solution:
 
     def GetProjectDefinitionsText(self):
         text = ''
-        for project in self.Projects.values():
+        for project in list(self.Projects.values()):
             text += str(project)
         return text
     
@@ -89,16 +89,16 @@ class Solution:
         match = re.search(project_dependencies_pattern, self.Data, re.S)
         
         # split the string into an array, remove the tabs on the start of the strings and then remove (filter) the empty array elements
-        raw_dependencies = filter(lambda value: len(value) != 0, map(string.strip, match.group('Dependencies').split('\n')))
+        raw_dependencies = [value for value in map(string.strip, match.group('Dependencies').split('\n')) if len(value) != 0]
         dependencies = []
         for raw_dependency in raw_dependencies:
             dependencies.append(ProjectDependency(raw_dependency))
     
-        for project in iter(self.Projects.values()):
+        for project in iter(list(self.Projects.values())):
             project.AddHierarchyGuids(dependencies)
 
         # Reduce the project list down to only those with no parent (root nodes)
-        projects = filter(lambda project: not project.ParentGuid, self.Projects.values())
+        projects = [project for project in list(self.Projects.values()) if not project.ParentGuid]
         for project in projects:
             project.AddChildProjects(self.Projects)
 

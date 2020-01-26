@@ -30,14 +30,14 @@ if __name__ == '__main__':
 						try:
 							size += os.path.getsize(fname)
 						except (IOError, OSError) as inst:
-							print('Exception raised: ', inst)
+							print(('Exception raised: ', inst))
 							pass	# I was occassionally getting a path too long OSError
 				totalSize += size
 				if verbose:
-					print('\t%s Size: %s Bytes (%s MB)' % (name, Utils.Commafy(size), Utils.Commafy(size / int(1048576))))
+					print(('\t%s Size: %s Bytes (%s MB)' % (name, Utils.Commafy(size), Utils.Commafy(size / int(1048576)))))
 			else:
 				totalSize += int(os.path.getsize(os.path.join(dir, name)))
 			
-		print('%s Total Size: %s Bytes (%s MB)' % (dir,  Utils.Commafy(totalSize),  Utils.Commafy(totalSize / int(1048576))))
+		print(('%s Total Size: %s Bytes (%s MB)' % (dir,  Utils.Commafy(totalSize),  Utils.Commafy(totalSize / int(1048576)))))
 		
 		

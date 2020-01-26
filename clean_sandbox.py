@@ -16,8 +16,8 @@ class Response(object):
         answer = None
         while not answer:
             try:
-                answer = raw_input('%s [y/n/a]? ' % prompt).strip().lower()
-            except SyntaxError, EOFError:   # Forward compatibility. Python 3.0 throws exceptions when no input is given.
+                answer = input('%s [y/n/a]? ' % prompt).strip().lower()
+            except SyntaxError as EOFError:   # Forward compatibility. Python 3.0 throws exceptions when no input is given.
                 answer = self._default
             if len(answer) == 0:
                 answer = self._default      # The user choose the default <enter>
@@ -53,7 +53,7 @@ def main(args):
     
     SVN_DIR = r'.svn'
     
-    print('Cleaning %s' % os.getcwd())
+    print(('Cleaning %s' % os.getcwd()))
     response = Response(all=no_prompt, default='y')
     svn = Subversion.Subversion()
     
@@ -66,7 +66,7 @@ def main(args):
                 continue
             if not svn.IsFileInRepository(path) and response.GetResponse('DEL %s' % path):
                 if not quiet:
-                    print('DEL %s' % path)
+                    print(('DEL %s' % path))
                 if not simulate:
                     os.remove(path)
         for dir in dirs:
@@ -76,10 +76,10 @@ def main(args):
             in_repository = svn.IsFileInRepository(path)
             if not in_repository:
                 if len(os.listdir(path)) != 0 and not simulate:
-                    print('ERROR: Directory %s is not empty' % path)
+                    print(('ERROR: Directory %s is not empty' % path))
                 if response.GetResponse('RMDIR %s' % path):
                     if not quiet:
-                        print('RMDIR %s' % path)
+                        print(('RMDIR %s' % path))
                     if not simulate:
                         os.rmdir(path)
     return 0

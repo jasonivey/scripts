@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
-from __future__ import print_function
+
 import argparse
 import json
 import os
@@ -95,7 +95,7 @@ def update_compile_commands(compiler_path, omniture_dir, mysql_dir, openssl_dir,
     new_commands = []
     for compile_command in compile_commands:
         new_command = {}
-        for key, value in compile_command.iteritems():
+        for key, value in compile_command.items():
             new_value = _update_path(value, compile_commands_dirname)
             if key == 'command':
                 new_value = _update_compile_command(new_value,

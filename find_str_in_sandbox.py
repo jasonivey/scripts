@@ -51,7 +51,7 @@ class Project:
             self.mCategory = views[key][1]
             self.mBranch = views[key][2]
         else:
-            print('ERROR: Couldn\'t find project name, "%s", in the workspace view' % name)
+            print(('ERROR: Couldn\'t find project name, "%s", in the workspace view' % name))
             self.mName = name
             self.mCategory = category
             self.mBranch = branch
@@ -64,7 +64,7 @@ class Project:
             self.mLabel = 'Release%s' % label[label.find('_'):]
         else:
             if label:
-                print('ERROR: Label, "%s", didn\t match the standard BuildNumber or Release format.' % label)
+                print(('ERROR: Label, "%s", didn\t match the standard BuildNumber or Release format.' % label))
             self.mLabel = label
         
     def GetFiles(self):
@@ -182,7 +182,7 @@ def ParseArgs( args, dir ):
         else:
             suffix = ''
         sandbox = GetSandbox(dir)
-        print('Searching for "%s" in the sandbox %s, case %ssensitive.' % ( searchStr, sandbox, suffix ))
+        print(('Searching for "%s" in the sandbox %s, case %ssensitive.' % ( searchStr, sandbox, suffix )))
 
     return searchStr, caseInsensitive, fast
 
@@ -194,5 +194,5 @@ if __name__ == '__main__':
     views = GetViews()
     for project in EnumerateProjects(sandbox, dir, views):
         project.FindString(searchStr, caseInsensitive, fast)
-        print('%s\n' % project)
+        print(('%s\n' % project))
 

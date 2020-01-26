@@ -370,7 +370,7 @@ def IsLabelCorrect( labelStr, name, branch ):
             if name != parts[index]:
                 name = parts[index]
         else:
-            print('ERROR: The label, %s, does not belong to project %s.' % (labelStr, name))
+            print(('ERROR: The label, %s, does not belong to project %s.' % (labelStr, name)))
             return False, name, branch
 
         
@@ -379,10 +379,10 @@ def IsLabelCorrect( labelStr, name, branch ):
                 branch = parts[index + 1]
             return True, name, branch
         else:
-            print('ERROR: The label, %s, does not belong to branch %s.' % (labelStr, branch))
+            print(('ERROR: The label, %s, does not belong to branch %s.' % (labelStr, branch)))
             return False, name, branch
         
-    print('ERROR: The label, %s, does not belong to branch %s.' % (labelStr, branch))
+    print(('ERROR: The label, %s, does not belong to branch %s.' % (labelStr, branch)))
     return False, name, branch
 
     
@@ -681,7 +681,7 @@ def FindAllProjects( project ):
                 proj = Project()
                 proj.Assign( projects[i] )
                 gQueriedProjects.append( proj )
-                print('Querying ' + projects[i].mName) # debug_info + ', old label: ' + projects[i].mOldLabel + ', new label: ' + projects[i].mNewLabel + '.'
+                print(('Querying ' + projects[i].mName)) # debug_info + ', old label: ' + projects[i].mOldLabel + ', new label: ' + projects[i].mNewLabel + '.'
                 projects = projects + FindComponentsTxtDependencies( projects[i] )
                 if len( projects ) != count:
                     projects = MakeUnique( projects )        
@@ -799,7 +799,7 @@ if __name__ == '__main__':
         PrintHeader( file )
 
     beginTime = datetime.datetime.now()
-    print('Started                 :  ' + beginTime.strftime( '%I:%M:%S %p' ))
+    print(('Started                 :  ' + beginTime.strftime( '%I:%M:%S %p' )))
 
     proj.mName = name.capitalize()
     proj.mOldBranch = branch.capitalize()
@@ -836,9 +836,9 @@ if __name__ == '__main__':
         file.close()
     
     endTime = datetime.datetime.now()
-    print('Finished                :  ' + endTime.strftime( '%I:%M:%S %p' ))
+    print(('Finished                :  ' + endTime.strftime( '%I:%M:%S %p' )))
     elapsed = endTime - beginTime
     hours = int( elapsed.seconds / 3600 )
     minutes = int( ( elapsed.seconds % 3600 ) / 60 )
     seconds = int( ( elapsed.seconds % 3600 ) % 60 )
-    print('Total time for operation:  %02d:%02d:%02d:%03d' % ( hours, minutes, seconds, elapsed.microseconds / 1000 ))
+    print(('Total time for operation:  %02d:%02d:%02d:%03d' % ( hours, minutes, seconds, elapsed.microseconds / 1000 )))

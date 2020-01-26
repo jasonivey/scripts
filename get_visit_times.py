@@ -81,7 +81,7 @@ for i in range(n):
 
 # n_act = len(activity.keys())
 # print("Total number of points with activity: %d  (%0.1f%%)"%(n_act,int(n_act/n*100)))
-print("Total number of points: %d"%n)
+print(("Total number of points: %d"%n))
 
 # Free some memory
 data.clear()
@@ -135,7 +135,7 @@ for i in range(begin_index,end_index):
         dist2poi.append(dist)
 
 close_points = np.array(close_points)
-print("Number of close points: %d\n"%close_points.size)
+print(("Number of close points: %d\n"%close_points.size))
 
 
 prev = 0    # Keeps in memory the last timestamp displayed
@@ -146,18 +146,18 @@ for i in range(close_points.size):
         if i>0 and i-prev > 2:
             if i == close_points.size-1: i=i+1
             if group_verbosity == 1:
-                print("\tGroup of %d points"%(i-prev-2))
+                print(("\tGroup of %d points"%(i-prev-2)))
             if group_verbosity == 2:
-                print("\n\tGroup of %d points: %d -> %d"%(i-prev-2,close_points[prev+1],close_points[i-1]))
+                print(("\n\tGroup of %d points: %d -> %d"%(i-prev-2,close_points[prev+1],close_points[i-1])))
                 pt_date_im1 = ts2datetime(timestampMs[close_points[i-1]])
                 pt_date_prevp1 = ts2datetime(timestampMs[close_points[prev+1]])
-                print("\tFrom: %s"%pt_date_prevp1)
-                print("\tTo  : %s"%pt_date_im1)
-                print("\tMean dist to POI: %0.1fm\n"%np.mean(dist2poi[prev+1:i]))
+                print(("\tFrom: %s"%pt_date_prevp1))
+                print(("\tTo  : %s"%pt_date_im1))
+                print(("\tMean dist to POI: %0.1fm\n"%np.mean(dist2poi[prev+1:i])))
 
         # if group_verbosity == 2: print()    # Add space between lines
         # Else, display the point, unless it's the end
         if i != close_points.size:
             pt_date = ts2datetime(timestampMs[close_points[i]])
-            print("Point %d  --  Date: %s  --  Distance to POI: %dm"%(close_points[i],pt_date,dist2poi[i]))
+            print(("Point %d  --  Date: %s  --  Distance to POI: %dm"%(close_points[i],pt_date,dist2poi[i])))
             prev = i

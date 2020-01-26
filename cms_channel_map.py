@@ -7,7 +7,7 @@
 # If specified that channel list will be forwarded onto the specified LSDVR to start a specific
 #  scan.  The result of this message is then printed out.
 #
-from __future__ import print_function
+
 import exceptions
 import json
 import os
@@ -15,8 +15,8 @@ import sys
 import argparse
 import re
 import traceback
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 
 def _get_environment(env):
@@ -31,10 +31,10 @@ def _get_cms_rf_footprint(env, zipcode, verbose):
         print('requesting json from {0}'.format(uri))
     response_data = None
     try:
-        req = urllib2.Request(uri)
-        response = urllib2.urlopen(req)
+        req = urllib.request.Request(uri)
+        response = urllib.request.urlopen(req)
         response_data = response.read()
-    except (urllib2.URLError, urllib2.HTTPError) as e:
+    except (urllib.error.URLError, urllib.error.HTTPError) as e:
         raise exceptions.RuntimeError('ERROR: opening url {0}. {1}'.format(uri, e.reason))
     return response_data
 
@@ -45,10 +45,10 @@ def _send_scan_message(address, json_data, verbose):
         print('posting json from {0}'.format(uri))
     response_data = None
     try:
-        req = urllib2.Request(uri, json_data, headers) 
-        response = urllib2.urlopen(req)
+        req = urllib.request.Request(uri, json_data, headers) 
+        response = urllib.request.urlopen(req)
         response_data = response.read()
-    except (urllib2.URLError, urllib2.HTTPError) as e:
+    except (urllib.error.URLError, urllib.error.HTTPError) as e:
         raise exceptions.RuntimeError('ERROR: opening url {0}. {1}'.format(uri, e.reason))
     return response_data
 

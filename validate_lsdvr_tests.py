@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import argparse
 import datetime
 from contextlib import closing
@@ -8,7 +8,7 @@ import os
 import sys
 import socket
 import traceback
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 import lsdvr_http_api
 
@@ -329,7 +329,7 @@ def _get_stream_files(ip_addr, stream_id):
     return stream_files
 
 def _parse_asset_json(values):
-    if not values.has_key('assets'): return []
+    if 'assets' not in values: return []
     recordings = []
     for asset in values['assets']:
         recording = Recording(asset['asset_id'],
@@ -340,7 +340,7 @@ def _parse_asset_json(values):
                               asset['channel_minor'],
                               _from_time_t(asset['start_time']),
                               _from_time_t(asset['stop_time']))
-        if asset.has_key('clips'):
+        if 'clips' in asset:
             for clip in asset['clips']:
                 if clip['type'] == 'content':
                     start = asset['start_time'] + _parse_stream_range_start(clip['range']);
@@ -352,7 +352,7 @@ def _parse_asset_json(values):
 
 def _get_recordings_chunk(ip_addr, params):
     url = 'http://{0}/api/'.format(ip_addr)
-    with closing(urllib2.urlopen(url, data=params)) as site:
+    with closing(urllib.request.urlopen(url, data=params)) as site:
         values = json.loads(site.read())
         return _parse_asset_json(values)
 
@@ -360,9 +360,9 @@ def _get_asset_ids(ip_addr):
     url = 'http://{0}/api/'.format(ip_addr)
     params = '{"message_type": "get_asset_ids"}'
     assets = []
-    with closing(urllib2.urlopen(url, data=params)) as site:
+    with closing(urllib.request.urlopen(url, data=params)) as site:
         values = json.loads(site.read())
-        if values.has_key('assets'):
+        if 'assets' in values:
             for asset in values['assets']:
                 assets.append(str(asset))
     if _is_verbose_output_enabled():
@@ -380,7 +380,7 @@ def _get_recordings(ip_addr):
         for recording in recordings:
             for stream in recording.streams:
                 stream.stream_files = _get_stream_files(ip_addr, stream.stream_id)
-    except urllib2.HTTPError, err:
+    except urllib.error.HTTPError as err:
         error = True
         print('EXCEPTION: while getting recordings for {0}. {1}'.format(ip_addr, err))
     #if error:

@@ -38,7 +38,7 @@ def MoveFromSubDirs():
             file = os.path.join( root, f )
             
             name = GetUniqueFileName( os.path.join(dst, f) )
-            print('Moving %s to %s' % ( f, os.path.basename(file) ))
+            print(('Moving %s to %s' % ( f, os.path.basename(file) )))
             shutil.move( file, name )
             
             
@@ -55,7 +55,7 @@ def ExtractFromZipFiles():
                 zfobj = zipfile.ZipFile(file)
                 for name in zfobj.namelist():
                     dstFile = GetUniqueFileName( os.path.join(dst, name) )
-                    print('Copying %s from archive %s' % ( os.path.basename(dstFile), f ))
+                    print(('Copying %s from archive %s' % ( os.path.basename(dstFile), f )))
                     outfile = open( dstFile, 'wb')
                     outfile.write(zfobj.read(name))
                     outfile.close()
@@ -108,10 +108,10 @@ def SelectCorrectPath(paths, platform, config):
     if len(correct_paths) == 1:
         return correct_paths[0]
 
-    print('INFO: found multiple paths for %s' % os.path.basename(correct_paths[0]))
+    print(('INFO: found multiple paths for %s' % os.path.basename(correct_paths[0])))
     for index, path in enumerate(correct_paths):
-        print(' %d. %s %s' % (index + 1, time.ctime(os.stat(path)[stat.ST_MTIME]), os.path.dirname(path)))
-    selection = int(input('Select correct: ')) - 1
+        print((' %d. %s %s' % (index + 1, time.ctime(os.stat(path)[stat.ST_MTIME]), os.path.dirname(path))))
+    selection = int(eval(input('Select correct: '))) - 1
     if selection < 0 or selection >= len(correct_paths):
         print('ERROR: selected an invalid option')
         return None
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     binary_files = []
     with open(r'd:\files.txt') as input_file:
         # read lines into array, strip empty chars and lower each char on each index, and delete empty indexes
-        binary_files = filter(lambda value: len(value) != 0, map(string.lower, map(string.strip, input_file.readlines())))
+        binary_files = [value for value in map(string.lower, list(map(string.strip, input_file.readlines()))) if len(value) != 0]
     
     print('Collecting paths for all binaries...')
     all_binary_files = {}
@@ -204,7 +204,7 @@ if __name__ == '__main__':
             if file.lower() not in binary_files:
                 continue
             full_path = os.path.join(root, file)
-            if file.lower() in all_binary_files.keys():
+            if file.lower() in list(all_binary_files.keys()):
                 all_binary_files[file.lower()].append(full_path)
             else:
                 all_binary_files[file.lower()] = [full_path]
@@ -231,9 +231,9 @@ if __name__ == '__main__':
     print('Selecting the correct source path for all binaries...')
     correct_paths = []
     for binary_file in binary_files:
-        if binary_file not in all_binary_files.keys():
-            print('ERROR: binary %s was never found' % binary_file)
-            source_path = input('Enter source path: ')
+        if binary_file not in list(all_binary_files.keys()):
+            print(('ERROR: binary %s was never found' % binary_file))
+            source_path = eval(input('Enter source path: '))
             all_binary_files[binary_file] = [source_path]
         
         source_path = SelectCorrectPath(all_binary_files[binary_file], 'x64', 'Debug')

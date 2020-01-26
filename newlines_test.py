@@ -29,14 +29,14 @@ def EndsWithNewline( filename ):
     file.close()
     value = data.lstrip('\t ').endswith('\n')
     if not value:
-        print filename
+        print(filename)
     return value
 
 
 class NewLinesTest(unittest.TestCase):
     def testSource(self):
         raptor = Raptor.Sandbox()
-        for component in raptor.items.keys():
+        for component in list(raptor.items.keys()):
             found = False
             for platforms in raptor.items[component].platforms:
                 if platforms.lower().startswith('linux'):
@@ -44,11 +44,11 @@ class NewLinesTest(unittest.TestCase):
             if not found or not raptor.items[component].dir.lower().startswith(raptor.wsdir.lower()):
                 continue
             
-            print component
+            print(component)
             for root, dirs, files in os.walk( raptor.items[component].dir ):
                 for file in files:
                     if IsSourceFileAndWritable( os.path.join(root, file) ):
-                        self.assert_( EndsWithNewline( os.path.join(root, file) ) )
+                        self.assertTrue( EndsWithNewline( os.path.join(root, file) ) )
 
 if __name__ == '__main__':
     unittest.main()

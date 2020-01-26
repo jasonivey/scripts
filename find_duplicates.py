@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 import argparse
 import binascii
 from collections import defaultdict
@@ -66,7 +66,7 @@ class DuplicateFinder(object):
     @staticmethod
     def _find_matches_template(src_files, dst_files):
         matches = defaultdict(list)
-        for src_hash, src_filenames in src_files.iteritems():
+        for src_hash, src_filenames in src_files.items():
             duplicate_files = src_filenames
             if dst_files and src_hash in dst_files:
                 duplicate_files += dst_files[src_hash]
@@ -84,20 +84,20 @@ class DuplicateFinder(object):
         # Only check for duplicates if the user selected two directories
         if self.dst_files != None:
             matches2 = DuplicateFinder._find_matches_template(self.dst_files, self.src_files)
-            for hash, filenames in matches2.iteritems():
+            for hash, filenames in matches2.items():
                 for filename in filenames:
                     if filename not in matches1[hash]:
                         matches1[hash].append(filename)
 
         # Only publish the matches which have more than one file name associated with them
-        for hash, filenames in matches1.iteritems():
+        for hash, filenames in matches1.items():
             if len(filenames) > 1:
                 self.matches[hash] = filenames
 
     @staticmethod
     def _find_uniques_template(src_files, dst_files):
         uniques = []
-        for hash in src_files.iterkeys():
+        for hash in src_files.keys():
             unique = None
             if dst_files == None:
                 if len(src_files[hash]) == 1:
@@ -130,7 +130,7 @@ class DuplicateFinder(object):
         output = []
         if self.matches != None:
             output.append('The following are duplicate files:\n')
-            for hash, filenames in self.matches.iteritems():
+            for hash, filenames in self.matches.items():
                 output.append('unique id: {0}'.format(hash))
                 for filename in filenames:
                     output.append('\t{0}'.format(filename))

@@ -6,7 +6,7 @@ perforce.connect()
 def OpenForEdit( filename ):
     success = len( perforce.run_edit(filename) ) >= 1
     if not success:
-        print('Error while opening %s for edit.' % filename)
+        print(('Error while opening %s for edit.' % filename))
     return success
 
 def RecurseDirectory( dir, function ):
@@ -171,7 +171,7 @@ def UpdateConfiguration(platform, config, text):
 
 
 def UpdateVcProj( filename ):
-    print('Processing %s' % os.path.basename(filename))
+    print(('Processing %s' % os.path.basename(filename)))
     file = open( filename, 'r' )
     text = file.read()
     file.close()

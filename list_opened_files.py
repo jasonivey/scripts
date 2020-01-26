@@ -17,4 +17,4 @@ if __name__ == '__main__':
         if not name.lower() in files:
             attribs = win32api.GetFileAttributes( name )
             win32api.SetFileAttributes( name, attribs | win32file.FILE_ATTRIBUTE_READONLY )
-            print('Resetting read-only on the file %s.' % name)
+            print(('Resetting read-only on the file %s.' % name))

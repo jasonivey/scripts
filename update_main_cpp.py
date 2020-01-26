@@ -14,7 +14,7 @@ def UpdateMainCpp( filename ):
     if Perforce.OpenForEdit( filename ) == False:
         return                
     
-    print('Processing file "' + filename + '"')
+    print(('Processing file "' + filename + '"'))
     file = open( filename, 'w' )
     updated = False
     deleteBlankSpaces = False

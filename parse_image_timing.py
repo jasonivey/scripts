@@ -33,5 +33,5 @@ if __name__ == '__main__':
                 queue_size = int( overlapped_io_match.group('queue_size') )
             else:
                 queue_size = 0
-            print('%s,%s,%d,%f' % (name, threadpool, queue_size, time))
+            print(('%s,%s,%d,%f' % (name, threadpool, queue_size, time)))
             

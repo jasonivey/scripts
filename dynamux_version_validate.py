@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
-from __future__ import print_function
+
 import argparse
 import contextlib
 import json
@@ -9,7 +9,7 @@ import sys
 import re
 import subprocess
 import traceback
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 
 def _parse_args():
@@ -57,15 +57,15 @@ def _create_uri(hostname, port, path, endpoint):
 
 def _test_endpoint(uri):
     try:
-        with contextlib.closing(urllib2.urlopen(uri)) as request:
+        with contextlib.closing(urllib.request.urlopen(uri)) as request:
             return True, request.read()
-    except urllib2.HTTPError as http_err:
+    except urllib.error.HTTPError as http_err:
         err = { http_err.code : http_err.reason }
         return False, json.dumps(err, sort_keys=True, indent=4, separators=(',', ': '))
 
 def _test_dynamux_paths(output_valid):
     #endpoints = ['version', '_version', 'status', 'status.json', '_status', '_status.json'
-    for name, parts in _get_dynamux_raw_paths().items():
+    for name, parts in list(_get_dynamux_raw_paths().items()):
         assert len(parts) == 3, 'dynamux raw path is malformed (%s)' % parts
         for raw_endpoint in ['version', 'status']:
             for variations in ['%s', '_%s', '%s.json', '_%s.json']:

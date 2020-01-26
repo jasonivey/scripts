@@ -112,7 +112,7 @@ def UpdateVcProj(filename, compilerRegex, linkerRegex, analyze):
     new_text = UpdateCompilerSettings(new_text, boost, compilerRegex)
     new_text = UpdateLinkerSettings(new_text, boost, linkerRegex)
     if new_text != org_text:
-        print('Updating %s' % filename)
+        print(('Updating %s' % filename))
         if analyze:
             return
         CHECK( OpenForEdit(filename), 'Unable to open %s for editing' % filename )

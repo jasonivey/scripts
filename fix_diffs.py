@@ -33,4 +33,4 @@ if __name__ == '__main__':
             if os.path.isfile(dst) and IsReadOnly(dst):
                 win32api.SetFileAttributes(dst, win32file.FILE_ATTRIBUTE_NORMAL)
             shutil.copyfile(src, dst)
-            print('Copied %s to K:\\music' % src)
+            print(('Copied %s to K:\\music' % src))

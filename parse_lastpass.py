@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from __future__ import print_function
+
 import argparse
 import logging
 import logging.handlers
@@ -36,13 +36,13 @@ _log = _initialize_logger()
 # url,username,password,extra,name,grouping,fav
 class LastPass(object):
     def __init__(self, **kwargs):
-        self._url = kwargs['url'] if kwargs.has_key('url') else None
-        self._username = kwargs['username'] if kwargs.has_key('username') else None
-        self._password = kwargs['password'] if kwargs.has_key('password') else None
-        self._extra = kwargs['extra'] if kwargs.has_key('extra') else None
-        self._name = kwargs['name'] if kwargs.has_key('name') else None
-        self._grouping = kwargs['grouping'] if kwargs.has_key('grouping') else None
-        self._fav = kwargs['fav'] if kwargs.has_key('fav') else None
+        self._url = kwargs['url'] if 'url' in kwargs else None
+        self._username = kwargs['username'] if 'username' in kwargs else None
+        self._password = kwargs['password'] if 'password' in kwargs else None
+        self._extra = kwargs['extra'] if 'extra' in kwargs else None
+        self._name = kwargs['name'] if 'name' in kwargs else None
+        self._grouping = kwargs['grouping'] if 'grouping' in kwargs else None
+        self._fav = kwargs['fav'] if 'fav' in kwargs else None
 
     @staticmethod
     def _parse_fields(data):

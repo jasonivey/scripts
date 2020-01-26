@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 import argparse
 import os
 import pep8
@@ -70,8 +70,8 @@ valgrind: any, linux|osx, valgrind --version, Run 'yum install valgrind' on yum-
 
 [run tools]
 ''' 
-    import ConfigParser
-    config = ConfigParser.SafeConfigParser()
+    import configparser
+    config = configparser.SafeConfigParser()
     config.optionxform = str
     filehandle = open(filename)
     #config.readfp(filehandle)

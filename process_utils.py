@@ -159,7 +159,7 @@ class Processes:
                 name = win32process.GetModuleFileNameEx( handle, 0 )
 
                 proc = Process( id, name )
-                assert(not self.Processes.has_key(id))
+                assert(id not in self.Processes)
                 self.Processes[id] = proc
             except Exception as inst:
                 if len( inst.args ) > 1:
@@ -173,10 +173,10 @@ class Processes:
 
     def GetProcess(self, name):
         if name == 'all':
-            return self.Processes.values()
+            return list(self.Processes.values())
 
         matching_processes = []
-        for process in self.Processes.values():
+        for process in list(self.Processes.values()):
             if os.path.basename(process.Name).lower() == os.path.basename(name).lower() or \
                os.path.splitext(os.path.basename(process.Name))[0].lower() == os.path.splitext(os.path.basename(name))[0].lower():
                 matching_processes.append(process)
@@ -191,7 +191,7 @@ class Processes:
         # Otherwise look for the the process looking for the fully qualified directory name
         original_matching_processes = matching_processes
         matching_processes = []
-        for process in self.Processes.values():
+        for process in list(self.Processes.values()):
             if process.Name.lower() == name.lower():
                 matching_processes.append(process)
 
@@ -212,16 +212,16 @@ class Processes:
             except RuntimeError as inst:
                 print(inst)
         else:
-            if not self.Processes.has_key(process_id) and process_id in self.ProcessIds:
-                print('ERROR: The process (%d) exists but we could not open a handle to it!' % process_id)
-            elif not self.Processes.has_key(process_id):
-                print('ERROR: The specified PID (%d) does not exist amoung this list of processes!' % process_id)
+            if process_id not in self.Processes and process_id in self.ProcessIds:
+                print(('ERROR: The process (%d) exists but we could not open a handle to it!' % process_id))
+            elif process_id not in self.Processes:
+                print(('ERROR: The specified PID (%d) does not exist amoung this list of processes!' % process_id))
             else:
                 pids.append(process_id)
         return pids
 
     def __str__(self):
-        processes = self.Processes.values()
+        processes = list(self.Processes.values())
         processes.sort()
 
         retstr = '\n         Process Name         :       PID\n'
@@ -277,9 +277,9 @@ if __name__ == '__main__':
     for process_id in detail_processes:
         pids = processes.GetProccessIds(process_id)
         for pid in pids:
-            print(processes.Processes[pid].GetStatistics())
+            print((processes.Processes[pid].GetStatistics()))
 
     for process_id in process_ids_to_kill:
         pids = processes.GetProccessIds(process_id)
         for pid in pids:
-            print(processes.Processes[pid].TerminateProcess())
+            print((processes.Processes[pid].TerminateProcess()))

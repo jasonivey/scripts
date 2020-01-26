@@ -12,7 +12,7 @@ def FindVsErrors( filename ):
     
     for str in lines:
         if reErrorsAndWarnings.match( str ) or reErrors.match( str ) or reWarnings.match( str ):
-            print str
+            print(str)
     
 
 def FindTestallErrors( filename ):

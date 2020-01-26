@@ -26,11 +26,11 @@ def RecurseDirectory( srcDir, files ):
 def CheckoutFiles( files ):
     for f in files:
         if os.path.exists( f ):
-            print 'CHECKING OUT ' + f.upper()
+            print('CHECKING OUT ' + f.upper())
             os.system( 'p4 edit ' + f )
             RemoveWin64Configuration( f )
         else:
-            print 'ERROR: File Not Found ' + f
+            print('ERROR: File Not Found ' + f)
 
 
 def RemoveWin64Configuration( filename ):

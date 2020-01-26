@@ -24,12 +24,12 @@ def ShelveFiles(shelve_location, repository):
     added, removed, modified, conflicts, unversioned = svn.GetOpenedFiles(repository)
     
     if len(removed):
-        print 'WARNING: %d files have been removed. These files will not be shelved.' % len(removed)
+        print('WARNING: %d files have been removed. These files will not be shelved.' % len(removed))
     if len(conflicts):
-        print 'ERROR: %d files have conflicts. Please fix them before continuing.' % len(conflicts)
+        print('ERROR: %d files have conflicts. Please fix them before continuing.' % len(conflicts))
         sys.exit(1)
     if len(unversioned):
-        print 'ERROR: %d unversioned files. Please add or remove them before continuing.' % len(unversioned)
+        print('ERROR: %d unversioned files. Please add or remove them before continuing.' % len(unversioned))
         sys.exit(1)
         
     if not os.path.isdir(shelve_location):
@@ -41,7 +41,7 @@ def ShelveFiles(shelve_location, repository):
         destination = os.path.join(shelve_location, source[len(repository_parent) + 1:])
         CreateFullPath(os.path.dirname(destination))
         shutil.copy2(source, destination)
-        print source
+        print(source)
 
 
 def UnshelveFiles(unshelve_location, repository):
@@ -53,14 +53,14 @@ def UnshelveFiles(unshelve_location, repository):
             destination = os.path.join(repository_parent, source[len(unshelve_location) + 1:])
 
             if not os.path.isfile(destination) or not svn.IsFileInRepository(destination):
-                print 'ERROR: %s doesn\'t exist in the file system or in the repository. (ADD)' % destination
+                print('ERROR: %s doesn\'t exist in the file system or in the repository. (ADD)' % destination)
                 continue
 
             #if os.path.getmtime(destination) > os.path.getmtime(source):
             #    print 'ERROR: %s file is more recent in the repository than the shelve. (manual diff)'
 
             shutil.copy2(source, destination)
-            print destination
+            print(destination)
 
 
 def FindFileInHeirarchy(dir, filename):

@@ -51,17 +51,17 @@ def _process_directory(root, files):
             global _BIT_RATES
             if root in _BIT_RATES:
                 if _BIT_RATES[root] != bit_rate:
-                    print('ERROR: %s has two different bitrates %d and %d' % (root, _BIT_RATES[root], bit_rate))
+                    print(('ERROR: %s has two different bitrates %d and %d' % (root, _BIT_RATES[root], bit_rate)))
             else:
                 _BIT_RATES[root] = bit_rate
-                print('%s bitrate: %d kbps' % (root, bit_rate))
+                print(('%s bitrate: %d kbps' % (root, bit_rate)))
         elif not _is_ignorable_file(filename):
-            print('unknown: %s' % os.path.join(root, filename))
+            print(('unknown: %s' % os.path.join(root, filename)))
 
 def _find_unknown_files(files):
     for filename in files:
         if not _is_media_file(filename):
-            print('  Unknown file: %s' % filename)
+            print(('  Unknown file: %s' % filename))
 
 def _find_all_files_impl(directory):
     all_files = []
@@ -75,13 +75,13 @@ def _find_all_files_impl(directory):
 def _find_all_files(directory, filename):
     all_files = []
     if os.path.isfile(filename):
-        print('INFO: reading file names from %s' % filename)
+        print(('INFO: reading file names from %s' % filename))
         with open(filename, 'r') as file:
             data = json.loads(file.read())
             for name in data['files']:
                 all_files.append(name)
     else:
-        print('INFO: reading file names from parsing directory %s' % directory)
+        print(('INFO: reading file names from parsing directory %s' % directory))
         all_files = _find_all_files_impl(directory)
         with open(filename, 'w') as file:
             data = {'files': all_files}

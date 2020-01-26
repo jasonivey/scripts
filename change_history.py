@@ -229,22 +229,22 @@ def ParseDateTimeValue( arg ):
     if year > currentYearAfterMillenium and year < 1990:
         year = year + 1900
     if year < 1990 or year > now().year:
-        print('DATE ERROR: The year (%d) is out of the range from 1990 to %d.' % ( year, now().year ))
+        print(('DATE ERROR: The year (%d) is out of the range from 1990 to %d.' % ( year, now().year )))
         PrintHelp()
     if month < 1 or month > 12:
-        print('DATE ERROR: The month (%d) is greater than 12 (December).' % month)
+        print(('DATE ERROR: The month (%d) is greater than 12 (December).' % month))
         PrintHelp()
     if day < 1 or day > DateTime(year, month).days_in_month:
-        print('DATE ERROR: The day (%d) is larger than the number of days in %s.' % ( day, Month[month] ))
+        print(('DATE ERROR: The day (%d) is larger than the number of days in %s.' % ( day, Month[month] )))
         PrintHelp()
     if hour < 0 or hour > 23:
-        print('TIME ERROR: The hour (%f) is larger than the number of hours in a day.' % hour)
+        print(('TIME ERROR: The hour (%f) is larger than the number of hours in a day.' % hour))
         PrintHelp()
     if minute < 0 or minute > 59:
-        print('TIME ERROR: The minute (%f) is larger than the number of minutes in an hour.' % minute)
+        print(('TIME ERROR: The minute (%f) is larger than the number of minutes in an hour.' % minute))
         PrintHelp()
     if second < 0 or second > 59:
-        print('TIME ERROR: The seconds (%f) is larger than the number of seconds in a minute.' % second)
+        print(('TIME ERROR: The seconds (%f) is larger than the number of seconds in a minute.' % second))
         PrintHelp()
     
     return DateTime( year, month, day, hour, minute, second )
@@ -311,14 +311,14 @@ def ParseArgs( argv ):
         elif switch.lower().startswith( 'h' ):                      # Short for hours
             hours = int(arg)
             if hours < 0 or hours >= 24:
-                print('TIME ERROR: The hours (%d) is larger than the number of hours in a day.' % hours)
+                print(('TIME ERROR: The hours (%d) is larger than the number of hours in a day.' % hours))
                 PrintHelp()
             begin = now() - RelativeDateTime( hours = hours )
         
         elif switch.lower().startswith( 'm' ):                      # Short for minutes
             minutes = int(arg)
             if minutes < 0 or minutes > 59:
-                print('TIME ERROR: The minutes (%d) is larger than the number of minutes in an hour.' % minutes)
+                print(('TIME ERROR: The minutes (%d) is larger than the number of minutes in an hour.' % minutes))
                 PrintHelp()
             begin = now() - RelativeDateTime( minutes = minutes )
             
@@ -345,7 +345,7 @@ def ParseArgs( argv ):
         PrintHelp()
         
     if begin > end:
-        print('DATE/TIME ERROR: The beginning date (%s) is later than ending date (%s).' % ( begin, end ))
+        print(('DATE/TIME ERROR: The beginning date (%s) is later than ending date (%s).' % ( begin, end )))
         PrintHelp()
         
     return name, category, branch, begin, end

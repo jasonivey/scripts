@@ -7,9 +7,9 @@ def ParseUnitTestLog(data, regex, verbose):
     for match in regex.finditer(data):
         testname = match.group(1)[match.group('test_name').rfind('\\') + 1:]
         if verbose:
-            print('Test: %s' % testname)
-            print('\t%s' % match.group('first_summary'))
-            print('\t%s\n\n' % match.group('second_summary'))
+            print(('Test: %s' % testname))
+            print(('\t%s' % match.group('first_summary')))
+            print(('\t%s\n\n' % match.group('second_summary')))
 
         if int(match.group('errors')) > 0 or \
             int(match.group('failures')) > 0 or \
@@ -22,7 +22,7 @@ def ParseUnitTestLog(data, regex, verbose):
     if len(callout) > 0:
         print('Errors/Failures/Not Run/Invalid/Ignored/Skipped:')
         for testname in callout:
-            print('\t%s' % testname)
+            print(('\t%s' % testname))
 
 
 if __name__ == '__main__':

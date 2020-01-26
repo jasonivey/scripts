@@ -18,6 +18,6 @@ def ConvertDebugLog(filename):
 if __name__ == '__main__':
 	for name in Utils.RecurseDirectory( os.getcwd(), IsDebugLog, False ):
 		if ConvertDebugLog(name):
-			print('Converted %s' % os.path.basename(name))
+			print(('Converted %s' % os.path.basename(name)))
 		else:
-			print('Error converting %s' % os.path.basename(name))
+			print(('Error converting %s' % os.path.basename(name)))

@@ -8,7 +8,7 @@ def unpin( arg, directory, files ):
     directory = directory.replace( './', '$/Components/Sme/Hydra/' )
     directory += '/*.*'
     command = 'ss Unpin \"' + directory + '\" >> pintool.log'
-    print 'Executing command: ' + command
+    print('Executing command: ' + command)
     os.system( command )
 
 

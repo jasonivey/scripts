@@ -194,14 +194,14 @@ class Serials:
     def IsMatching(self, str1, parts):
         str2 = self.Reassemble( parts )
         if len( str2 ) != len( str1 ):
-            print 'len(line) == %d, len(parts) == %d' % (len( str2 ), len( str1 ))
+            print('len(line) == %d, len(parts) == %d' % (len( str2 ), len( str1 )))
             return False
         else:
             i = 0
             count = len(str1)
             while i < count:
                 if str1[i].lower() != str2[i].lower():
-                    print 'Doesn\'t match at char(%d)'
+                    print('Doesn\'t match at char(%d)')
                     return False
                 i = i + 1
             return True
@@ -263,7 +263,7 @@ class Serials:
     
 
 def RecurseDirectory( dir ):
-    print 'Finding various SEU files...'    
+    print('Finding various SEU files...')    
     textFiles = []
     
     for root, dirs, files in os.walk( dir ):
@@ -282,7 +282,7 @@ def ParseSeuTextFiles(dir):
     count = 0
     
     for name in files:
-        print 'Parsing file \'%s\'' % os.path.basename(name)
+        print('Parsing file \'%s\'' % os.path.basename(name))
         file = open( name, 'r' )
         lines = file.readlines()
         file.close()
@@ -290,7 +290,7 @@ def ParseSeuTextFiles(dir):
         for line in lines:
             try:
                 serials.Parse(line)
-            except RuntimeWarning, w:
+            except RuntimeWarning as w:
                 gErrors = gErrors + 1
     
     serials.Sort()
@@ -306,8 +306,8 @@ if __name__ == '__main__':
     path = os.getcwd()
     serials, lines = ParseSeuTextFiles( path )
     count = serials.Count()
-    print 'Serial Numbers Count: %d' % count
-    print 'Total Errors        : %d' % gErrors
-    print 'Total Duplicates    : %d' % gDuplicates
-    print 'Unaccounted Input   : %d' % (lines - count - gDuplicates - gErrors)
+    print('Serial Numbers Count: %d' % count)
+    print('Total Errors        : %d' % gErrors)
+    print('Total Duplicates    : %d' % gDuplicates)
+    print('Unaccounted Input   : %d' % (lines - count - gDuplicates - gErrors))
 

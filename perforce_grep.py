@@ -48,7 +48,7 @@ def PrintMatch(match):
 
 def GrepFile(search, filename, ignoreCase):
     if not Perforce.IsFileInDepot(filename):
-        print('ERROR: %s is not in the depot.' % filename)
+        print(('ERROR: %s is not in the depot.' % filename))
         return
 
     contents = Perforce.GetFileContents(filename)
@@ -58,7 +58,7 @@ def GrepFile(search, filename, ignoreCase):
         regex = re.compile(search, re.S)
     
     for match in regex.finditer(contents):
-        print('%s %s' % (filename, PrintMatch(match)))
+        print(('%s %s' % (filename, PrintMatch(match))))
     
 
 def PrintTiming(verbose, startTime, endTime = None):
@@ -66,14 +66,14 @@ def PrintTiming(verbose, startTime, endTime = None):
         return
     
     if startTime:
-        print('Started                 :  ' + startTime.strftime( '%I:%M:%S %p' ))
+        print(('Started                 :  ' + startTime.strftime( '%I:%M:%S %p' )))
     elif endTime:
-        print('Finished                :  ' + endTime.strftime( '%I:%M:%S %p' ))
+        print(('Finished                :  ' + endTime.strftime( '%I:%M:%S %p' )))
         elapsed = endTime - startTime
         hours = int( elapsed.seconds / 3600 )
         minutes = int( ( elapsed.seconds % 3600 ) / 60 )
         seconds = int( ( elapsed.seconds % 3600 ) % 60 )
-        print('Total time for operation:  %02d:%02d:%02d:%03d' % ( hours, minutes, seconds, elapsed.microseconds / 1000 ))
+        print(('Total time for operation:  %02d:%02d:%02d:%03d' % ( hours, minutes, seconds, elapsed.microseconds / 1000 )))
 
 
 def ParseCommandLine(args):

@@ -19,7 +19,7 @@ class Project:
         
     def DependenciesEqual(self, other):
         if len(self.mDependencies) != len(other.mDependencies):
-            print('INFO: Project %s has a different number of project dependencies.' % self.mName)
+            print(('INFO: Project %s has a different number of project dependencies.' % self.mName))
             return False
 
         self.mDependencies.sort( cmp=lambda x,y: cmp(x.lower(), y.lower()) )
@@ -28,7 +28,7 @@ class Project:
         i = 0
         while i < count:
             if self.mDependencies[i].lower() != other.mDependencies[i].lower():
-                print('INFO: In project %s the dependency %s is not equal to %s' % ( self.mName, self.mDependencies[i], other.mDependencies[i] ))
+                print(('INFO: In project %s the dependency %s is not equal to %s' % ( self.mName, self.mDependencies[i], other.mDependencies[i] )))
                 return False
             i += 1
             
@@ -36,7 +36,7 @@ class Project:
     
     def ConfigurationsEqual(self, other):
         if len(self.mConfigurations) != len(other.mConfigurations):
-            print('INFO: Project %s has a different number of project configurations.' % self.mName)
+            print(('INFO: Project %s has a different number of project configurations.' % self.mName))
             return False
 
         self.mConfigurations.sort( cmp=lambda x,y: cmp(x.lower(), y.lower()) )
@@ -45,7 +45,7 @@ class Project:
         i = 0
         while i < count:
             if self.mConfigurations[i].lower() != other.mConfigurations[i].lower():
-                print('INFO: In project %s the configuration %s is not equal to %s' % ( self.mName, self.mConfigurations[i], other.mConfigurations[i] ))
+                print(('INFO: In project %s the configuration %s is not equal to %s' % ( self.mName, self.mConfigurations[i], other.mConfigurations[i] )))
                 return False
             i += 1
             
@@ -56,16 +56,16 @@ class Project:
     
     def __eq__(self, other):
         if self.mName.lower() != other.mName.lower():
-            print('INFO: Project name %s is not equal to %s' % ( self.mName, other.mName ))
+            print(('INFO: Project name %s is not equal to %s' % ( self.mName, other.mName )))
             return False
         elif self.mPath.lower() != other.mPath.lower():
-            print('INFO: In project %s the path %s is not equal to %s' % ( self.mName, self.mPath, other.mPath ))
+            print(('INFO: In project %s the path %s is not equal to %s' % ( self.mName, self.mPath, other.mPath )))
             return False
         elif self.mType.lower() != other.mType.lower():
-            print('INFO: Project type %s is not equal to %s' % ( self.mName, self.mType, other.mType ))
+            print(('INFO: Project type %s is not equal to %s' % ( self.mName, self.mType, other.mType )))
             return False
         elif self.mId.lower() != other.mId.lower():
-            print('INFO: Project id %s is not equal to %s' % ( self.mName, self.mId, other.mId ))
+            print(('INFO: Project id %s is not equal to %s' % ( self.mName, self.mId, other.mId )))
             return False
         return self.DependenciesEqual(other) and self.ConfigurationsEqual(other)
         #return self.mName.lower() == other.mName.lower() and \
@@ -135,7 +135,7 @@ class Solution:
         i = 0
         while i < count:
             if self.mSlnConfigs[i].lower() != other.mSlnConfigs[i].lower():
-                print('INFO: Solution configuration %s is not equal to %s' % ( self.mSlnConfigs[i], other.mSlnConfigs[i] ))
+                print(('INFO: Solution configuration %s is not equal to %s' % ( self.mSlnConfigs[i], other.mSlnConfigs[i] )))
                 return False
             i += 1
         return True
@@ -156,7 +156,7 @@ class Solution:
             key1 = keys1[i].lower()
             key2 = keys2[i].lower()
             if key1 != key2:
-                print('INFO: Solution dependency %s is not equal to %s' % ( keys1[i], keys2[i] ))
+                print(('INFO: Solution dependency %s is not equal to %s' % ( keys1[i], keys2[i] )))
                 return False
             elif self.mProjects[key1] != other.mProjects[key2]:
                 return False

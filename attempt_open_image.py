@@ -3,7 +3,7 @@ from SmeApi import *
 
 def CheckLocalResult(result, description):
     if not result.IsSuccess():
-        print(GetStringFromResult(result))
+        print((GetStringFromResult(result)))
         WriteDebugLogToFile('d:\\out.log')
     return result.IsSuccess()
 
@@ -64,11 +64,11 @@ if __name__ == '__main__':
 
     retval = OpenImage(filename)
     if retval:
-        print('Opening image %s SUCCEEDED, deleting tracer file.' % filename)
+        print(('Opening image %s SUCCEEDED, deleting tracer file.' % filename))
         os.remove(tracerfile)
         assert( not os.path.isfile(tracerfile) )
         sys.exit(0)
     else:
-        print('Opening image %s FAILED, deleting tracer file.' % filename)
+        print(('Opening image %s FAILED, deleting tracer file.' % filename))
         assert( os.path.isfile(tracerfile) )
         sys.exit(1)

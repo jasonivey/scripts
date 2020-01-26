@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import argparse
 import os
 import re
@@ -28,7 +28,7 @@ def _parse_args():
 def _get_streams(ipaddr, stream, verbose):
     streams = []
     for partition in lsdvr_http_api.get_stream_partitions(ipaddr, stream, verbose):
-        for id, stream_size in lsdvr_http_api.get_stream_files_sizes(ipaddr, stream, partition, verbose).iteritems():
+        for id, stream_size in lsdvr_http_api.get_stream_files_sizes(ipaddr, stream, partition, verbose).items():
             stream_size.process()
             print(stream_size)
 

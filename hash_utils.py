@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import exceptions
 import os
 import hashlib
 import re
@@ -33,30 +32,21 @@ def CreateHasher(hash_type):
     return hasher
     #create object of type and be useable afterwards here!
 
-class shell_hash_types:
-    '''Given a platform type it will return the subset of available hash functions available'''
-    def __init__(self):
-        platform_id = custom_utils.get_platform_id()
+#class shell_hash_types:
+#    '''Given a platform type it will return the subset of available hash functions available'''
+#    def __init__(self):
+#        platform_id = custom_utils.get_platform_id()
 
-class hash_types:
-    '''Given a platform type it will return the subset of available hash functions available'''
-    def __init__(self):
-        platform_id = custom_utils.get_platform_id()
+#class hash_types:
+#    '''Given a platform type it will return the subset of available hash functions available'''
+#    def __init__(self):
+#        platform_id = custom_utils.get_platform_id()
 
-class hash_util:
-    '''Creates a crc/md5/sha1/etc. based on file like objects'''
-    def __init__(self, hash_obj=None, shell=None):
-        self.mHashObj = hashlib.md5() if hash_obj is None else hash_obj
-        self.mShell = 'md'
-
-def _md5_shell(file_name):
-    '''Calls the md5 shell binary to calculate the hash of a file.'''
-    command = 'md5 -q {0}'.format(custom_utils.prepare_filename_for_shell(file_name))
-    process = subprocess.Popen(command, shell=True, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    stdoutdata, stderrdata = process.communicate()
-    if process.wait() != 0:
-        raise exceptions.RuntimeError('md5 failed processing file {0}'.format(file_name))
-    return stdoutdata.strip()
+#class hash_util:
+#    '''Creates a crc/md5/sha1/etc. based on file like objects'''
+#    def __init__(self, hash_obj=None, shell=None):
+#        self.mHashObj = hashlib.md5() if hash_obj is None else hash_obj
+#        self.mShell = 'md'
 
 def _md5sum_shell(file_name):
     '''Calls the md5sum shell binary to calculate the hash of a file.'''
@@ -64,23 +54,17 @@ def _md5sum_shell(file_name):
     process = subprocess.Popen(command, shell=True, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdoutdata, stderrdata = process.communicate()
     if process.wait() != 0:
-        raise exceptions.RuntimeError('md5sum failed processing file {0}'.format(file_name))
+        raise Exception('md5sum returned an error processing file {0}'.format(file_name))
     match = re.search(r'^(?P<md5sum>\w+)\s+', stdoutdata.strip('\\'))
     if match is None:
-        raise exceptions.RuntimeError('failed to find md5sum from output for file {0}'.format(file_name))
+        raise Exception('md5sum did not return the expected output for file {0}'.format(file_name))
     return match.group('md5sum').lower()
     
 def md5sum_shell(file_name):
     '''Calls the md5sum/md5 shell binary to calculate the hash of a file.'''
-    platform_id = custom_utils.get_platform_id()
-    if platform_id.startswith('linux'):
-        return _md5sum_shell(file_name)
-    elif platform_id.startswith('osx'):
-        return _md5_shell(file_name)
-    elif custom_utils.is_binary_in_path('md5sum'):
-        return _md5sum_shell(file_name)
-    else:
-        raise exceptions.RuntimeError('no md5sum shell program available')
+    if not custom_utils.is_binary_in_path('md5sum'):
+        raise Exception('md5sum is not available -- \'brew brew install coreutils\' will install on Mac')
+    return _md5sum_shell(file_name)
 
 def _sumstr(s):
     '''Returns a md5 hash for a string.'''
@@ -115,7 +99,7 @@ def _crc32_shell(file_name):
     process = subprocess.Popen(command, shell=True, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdoutdata, stderrdata = process.communicate()
     if process.wait() != 0:
-        raise exceptions.RuntimeError('crc32 failed processing file {0}'.format(file_name))
+        raise Exception('crc32 failed processing file {0}'.format(file_name))
     return stdoutdata.strip()
 
 def _crc_shell(file_name):
@@ -124,10 +108,10 @@ def _crc_shell(file_name):
     process = subprocess.Popen(command, shell=True, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdoutdata, stderrdata = process.communicate()
     if process.wait() != 0:
-        raise exceptions.RuntimeError('crc failed processing file {0}'.format(file_name))
+        raise Exception('crc failed processing file {0}'.format(file_name))
     match = re.search(r'CRC of file .*? is 0x(?P<crc>\w+)\r\n', stdoutdata)
     if match is None:
-        raise exceptions.RuntimeError('failed to find crc from output for file {0}'.format(file_name))
+        raise Exception('failed to find crc from output for file {0}'.format(file_name))
     return match.group('crc').lower()
 
 def crc32_shell(file_name):
@@ -165,6 +149,7 @@ def crc32(fname_or_str):
 
 def _parse_args():
     parser = argparse.ArgumentParser(description='Creates chksum\'s of files')
+    #parser.add_argument('-'
     parser.add_argument('-c', '--crc32', dest='crc32', default=False, action='store_true', help='hash input using python zlib crc32')
     parser.add_argument('-cs', '--crc32-shell', dest='crc32_shell', default=False, action='store_true', help='hash input using shell crc32 program')
     parser.add_argument('-m', '--md5sum', dest='md5sum', default=False, action='store_true', help='hash input using python hashlib md5')

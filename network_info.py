@@ -8,6 +8,7 @@ import subprocess
 import sys
 import traceback
 
+import location_info 
 
 class NetworkInfo:
     def __init__(self, buf):
@@ -89,26 +90,33 @@ def get_network_info():
     return devices
 
 def get_hostname_info():
+    hostnames = []
     command = 'hostname'
     if not sys.platform.startswith('darwin'):
         command += ' --fqdn'
     process = subprocess.Popen(command, shell=True, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdoutdata, stderrdata = process.communicate()
     if process.wait() != 0:
-        #print('ERROR: while running hostname')
-        return None
+        return hostnames 
     for line in stdoutdata.decode('ascii').split('\n'):
         if len(line.strip()) > 0:
-            return ('Hostname', line.strip())
-    return None
+            hostname_line = line.strip()
+            hostnames = []
+            hostnames.append(('Hostname', hostname_line))
+            index = hostname_line.find('.')
+            if index != -1:
+                hostnames.append(('Computer Name', hostname_line[:index]))
+    return hostnames 
+
+def get_external_ip_address():
+    router_ip = location_info.get_ip_address()
+    return [('Router IP Address', router_ip)] if router_ip else []
 
 def get_system_info():
-    hostname = get_hostname_info()
+    hostnames = get_hostname_info()
+    external_ip = get_external_ip_address()
     networks = get_network_info()
-    infos = []
-    if hostname:
-        infos.append(hostname)
-    return infos + networks
+    return hostnames + external_ip + networks
 
 def main():
     try:

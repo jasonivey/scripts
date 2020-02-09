@@ -36,16 +36,29 @@ class NetworkInfo:
                 self.active = match.group('status') == 'active'
 
     def _parse_linux(self, buf):
-        match = re.match(r'(?P<name>[^\s]+)\s+Link encap:', buf[0])
-        if match:
-            self.name = match.group('name')
+        match1 = re.match(r'(?P<name>[^\s]+)\s+Link encap:', buf[0])
+        match2 = re.match(r'(?P<name>[^:]+):\s*flags=', buf[0])
+        if match1:
+            self.name = match1.group('name')
+        elif match2:
+            self.name = match2.group('name')
         for i in buf:
             # this matches windows ubuntu: 'Link encap:UNSPEC  HWaddr 54-35-30-1F-62-A9-00-00-00-00-00-00-00-00-00-00' 
             match = re.search(r'HWaddr\s+(?P<ether>(?:[\da-fA-F]{2}[-:]){5}[\da-fA-F]{2})(?:(?:[-:][\da-fA-F]{2}){5})?', i.strip())
             if match:
                 self.mac = match.group('ether')
                 continue
+            # this matches Ubuntu 18.04 'ether ec:f4:bb:78:3f:57  txqueuelen 1000  (Ethernet)' IPv6 is now on another line
+            match = re.search(r'ether\s+(?P<ether>(?:[\da-fA-F]{2}:){5}[\da-fA-F]{2})\s+', i.strip())
+            if match:
+                self.mac = match.group('ether')
+                continue
             match = re.match(r'inet addr:\s*(?P<ipaddr>[^\s]+)\s+Bcast', i.strip())
+            if match:
+                self.ip = match.group('ipaddr')
+                continue
+            # this matches Ubuntu 18.04 'inet 192.168.1.180  netmask 255.255.255.0  broadcast 192.168.1.255'
+            match = re.match(r'inet\s+(?P<ipaddr>[^\s]+)\s+netmask', i.strip())
             if match:
                 self.ip = match.group('ipaddr')
                 continue

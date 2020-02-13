@@ -19,12 +19,9 @@ def _get_network_infos():
         ip = None
         mac = None
         for address in addresses:
-            #print('address family: {}, {}'.format(socket.AddressFamily(int(address.family)), address.address))
-            #print('address family: {}, {}'.format(address.family, address.address))
             if address.family == socket.AF_INET:
                 ip = address.address if not address.address.startswith('127.') else None
-            #elif address.family == socket.AF_LINK:
-            elif address.family == 17:
+            elif address.family == psutil.AF_LINK:
                 mac = address.address
             if ip and mac:
                 networking_infos.append((name, ip))

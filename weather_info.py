@@ -10,7 +10,7 @@ import traceback
 
 import location_info
 
-_TIME_OUT = 2.0
+_TIME_OUT = 5.0
 _VERBOSE = False
 
 def _verbose_print(s):
@@ -55,11 +55,11 @@ def _call_uri(uri):
         return None
 
 def get_one_line_weather(location):
-    uri = 'http://wttr.in/{}?format=%l:+%t+%c+%C+%w+%m&lang=en'.format(location)
+    uri = 'http://wttr.in/{}?format=%l:+%t+%c+%C+%w+%m&lang=en'.format(location.replace(' ', '%20'))
     return _call_uri(uri)
 
 def get_weather(location):
-    uri = 'http://wttr.in/{}?lang=en'.format(location)
+    uri = 'http://wttr.in/{}?lang=en'.format(location.replace(' ', '%20'))
     return _call_uri(uri)
 
 def main():

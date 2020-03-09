@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
 
 import argparse

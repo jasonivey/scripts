@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
 
 import argparse
@@ -40,9 +40,9 @@ def get_networking_infos():
         infos.append(('MAC Address {}'.format(net_info[0]), net_info[1]))
     return infos
 
-def get_external_ip_address():
-    router_ip = location_info.get_ip_address()
-    return [('Router IP Address', router_ip)] if router_ip else []
+def get_public_ip_address():
+    public_ip = location_info.get_ip_address()
+    return [('Public IP', public_ip)] if public_ip else []
 
 def get_hostname_info():
     hostnames = []
@@ -56,9 +56,9 @@ def get_hostname_info():
 
 def get_system_info():
     hostnames = get_hostname_info()
-    external_ip = get_external_ip_address()
+    public_ip = get_public_ip_address()
     networking_infos = get_networking_infos()
-    return hostnames + external_ip + networking_infos
+    return hostnames + public_ip + networking_infos
 
 def main():
     try:

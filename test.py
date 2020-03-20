@@ -1,46 +1,65 @@
-#!/usr/bin/env python
-from __future__ import print_function
-import argparse
-import collections
-import exceptions
-import glob
+#!/usr/bin/env python3
 import os
-import re
 import sys
-import subprocess
 
-cdef class Foo(object):
-    def __init__(self):
-        self._value = None
-        print('inside of Foo init')
+# NOTE: table can either be a list like the following
+table = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
 
-    property prperty:
-        def __get__(self) return self._value
-        def __set__(self, value) self._value = value
+# NOTE: or table can be a dictionary where the indexes are identical to the list (i.e. 0,1,2,3...)
+#       to get a value out of either you simply use table[0] or print(table[15]) and prints 'F'
+'''
+table = {0: '0',
+         1: '1',
+         2: '2',
+         3: '3',
+         4: '4',
+         5: '5',
+         6: '6',
+         7: '7',
+         8: '8',
+         9: '9',
+         10: 'A',
+         11: 'B',
+         12: 'C',
+         13: 'D',
+         14: 'E',
+         15: 'F'}
+'''
 
-    def __str__(self):
-        return 'inside of Foo str'
-
+def decimalToRep(num, base):
+    # NOTE: changed rep from a space ' ' to just an empty string '' to be populated inside the while loop
+    rep = ''
+    # NOTE: special case, num cannot be a negative number and base has to be 2 or larger
+    #       normally we would raise an Assertion but we aren't using the UnitTest module 
+    #       which would make it easy to create a test which succeeds when an Assertion
+    #       is raised.
+    if num < 0 or base < 2:
+        return rep
+    print('\nstart num: {}, base: {}'.format(num, base))
+    while num > 0:
+        print('num: {}'.format(num))
+        # NOTE: changed the remainder operator to be the modulus operator
+        rem = num % base
+        print('rem: {}'.format(rem))
+        # NOTE: we are populating the rep string with indexing into the table what the modulus returned (i.e. 12 % base 10 == 2)
+        rep = table[rem] + rep
+        print('rep: {}'.format(rem))
+        # NOTE: num is now decremented using the remainder operator
+        num = num // base 
+    print('end: {}'.format(rep))
+    return rep
 
 def main(args):
-    foo = Foo()
-    foo.prperty = 'value'
-    print('foo property: %s' % foo.prperty)
-    print(foo)
-    # avi_dir = r'G:\movies\avi'
-    # ipod_dir = r'G:\movies\ipod'
-    # avi_files = []
-    # for root, dirs, files in os.walk(avi_dir):
-    #     for filename in files:
-    #         full_path = os.path.join(root, filename)
-    #         if not os.path.isfile(full_path) or not filename.endswith('.avi'):
-    #             continue
-    #         ipod_path = r'{0}\{1}.*'.format(ipod_dir, os.path.splitext(filename)[0])
-    #         ipod_path1 = r'{0}\{1} - iP?d.*'.format(ipod_dir, os.path.splitext(filename)[0])
-    #         if len(glob.glob(ipod_path)) == 0 and len(glob.glob(ipod_path1)) == 0:
-    #             avi_files.append(full_path)
-    #         print('.', end='')
-    # print('\n{0}\n'.format('\n'.join(avi_files)))
+    assert decimalToRep(10, 10) == '10'
+    assert decimalToRep(10, 8) == '12'
+    assert decimalToRep(10, 2) == '1010'
+    assert decimalToRep(10, 16) == 'A'
+    # NOTE: For extra credit uncomment the following and make them pass
+    assert decimalToRep(-1, 10) == ''
+    assert decimalToRep(100, -1) == ''
+    assert decimalToRep(100, 0) == ''
+    assert decimalToRep(100, 1) == ''
+    # NOTE: For extra-extra credit think of any other bounds (i.e. too large or too small) we aren't thinking of to test
     return 0
 
 if __name__ == '__main__':

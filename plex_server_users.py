@@ -72,7 +72,7 @@ def _find_users(media_container):
     return users
 
 def get_plex_current_users(token):
-    uri = 'http://localhost:32400/status/sessions?X-Plex-Token={}'.format(token)
+    uri = 'http://192.168.1.180:32400/status/sessions?X-Plex-Token={}'.format(token)
     try:
         _verbose_print('INFO: calling {} with a {} second timeout'.format(uri, _TIME_OUT))
         response = requests.get(uri, timeout=_TIME_OUT)

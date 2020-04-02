@@ -101,14 +101,15 @@ def main():
             print('ERROR: no auth token was returned', file=sys.stderr)
             return 1
         users = get_plex_current_users(token) 
-        if users:
-            print('Users:')
-            if len(users) == 0:
-                print('  no users online currently')
-            for user_id, user_name_count in users.items():
-                user_name = user_name_count[0]
-                user_count = user_name_count[1]
-                print('  {}: logged in {} time(s)'.format(user_name, user_count))
+        _verbose_print('INFO: users: {}'.format(pprint.pformat(users, compact=True)))
+        print('Users:')
+        if users == None or len(users) == 0:
+            print('  no users online currently{}'.format('' if _is_verbose_mode_on() else ' (use --verbose for more information)'))
+            users = {}
+        for user_id, user_name_count in users.items():
+            user_name = user_name_count[0]
+            user_count = user_name_count[1]
+            print('  {}: logged in {} time(s)'.format(user_name, user_count))
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)

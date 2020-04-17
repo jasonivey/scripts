@@ -1,65 +1,97 @@
 #!/usr/bin/env python3
+# vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
+
+import ipaddress
 import os
+import re
+import shlex
 import sys
+import subprocess
+import traceback
 
-# NOTE: table can either be a list like the following
-table = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+_VERBOSE = False
 
-# NOTE: or table can be a dictionary where the indexes are identical to the list (i.e. 0,1,2,3...)
-#       to get a value out of either you simply use table[0] or print(table[15]) and prints 'F'
-'''
-table = {0: '0',
-         1: '1',
-         2: '2',
-         3: '3',
-         4: '4',
-         5: '5',
-         6: '6',
-         7: '7',
-         8: '8',
-         9: '9',
-         10: 'A',
-         11: 'B',
-         12: 'C',
-         13: 'D',
-         14: 'E',
-         15: 'F'}
-'''
+def _verbose_print(s):
+    if _VERBOSE:
+        print(s, file=sys.stdout)
 
-def decimalToRep(num, base):
-    # NOTE: changed rep from a space ' ' to just an empty string '' to be populated inside the while loop
-    rep = ''
-    # NOTE: special case, num cannot be a negative number and base has to be 2 or larger
-    #       normally we would raise an Assertion but we aren't using the UnitTest module 
-    #       which would make it easy to create a test which succeeds when an Assertion
-    #       is raised.
-    if num < 0 or base < 2:
-        return rep
-    print('\nstart num: {}, base: {}'.format(num, base))
-    while num > 0:
-        print('num: {}'.format(num))
-        # NOTE: changed the remainder operator to be the modulus operator
-        rem = num % base
-        print('rem: {}'.format(rem))
-        # NOTE: we are populating the rep string with indexing into the table what the modulus returned (i.e. 12 % base 10 == 2)
-        rep = table[rem] + rep
-        print('rep: {}'.format(rem))
-        # NOTE: num is now decremented using the remainder operator
-        num = num // base 
-    print('end: {}'.format(rep))
-    return rep
+def call_external_command(command):
+    _verbose_print('INFO: command: %s' % command)
+    args = shlex.split(command)
+    process = subprocess.Popen(args, encoding='utf-8', universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, error = process.communicate()
+    if process.wait() != 0:
+        excusable_error = 'is not a recognized network service'
+        if command.find('-getinfo') != -1 and (error.find(excusable_error) != -1 or output.find(excusable_error) != -1):
+            return []
+        print('ERROR:  {}'.format(command), file=sys.stderr)
+        print('stderr: {}'.format(error), file=sys.stderr)
+        print('stdout: {}'.format(output), file=sys.stderr)
+        return []
+    return output.split('\n')
+
+def list_all_hardware_ports():
+    output = call_external_command('networksetup -listallhardwareports')
+    hardware_ports = []
+    port = device = mac = None
+    for line in output:
+        match = re.search(r'^Hardware Port:\s*(?P<port>.*)', line.strip())
+        if match:
+            port = match.group('port').strip()
+            continue
+        match = re.search(r'^Device:\s*(?P<device>.*)', line.strip())
+        if match:
+            device = match.group('device').strip()
+            continue
+        match = re.search(r'^Ethernet Address:\s*(?P<mac>.*)', line.strip())
+        if match:
+            mac = match.group('mac').strip()
+        if port and device and mac:
+            hardware_ports.append((port, device, mac))
+            port = device = mac = None
+
+    return hardware_ports
+
+def get_ip_info(service, mac):
+    command = 'networksetup -getinfo \"{}\"'.format(service)
+    output = call_external_command(command)
+    hardware_ports = []
+    ip = new_mac = None
+    for line in output:
+        match = re.search(r'^IP address:\s*(?P<ip>.*)', line.strip())
+        if match:
+            ip = match.group('ip').strip()
+            continue
+        match = re.search(r'^{} ID:\s*(?P<mac>.*)'.format(service), line.strip())
+        if match:
+            new_mac = match.group('mac').strip()
+        if ip and new_mac:
+            if mac != new_mac:
+                raise Exception('ERROR: mac address found with networksetup -listallhardwareports {} is not the same as found when calling {} {}'.format(mac, command, new_mac))
+            return ipaddress.ip_address(ip)
+    return None
+
+def find_networks():
+    networks = {}
+    for hardware_port in list_all_hardware_ports():
+        (port, device, mac) = hardware_port
+        ip = get_ip_info(port, mac)
+        if not ip:
+            continue
+        networks[port] = (ip, mac)
+    return networks
+    #print('Hardware Port: {}\nDevice: {}\nEthernet Address: {}\nIP address: {}\n'.format(hardware_port[0], hardware_port[1], hardware_port[2], ip))
 
 def main(args):
-    assert decimalToRep(10, 10) == '10'
-    assert decimalToRep(10, 8) == '12'
-    assert decimalToRep(10, 2) == '1010'
-    assert decimalToRep(10, 16) == 'A'
-    # NOTE: For extra credit uncomment the following and make them pass
-    assert decimalToRep(-1, 10) == ''
-    assert decimalToRep(100, -1) == ''
-    assert decimalToRep(100, 0) == ''
-    assert decimalToRep(100, 1) == ''
-    # NOTE: For extra-extra credit think of any other bounds (i.e. too large or too small) we aren't thinking of to test
+    try:
+        for name, network in find_networks().items():
+            (ip, mac) = network
+            print('{}: {}'.format(name, ip))
+            print('{}: {}'.format(name, mac))
+    except:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
+        return 1
     return 0
 
 if __name__ == '__main__':

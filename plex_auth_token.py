@@ -53,6 +53,9 @@ def parse_args(parser=None, args=None):
     return username, password
 
 def _generate_version_and_client_id():
+    if sys.platform != 'linux':
+        return '1.1.1.1', str(uuid.uuid4()).replace('-', '')
+
     command = 'dpkg -l | rg plexmediaserver | awk \'{ print $3 }\''
     process = subprocess.Popen(command, shell=True, bufsize=1, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     stdoutdata, stderrdata = process.communicate()
@@ -92,7 +95,7 @@ def _generate_headers(username, password):
     return headers
 
 def get_plex_auth_token(username, password):
-    uri = 'https://plex.tv/users/sign_in.json' 
+    uri = 'https://plex.tv/users/sign_in.json'
     headers = _generate_headers(username, password)
 
     try:

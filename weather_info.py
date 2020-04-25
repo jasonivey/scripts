@@ -41,7 +41,7 @@ def _parse_args():
 
     _verbose_print('INFO: args:\n  verbose: {}\n  full report: {}\n  zip code: {}\n  region: {}\n  location: {}' \
                    .format(args.verbose, args.full_report, args.zip_code, args.region, location))
-    return location, args.full_report 
+    return location, args.full_report
 
 def _call_uri(uri):
     try:
@@ -55,11 +55,17 @@ def _call_uri(uri):
         return None
 
 def get_one_line_weather(location):
-    uri = 'http://wttr.in/{}?format=%l:+%t+%c+%C+%w+%m&lang=en'.format(location.replace(' ', '%20'))
+    if location:
+        uri = 'http://wttr.in/{}?format=%l:+%t+%c+%C+%w+%m&lang=en'.format(location.replace(' ', '%20'))
+    else:
+        uri =  'http://wttr.in/?format=%l:+%t+%c+%C+%w+%m&lang=en'
     return _call_uri(uri)
 
 def get_weather(location):
-    uri = 'http://wttr.in/{}?lang=en'.format(location.replace(' ', '%20'))
+    if location:
+        uri = 'http://wttr.in/{}?lang=en'.format(location.replace(' ', '%20'))
+    else:
+        uri = 'http://wttr.in/?lang=en'
     return _call_uri(uri)
 
 def main():

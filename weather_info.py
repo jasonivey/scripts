@@ -55,11 +55,17 @@ def _call_uri(uri):
         return None
 
 def get_one_line_weather(location):
-    uri = 'http://wttr.in/{}?format=%l:+%t+%c+%C+%w+%m&lang=en'.format(location.replace(' ', '%20'))
+    if location:
+        uri = 'http://wttr.in/{}?format=%l:+%t+%c+%C+%w+%m&lang=en'.format(location.replace(' ', '%20'))
+    else:
+        uri =  'http://wttr.in/?format=%l:+%t+%c+%C+%w+%m&lang=en'
     return _call_uri(uri)
 
 def get_weather(location):
-    uri = 'http://wttr.in/{}?lang=en'.format(location.replace(' ', '%20'))
+    if location:
+        uri = 'http://wttr.in/{}?lang=en'.format(location.replace(' ', '%20'))
+    else:
+        uri = 'http://wttr.in/?lang=en'
     return _call_uri(uri)
 
 def main():

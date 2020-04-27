@@ -10,7 +10,7 @@ import subprocess
 import traceback
 
 _VERBOSE = False
-
+'''
 def _verbose_print(s):
     if _VERBOSE:
         print(s, file=sys.stdout)
@@ -81,13 +81,11 @@ def find_networks():
         networks[port] = (ip, mac)
     return networks
     #print('Hardware Port: {}\nDevice: {}\nEthernet Address: {}\nIP address: {}\n'.format(hardware_port[0], hardware_port[1], hardware_port[2], ip))
+'''
 
 def main(args):
     try:
-        for name, network in find_networks().items():
-            (ip, mac) = network
-            print('{}: {}'.format(name, ip))
-            print('{}: {}'.format(name, mac))
+        print('All you lovely people like to come outside and play!')
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)

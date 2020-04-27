@@ -9,10 +9,27 @@ import requests
 import sys
 import traceback
 
-_ACCESS_KEY = '763cf4d76a80630696226732e87a186a'
 _VERBOSE = False
-_IP_STACK_URI = 'http://api.ipstack.com/check'
-_SHOW_IP_URI = 'http://v4.showip.spamt.net/'
+
+_ACCESS_KEY = '763cf4d76a80630696226732e87a186a'
+
+_EXTERNAL_IPV4_URLS = ['http://v4.showip.spamt.net/',
+                       'http://ipecho.net/plain',
+                       'http://ident.me/v4'
+                       'http://ipv4.icanhazip.com',
+                       'http://checkip.amazonaws.com',
+                       'http://ifconfigme.com',]
+
+_EXTERNAL_IPV6_URLS = ['http://smart-ip.net/myip',
+                       'http://ident.me/v6',
+                       'http://icanhazip.com',
+                       'http://ipv6.icanhazip.com',]
+
+_IP_STACK_URI = 'http://api.ipstack.com/check?access_key={}&language=en&output=json'.format(_ACCESS_KEY)
+
+_IP_ADDRESS_V4 = 1
+_IP_ADDRESS_V6 = 2
+_IP_ADDRESS_EITHER = 4
 
 def _verbose_print(s):
     if _VERBOSE: print(s, file=sys.stdout)
@@ -29,10 +46,6 @@ def _parse_args():
     global _VERBOSE
     _VERBOSE = args.verbose
 
-    # The following command line produces args.info [[]]
-    # For example:
-    #  location_info.py -v -i ip location -i gps
-    #  produces: args.info => [['ip', 'location'], ['gps']]
     ip_address = any('ip' in info for info in args.info)
     location = any('location' in info for info in args.info)
     zip_code = any('zip-code' in info for info in args.info)
@@ -43,68 +56,75 @@ def _parse_args():
 
     return ip_address, location, zip_code, gps
 
-def _call_ipstack():
-    json_data = None
-    uri = '{}?access_key={}&language=en&output=json'.format(_IP_STACK_URI, _ACCESS_KEY)
+def _make_http_call(uri):
     try:
         response = requests.get(uri, timeout=0.5)
         response.raise_for_status()
-        json_data = response.json()
+        return response.text.strip()
     except requests.exceptions.RequestException as e:
-        print('ERROR: error while calling {}'.format(_IP_STACK_URI), file=sys.stderr)
-        print('ERROR: {}'.format(e), file=sys.stderr)
-        return None
-    except ValueError as e:
-        print('ERROR: error while converting return body of {} into json'.format(_IP_STACK_URI), file=sys.stderr)
-        return None
-    return json_data
+        _verbose_print('ERROR: error while calling {}'.format(uri))
+        _verbose_print('ERROR: {}'.format(e))
+    return None
 
-def _call_showip():
-    ip = None
-    try:
-        response = requests.get(_SHOW_IP_URI, timeout=0.5)
-        response.raise_for_status()
-        ip = ipaddress.ip_address(response.text.strip())
-    except requests.exceptions.RequestException as e:
-        print('ERROR: error while calling {}'.format(_SHOW_IP_URI), file=sys.stderr)
-        print('ERROR: {}'.format(e), file=sys.stderr)
-        return None
-    except ValueError as e:
-        print('ERROR: error while converting return of {} into an ip address'.format(_SHOW_IP_URI), file=sys.stderr)
-        print('ERROR: {}'.format(e), file=sys.stderr)
-        return None
-    return ip 
+def _call_ipstack():
+    response = _make_http_call(_IP_STACK_URI)
+    return None if not response else json.loads(response)
+
+
+def get_public_ip_address(version=_IP_ADDRESS_V4):
+    if version == _IP_ADDRESS_V4:
+        addresses = _EXTERNAL_IPV4_URLS[:]
+    elif version == _IP_ADDRESS_V6:
+        addresses = _EXTERNAL_IPV6_URLS[:]
+    elif version == _IP_ADDRESS_EITHER:
+        addresses = _EXTERNAL_IPV4_URLS[:] + _EXTERNAL_IPV6_URLS[:]
+
+    for url in addresses:
+        response = _make_http_call(url)
+        if not response:
+            _verbose_print('ERROR: error querying ip address while calling {}'.format(url))
+            continue
+        ip = ipaddress.ip_address(response)
+        if version == _IP_ADDRESS_V4 and ip.version == 6:
+            _verbose_print('ERROR: ip ({}) returned from {} is an IPv6 when IPv4 was requested'.format(ip, url))
+            continue
+        elif version == _IP_ADDRESS_V6 and ip.version == 4:
+            _verbose_print('ERROR: ip ({}) returned from {} is an IPv4 when IPv6 was requested'.format(ip, url))
+            continue
+        else:
+            _verbose_print('INFO: successfully found {} version IPv{} from {}'.format(ip, ip.version, url))
+            return ip
 
 def _parse_ipstack_json(json_data, parse_ip=False, parse_location=False, parse_zip_code=False, parse_gps=False):
-    if not json_data: return dict() 
+    if not json_data: return dict()
     parsed_data = {}
     if parse_ip:
         if 'ip' not in json_data:
-            print('ERROR: ip address was not returned from call to {}'.format(_IP_STACK_URI), sys.stderr)
-            return dict() 
+            _verbose_print('ERROR: ip address was not returned from call to {}'.format(_IP_STACK_URI), sys.stderr)
+            return dict()
         parsed_data['ip'] = ipaddress.ip_address(json_data['ip'])
     if parse_location:
         if 'city' not in json_data or 'region_name' not in json_data or 'country_code' not in json_data:
-            print('ERROR: \'city\' or \'region_name\' or \'country_code\' was not returned from call to {}'.format(_IP_STACK_URI), sys.stderr)
-            return dict() 
+            _verbose_print('ERROR: \'city\' or \'region_name\' or \'country_code\' was not returned from call to {}'.format(_IP_STACK_URI), sys.stderr)
+            return dict()
         parsed_data['location'] = '{} {} {}'.format(json_data['city'], json_data['region_name'], json_data['country_code'])
     if parse_zip_code:
         if 'zip' not in json_data:
-            print('ERROR: zip code was not returned from call to {}'.format(_IP_STACK_URI), sys.stderr)
-            return dict() 
+            _verbose_print('ERROR: zip code was not returned from call to {}'.format(_IP_STACK_URI), sys.stderr)
+            return dict()
         parsed_data['zip_code'] = json_data['zip']
     if parse_gps:
         if 'latitude' not in json_data or 'longitude' not in json_data:
-            print('ERROR: \'latitude\' or \'longitude\' was not returned from call to {}'.format(_IP_STACK_URI), sys.stderr)
-            return dict() 
+            _verbose_print('ERROR: \'latitude\' or \'longitude\' was not returned from call to {}'.format(_IP_STACK_URI), sys.stderr)
+            return dict()
         parsed_data['gps'] = '{},{}'.format(json_data['latitude'], json_data['longitude'])
-    return parsed_data 
+    return parsed_data
 
 def _get_ip_address(json_data):
     parsed_data = _parse_ipstack_json(json_data, parse_ip=True)
     public_ip = parsed_data['ip'] if 'ip' in parsed_data else None
     if not public_ip or public_ip.version == 6:
-        updated_ip = _call_showip()
+        updated_ip = get_public_ip_address()
         if updated_ip:
             public_ip = updated_ip
     _verbose_print('Public IP: {}'.format(public_ip))

@@ -41,7 +41,7 @@ def _parse_args():
 
     _verbose_print('INFO: args:\n  verbose: {}\n  full report: {}\n  zip code: {}\n  region: {}\n  location: {}' \
                    .format(args.verbose, args.full_report, args.zip_code, args.region, location))
-    return location, args.full_report 
+    return location, args.full_report
 
 def _call_uri(uri):
     try:
@@ -72,7 +72,7 @@ def main():
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
         return 1
-    return 0 
+    return 0
 
 if __name__ == '__main__':
     sys.exit(main())

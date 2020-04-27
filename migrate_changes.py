@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/env python
 # migrateChanges.py
 
 import os, sys, zipfile

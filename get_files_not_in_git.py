@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # coding: utf-8
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Version 1.1  (6/22/95) rm
 #
 # Usage:

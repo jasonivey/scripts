@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [ $# -ne 3 ] ; then
 	printf "Usage:   <server type> <number> <environment>\n"

@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/usr/bin/env bash
 
 declare -a ARGS=($@)
 FILTER=$1

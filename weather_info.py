@@ -48,7 +48,8 @@ def _call_uri(uri):
         _verbose_print('INFO: calling {} with a {} second timeout'.format(uri, _TIME_OUT))
         response = requests.get(uri, timeout=_TIME_OUT)
         response.raise_for_status()
-        return response.text.strip()
+        response_str = response.text.strip()
+        return None if not response_str or response_str.find('Unknown location; please try') != -1 else response_str
     except requests.exceptions.RequestException as e:
         print('ERROR: error while calling {}'.format(uri), file=sys.stderr)
         print('ERROR: {}'.format(e), file=sys.stderr)
@@ -72,8 +73,7 @@ def main():
     location, full_report = _parse_args()
     try:
         weather = get_weather(location) if full_report else get_one_line_weather(location)
-        if weather:
-            print(weather)
+        print(weather if weather else '')
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)

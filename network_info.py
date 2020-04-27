@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# vim: aw=on:sts=4:ts=4:sw=4:et:cin:fdm=manual:tw=120:ft=python
+# vim: aw:sts=4:ts=4:sw=4:et:cin:fdm=manual:tw=120:ft=python
 # autowrite, softtabstop, tabstop, shiftwidth, expandtab, cindent, foldmethod, textwidth, filetype
 
 import argparse
@@ -214,8 +214,10 @@ def _get_network_infos():
                     print('ERROR: {} is not a valid IPv4 address'.format(address.address), file=sys.stderr)
             if address.family == socket.AF_INET6 and not ip:
                 try:
-                    address_str = address.address if '%' not in address.address else address.address[:address.address.find('%')]
-                    ip = ipaddress.ip_address(address_str)
+                    address_str = address.address
+                    if '%' in address.address:
+                        address_str = address.address[:address.address.find('%')]
+                    ip = ipaddress.ip_address(address_str) if not address_str.startswith('::1') else None
                     network_info.ip = ip
                 except ValueError as e:
                     ip = None

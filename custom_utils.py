@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim: aw:sts=4:ts=4:sw=4:et:cin:fdm=manual:tw=120:ft=python
 
 import argparse
 import datetime
@@ -16,7 +17,7 @@ class ScopedTimer(object):
     TIMER_TIME_OF_DAY = 1
     TIMER_ELAPSED = 2
     ALL_TIMERS = [TIMER_TIME_OF_DAY, TIMER_ELAPSED]
-    
+
     ELAPSED_PROMPT_KEY = 'ELAPSED_PROMPT'
     TIME_OF_DAY_PROMPT_KEY = 'TIME_OF_DAY_PROMPT'
     STATUS_PROMPTS_DICT = {ELAPSED_PROMPT_KEY:'{0}', TIME_OF_DAY_PROMPT_KEY:'{0}'}
@@ -85,7 +86,7 @@ def find_path_in_directory(start_dir, filename=None, dirname=None):
     return None
 
 def prepare_filename_for_shell(file_name):
-    return '"{0}"'.format(file_name.replace('\\', '\\\\').replace('"', '\"').replace('$', '\$').replace('`', '\`'))    
+    return '"{0}"'.format(file_name.replace('\\', '\\\\').replace('"', '\"').replace('$', '\$').replace('`', '\`'))
 
 def is_binary_in_path(file_name):
     command = '{0} {1}'.format('where' if os.name == 'nt' else 'which', prepare_filename_for_shell(file_name))

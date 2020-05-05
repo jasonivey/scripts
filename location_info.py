@@ -152,7 +152,7 @@ def _get_zip_code(json_data):
     parsed_data = _parse_ipstack_json(json_data, parse_zip_code=True)
     zip_code = parsed_data['zip_code'] if 'zip_code' in parsed_data else None
     _verbose_print('zip code: {}'.format(zip_code))
-    return zip_code 
+    return zip_code
 
 def get_zip_code():
     json_data = _call_ipstack()
@@ -204,7 +204,7 @@ def main():
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
         return 1
-    return 0 
+    return 0
 
 if __name__ == '__main__':
     sys.exit(main())

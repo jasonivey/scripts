@@ -14,7 +14,7 @@ import weather_info
 
 def _get_current_time():
     local_timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
-    return [('Date & Time', '{:%A, %B %d %Y * %H:%M:%S %P (%Z)}'.format(datetime.datetime.now(local_timezone)))]
+    return [('Date & Time', '{:%A, %B %d %Y 🕰  %H:%M:%S %p (%Z)}'.format(datetime.datetime.now(local_timezone)))]
 
 def get_login_info():
     datetime_info = _get_current_time()

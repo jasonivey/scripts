@@ -1,0 +1,5 @@
+* linguist-vendored
+*.py linguist-language=python
+*.go linguist-language=go
+*.bash linguist-language=shell
+*.sh linguist-language=shell

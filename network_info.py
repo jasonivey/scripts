@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# vim: aw:sts=4:ts=4:sw=4:et:cin:fdm=manual:tw=120:ft=python
-# autowrite, softtabstop, tabstop, shiftwidth, expandtab, cindent, foldmethod, textwidth, filetype
+# vim: awa:sts=4:ts=4:sw=4:et:cin:fdm=manual:tw=120:ft=python
+# autowriteall, softtabstop, tabstop, shiftwidth, expandtab, cindent, foldmethod, textwidth, filetype
 
 import argparse
 import copy

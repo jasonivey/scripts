@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
+# vim: awa:sts=4:ts=4:sw=4:et:cin:fdm=manual:tw=120:ft=python
+# autowriteall, softtabstop, tabstop, shiftwidth, expandtab, cindent, foldmethod, textwidth, filetype
 
 import argparse
 import os
@@ -7,14 +8,31 @@ import sys
 import traceback
 
 class AppSettings(object):
-    class __AppSettings:
+    class __AppSettings(object):
         def __init__(self):
-            self.verbose = False
-            self.live_run = False
-            self.directories = None
+            super(AppSettings.__AppSettings, self).__setattr__('values', {})
+            #self.values = {}
+
+        def __getattr__(self, name):
+            #if name == 'values':
+            #    return self.values
+            #elif name not in self.values:
+            #    self.values[name] = default
+            try:
+                return self.values[name]
+            except KeyError:
+                raise AttributeError
+
+        def __setattr__(self, name, value):
+            #if name == 'values':
+            #    self.values = value
+            #else:
+            self.values[name] = value
 
         def print(self, s):
-            if self.verbose:
+            verbose_enabled = 'verbose' in self.values and self.values['verbose']
+            no_verbose_setting = 'verbose' not in self.values
+            if verbose_enabled or no_verbose_setting:
                 print(s, file=sys.stdout)
 
         def __str__(self):
@@ -28,16 +46,16 @@ class AppSettings(object):
         return AppSettings.__instance
 
     def __getattr__(self, name):
-        return getattr(self.__instance, name)
+        return self.__instance.getattr(name)
 
-    def __setattr__(self, name):
-        return setattr(self.__instance, name)
+    def __setattr__(self, name, value):
+        self.__instance.settattr(name, value)
 
     def print(self, s):
-        AppSettings.__instance.print(s)
+        self.__instance.print(s)
 
     def __str__(self):
-        return str(AppSettings.__instance)
+        return str(self.__instance)
 
 app_settings = AppSettings()
 

@@ -45,7 +45,7 @@ def _dump_file_out_of_proc(dirname, filename, show_last_modified, crc_chk, md5_c
     if crc_chk or md5_chk:
         output += _external_get_chksum(fullpath, crc_chk, md5_chk) + ' *'
     return output + filename
-    
+
 #class FileDumperThread(threading.Thread):
 #    def __init__(self, files, output_queue, chksum):
 #        threading.Thread.__init__(self)
@@ -176,7 +176,7 @@ def main1():
     for thread in threads:
         thread.join()
     #file_queue.join()
-    
+
     filenames = list(output.keys())
     filenames.sort(key=str.lower)
     for filename in filenames:

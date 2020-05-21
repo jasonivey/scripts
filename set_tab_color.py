@@ -77,15 +77,16 @@ def _call_system_command(cmd):
 def _call_echo_command(str_cmd):
     echo_cmd = 'echo'
     post_cmd = '-n -e'
-    postfix = '> /dev/null 2>&1 ;'
+    #postfix = '> /dev/null 2>&1 ;'
+    postfix = ';'
     if sys.platform == 'darwin':
         _verbose_print('INFO: running in a mac OS environment')
         if shutil.which('gecho'):
             _verbose_print('INFO: found the gnu version of echo (gecho), using that instead')
             echo_cmd = 'gecho'
-        #else:
-        #    _verbose_print('INFO: unable to find the gnu version of echo (gecho), using standard version and redirecting output to null')
-        #    postfix = '> /dev/null 2>&1 ;'
+        else:
+            _verbose_print('INFO: unable to find the gnu version of echo (gecho), using standard version and redirecting output to null')
+            postfix = '> /dev/null 2>&1 ;'
     #elif 'SSH_CONNECTION' not in os.environ:
     #    post_cmd = '-n'
 

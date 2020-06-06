@@ -237,6 +237,14 @@ def get_networking_infos():
     net_infos = _get_network_infos() if sys.platform != 'darwin' else _get_network_infos_darwin()
     return net_infos
 
+def get_ip_addresses():
+    network_infos = get_networking_infos()
+    return [(network_info.name, network_info.ip) for network_info in network_infos]
+
+def get_mac_addresses():
+    network_infos = get_networking_infos()
+    return [(network_info.name, network_info.mac) for network_info in network_infos]
+
 def _get_displayable_networking_infos():
     network_infos = get_networking_infos()
     infos = []
@@ -245,14 +253,29 @@ def _get_displayable_networking_infos():
         infos.append(('Mac Address {}'.format(network_info.name), network_info.mac))
     return infos
 
+def get_external_ip_address():
+    public_ip = location_info.get_ip_address()
+    return str(ipaddress.ip_address(public_ip)) if public_ip else None
+
 def get_public_ip_address():
     public_ip = location_info.get_ip_address()
     return [('Public IP', ipaddress.ip_address(public_ip))] if public_ip else []
 
+def get_host_name():
+    return socket.gethostname()
+
+def get_computer_name():
+    host_name = socket.gethostname()
+    if host_name:
+        index = host_name.find('.')
+        if index != -1:
+            return host_name[:index]
+    return None
+
 def get_hostname_info():
     hostnames = []
     hostname = socket.gethostname()
-    if hostname and len(hostname) > 0:
+    if hostname:
         hostnames.append(('Hostname', hostname))
         index = hostname.find('.')
         if index != -1:

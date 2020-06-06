@@ -4,8 +4,9 @@
 
 import argparse
 import os
+import shlex
 import shutil
-import subprocess
+from subprocess import run, CalledProcessError, SubprocessError
 import sys
 import traceback
 
@@ -45,11 +46,36 @@ def _parse_args():
     _verbose_print('Args, verbose: {}, color: {}'.format(_VERBOSE, color))
     return color
 
-def _call_system_command(cmd):
-    #
-    # This works where as process.run or process.Popen do not. Those affect a child process which is destroyed after
-    #  the process is destroyed.
-    #
+# I was unable to get this working for a long time. It would succeed in calling the command but it would not affect
+#  the tab color. I thought it was due to the starting of the child process but I finally got it working once I
+#  started splitting the arguments, passing shell=False and passing the os.environ in as the new env.
+def _call_subprocess_run(cmd):
+    try:
+        _verbose_print('INFO: command: %s' % cmd)
+        run(shlex.split(cmd), shell=False, check=True, env=os.environ, stdin=None, stdout=None, stderr=None)
+        return True
+    except CalledProcessError as err:
+        print('ERROR: {} calling {}'.format(err.returncode, cmd))
+        return False
+    except SubprocessError as err:
+        print('ERROR: subprocess run error calling {}'.format(cmd))
+        return False
+
+# Attempting to figure out why subprocess.call wouldn't work I also tested the following os.spawn calls. There didn't
+#  seem to be a problem with these calls at all and I was able to change the tab color successfully.
+def _call_os_spawn(cmd):
+    _verbose_print('INFO: command: %s' % cmd)
+    args = shlex.split(cmd)
+    exit_code = os.spawnvpe(os.P_WAIT, args[0], args, os.environ)
+    if exit_code == 0:
+        _verbose_print('INFO: calling {} returned success'.format(cmd))
+        return True
+    else:
+        print('ERROR: calling {} returned error {}'.format(cmd, exit_code), file=sys.stderr)
+        return False
+
+# This worked where I had trouble with subprocess.call due to it creating another process
+def _call_os_system(cmd):
     _verbose_print('INFO: command: %s' % cmd)
     status = os.system(cmd)
     if os.WIFEXITED(status):
@@ -74,31 +100,25 @@ def _call_system_command(cmd):
         return False
     return True
 
-def _call_echo_command(str_cmd):
-    echo_cmd = 'echo'
-    post_cmd = '-n -e'
-    #postfix = '> /dev/null 2>&1 ;'
-    postfix = ';'
+def _call_echo_command(color_str):
+    cmd_name = 'echo'
+    cmd_args = '-n -e'
+    post_cmd = ''
     if sys.platform == 'darwin':
         _verbose_print('INFO: running in a mac OS environment')
         if shutil.which('gecho'):
             _verbose_print('INFO: found the gnu version of echo (gecho), using that instead')
-            echo_cmd = 'gecho'
+            cmd_name = 'gecho'
         else:
             _verbose_print('INFO: unable to find the gnu version of echo (gecho), using standard version and redirecting output to null')
-            postfix = '> /dev/null 2>&1 ;'
-    #elif 'SSH_CONNECTION' not in os.environ:
-    #    post_cmd = '-n'
-
-    cmd = '{} {} {} {}'.format(echo_cmd, post_cmd, str_cmd, postfix)
-    _call_system_command(cmd)
+            post_cmd = '> /dev/null 2>&1'
+    cmd = '{} {} {} {}'.format(cmd_name, cmd_args, color_str, post_cmd)
+    _call_subprocess_run(cmd)
 
 def set_tab_color(color):
-    if color not in _COLORS:
-        print('ERROR: {} is not a color supported by this script'.format(color), file=sys.stderr)
-    else:
-        _verbose_print('INFO: setting tab color to {}'.format(color))
-        _call_echo_command(_COLORS[color])
+    assert color in _COLORS, '{} is not a color supported by this script'.format(color)
+    _verbose_print('INFO: setting tab color to {}'.format(color))
+    _call_echo_command(_COLORS[color])
 
 def main():
     color = _parse_args()

@@ -352,7 +352,7 @@ def get_tod_greeting():
 def _get_last_login():
     output = _run_external_command('last')
     assert output, _assert_message('system command "last" did not return anything')
-    assert False, 'You need to fix the following'
+    _error_print('You need to fix the following on line 354')
     pattern = r'^(?P<who>[^\s]+)\s+(?P<where>[^\s]+)\s*(?P<source>(?:[0-9]{1,3}\.){3}[0-9]{1,3})?\s*(?P<date>[a-zA-Z]{3} [a-zA-Z]{3} \d{2} \d{2}:\d{2})'
     last_login = None
     for line in output.split('\n'):
@@ -369,14 +369,19 @@ def _get_last_login():
                 last_login += ' at {}'.format(source)
         if last_login:
             break
-    return last_login 
+    return last_login
 
 def _get_weather_report():
     location = location_info.get_location()
     weather = weather_info.get_one_line_weather(location)
     if weather:
-        parts = [half.strip() for half in weather.split(':')]
-        return parts
+        index = weather.find(':')
+        if index != -1:
+            return weather[:index], weather[index + 2:]
+        elif location:
+            return location, weather
+        else:
+            return 'Lehi Utah US', weather
     elif location:
         return location, 'Unavailable'
     else:
@@ -437,7 +442,7 @@ def output_login_info():
     assert len(net_infos) > 0
     _print_columns('Memory Usage', login_infos['Memory Usage'], 'IP address for {}'.format(net_infos[0].name), str(net_infos[0].ip))
     _print_columns('Swap Usage', login_infos['Swap Usage'], 'Mac address for {}'.format(net_infos[0].name), net_infos[0].mac)
-    for net_info, _ in enumerate(net_infos, 1):
+    for net_info in net_infos[1:]:
         _print_columns('', '', 'IP address for {}'.format(net_info.name), str(net_info.ip))
         _print_columns('', '', 'Mac address for {}'.format(net_info.name), net_info.mac)
 

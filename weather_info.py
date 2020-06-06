@@ -4,8 +4,10 @@
 import argparse
 import json
 import os
+import re
 import requests
 import sys
+import time
 import traceback
 
 import location_info
@@ -55,12 +57,26 @@ def _call_uri(uri):
         print('ERROR: {}'.format(e), file=sys.stderr)
         return None
 
+def _sun_event(match):
+    #r'Sunrise: \g<1>, Sunset: \g<2>'
+    sunrise_str = match.group('sunrise')
+    sunrise = time.strptime(sunrise_str, '%H:%M:%S')
+    sunrise_str = time.strftime('%I:%M:%S%p', sunrise).lower()
+    sunset_str = match.group('sunset')
+    sunset = time.strptime(sunset_str, '%H:%M:%S')
+    sunset_str = time.strftime('%I:%M:%S%p', sunset).lower()
+    return ', Sunrise: {},  Sunset: {}'.format(sunrise_str, sunset_str)
+
 def get_one_line_weather(location):
     if location:
-        uri = 'http://wttr.in/{}?format=%l:+%t+%c+%C+%w+%m&lang=en'.format(location.replace(' ', '%20'))
+        uri = 'http://wttr.in/{}?u&format=%l:+%t+%c+%C+%w+%m+%S+%s&lang=en'.format(location.replace(' ', '%20'))
     else:
-        uri =  'http://wttr.in/?format=%l:+%t+%c+%C+%w+%m&lang=en'
-    return _call_uri(uri)
+        uri =  'http://wttr.in/?u&format=%l:+%t+%c+%C+%w+%m+%S+%s&lang=en'
+    report = _call_uri(uri)
+    if not report: return None
+    pattern = r'(?P<sunrise>\d{2}:\d{2}:\d{2}) (?P<sunset>\d{2}:\d{2}:\d{2})'
+    weather_report = re.sub(pattern, _sun_event, report)
+    return weather_report
 
 def get_weather(location):
     if location:

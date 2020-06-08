@@ -94,33 +94,32 @@ COLUMN_LH_WIDTH_2 = 25
 COLUMN_RH_WIDTH_2 = 14
 
 def _print_column(label, value):
-    lh = am.ansistring('<label>{}</label>'.format(label + ':'))
+    label = label + ':' if len(label) > 0 else lebel
+    lh = am.ansistring('<label>{}</label>'.format(label))
     rh = am.ansistring('<value>{}</value>'.format(value))
     lh_width = COLUMN_LH_WIDTH_1 + lh.delta
     rh_width = COLUMN_RH_WIDTH_1 + rh.delta
-    #print('  {:{lh_width}} {:(rh_width}}'.format(lh, rh, lh_width=lh_width, rh_width=rh_width))
     print(f'  {lh:{lh_width}} {rh:{rh_width}}')
 
 def _print_columns(label1, value1, label2, value2):
-    col1_lh = am.ansistring('<label>{}</label>'.format(label1 + ':'))
+    label1 = label1 + ':' if len(label1) > 0 else label1
+    label2 = label2 + ':' if len(label2) > 0 else label2
+    col1_lh = am.ansistring('<label>{}</label>'.format(label1))
     col1_rh = am.ansistring('<value>{}</value>'.format(value1))
-    col2_lh = am.ansistring('<label>{}</label>'.format(label2 + ':'))
+    col2_lh = am.ansistring('<label>{}</label>'.format(label2))
     col2_rh = am.ansistring('<value>{}</value>'.format(value2))
     lh_width1 = COLUMN_LH_WIDTH_1 + col1_lh.delta
     rh_width1 = COLUMN_RH_WIDTH_1 + col1_rh.delta
     lh_width2 = COLUMN_LH_WIDTH_2 + col2_lh.delta
     rh_width2 = COLUMN_RH_WIDTH_2 + col2_rh.delta
-
-    #print('  {:{lh_width1}} {:{rh_width1}}   {:{lh_width2}} {:(rh_width2}}' \
-    #      .format(col1_lh, col1_rh, col2_lh, col2_rh, lh_width1=lh_width1, rh_width1=rh_width1, lh_width2=lh_width2, rh_width2=rh_width2))
     print(f'  {col1_lh:{lh_width1}} {col1_rh:{rh_width1}}   {col2_lh:{lh_width2}} {col2_rh:{rh_width2}}')
 
 def _print_weather(location, weather):
+    location = location + ':' if len(location) > 0 else location 
     lh = am.ansistring('<location>{}</location>'.format(location + ':'))
     rh = am.ansistring('<weather>{}</weather>'.format(weather))
     lh_width = COLUMN_LH_WIDTH_1 + lh.delta
     rh_width = COLUMN_RH_WIDTH_1 + rh.delta
-    #print('  {:{lh_width}} {:{rh_width}}'.format(lh, rh, lh_width=lh_width, rh_width=rh_width))
     print(f'  {lh:{lh_width}} {rh:{rh_width}}')
 
 def _print_quote(quote):
@@ -195,6 +194,13 @@ def _convert_yearless_timestamp(timestamp):
     year = now.year if dt.month <= now.month else now.year - 1
     return dt.replace(year=year, tzinfo=tz)
 
+def _convert_time_duration(dt, hour, minute):
+    delta = datetime.delta(minutes=minute, hours=hour)
+    return dt + delta
+
+def _convert_date_time(dt):
+    return '{:%d-%b-%Y %I:%M:%S%p %Z}'.format(dt).replace('AM', 'am').replace('PM', 'pm')
+
 def _run_external_command(cmd):
     args = shlex.split(cmd)
     process = subprocess.Popen(args, encoding='utf-8', shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -251,7 +257,7 @@ def _get_os_name():
 
 def _get_packages_available():
     if sys.platform == 'darwin':
-        return None
+        return ''
     updates_available = '/var/lib/update-notifier/updates-available'
     if os.path.isfile(updates_available) and os.access(updates_available, os.R_OK):
         with open(updates_available) as updates_available_file:
@@ -330,13 +336,25 @@ def _get_system_information_time():
     prefix = 'System information as of'
     return '{0} {1:%a, %d-%b-%Y} {2} {1:%I:%M:%S%p %Z}'.format(prefix, now, time_emoji).replace('AM', 'am').replace('PM', 'pm')
 
-def _get_unopened_mail():
+def _get_macosx_available_mail():
+    cmd = 'mailq'
+    output = _run_external_command(cmd)
+    assert output, _assert_message('mailq did not return any output')
+    if output.strip() == 'Mail queue is empty':
+        return 0
+    else:
+        return 1
+
+def _get_linux_available_mail():
     cmd = r'pam_tally --file /var/mail/{0} --user {0}'.format(os.getlogin())
     output = _run_external_command(cmd)
     assert output, _assert_message('pam_tally did not return any output')
     match = re.match(r'^User\s+{}\s*\(\d+\)\s*has\s*(?P<mail>\d+)$'.format(os.getlogin()), output.strip())
     assert match, _assert_message('definition of pam_tally output has changed')
-    mail_items = int(match.group('mail'))
+    return int(match.group('mail'))
+
+def _get_unopened_mail():
+    mail_items = _get_macosx_available_mail() if sys.platform == 'darwin' else _get_linux_available_mail()
     if mail_items > 0:
         return am.ansistring(f'<mail>{mail_items}</mail> Unread Mail Items')
     else:
@@ -352,21 +370,32 @@ def get_tod_greeting():
 def _get_last_login():
     output = _run_external_command('last')
     assert output, _assert_message('system command "last" did not return anything')
-    _error_print('You need to fix the following on line 354')
-    pattern = r'^(?P<who>[^\s]+)\s+(?P<where>[^\s]+)\s*(?P<source>(?:[0-9]{1,3}\.){3}[0-9]{1,3})?\s*(?P<date>[a-zA-Z]{3} [a-zA-Z]{3} \d{2} \d{2}:\d{2})'
     last_login = None
     for line in output.split('\n'):
-        match = re.match(pattern, line.strip())
-        if match:
-            who = match.group('who')
-            where = match.group('where')
-            source = match.group('source')
-            when = _convert_yearless_timestamp(match.group('date'))
-            #last_login_date = '{:%a, %d-%b-%Y %I:%M:%S%p %Z}'.format(when).replace('AM', 'am').replace('PM', 'pm')
-            last_login_date = _get_time_since(when)
-            last_login = '{} on {} from {}'.format(last_login_date, where, who)
-            if source:
-                last_login += ' at {}'.format(source)
+        line = line.strip()
+        parts = line.split()
+        # if the list of parts is not 9-10 items long
+        if (9 <= len(parts) <= 10) == False:
+            continue
+        user = parts[0]
+        terminal = parts[1]
+        host = ''
+        if len(parts) == 10:
+            host = parts[2]
+        login_time = _convert_yearless_timestamp(' '.join(parts[-7:-3]))
+        login_time_str = _convert_date_time(login_time)
+        if line.endswith('still logged in'):
+            logout_time_str = 'still logged in'
+        else:
+            match = re.match('^(?P<hour>\d\d):(?P<minute>\d\d)$', parts[-2])
+            assert match, _assert_message('the last command did not return the duration of the last login')
+            hour = int(match.group('hour'))
+            minute = int(match.group('minute'))
+            logout_time_str = _convert_date_time(_convert_time_duration(login_time, hour, minute))
+        if host:
+            last_login = f'{user} logged into {terminal} from {host} login, {login_time_str} logout, {logout_time_str}'
+        else:
+            last_login = f'{user} logged into {terminal} login, {login_time_str} logout, {logout_time_str}'
         if last_login:
             break
     return last_login
@@ -432,7 +461,7 @@ def output_login_info():
     location, weather = _get_weather_report()
     _print_weather(location, weather)
     _print_column('Last Login', _get_last_login())
-    _print_column('Boot Time', _get_boot_time())
+    _print_column('Boot Time', _get_boot_time() + '\n')
 
     _print_columns('Computer Name', login_infos['Computer Name'], 'Hostname', login_infos['Hostname'])
     _print_columns('Public IP', login_infos['Public IP'], 'Mail', _get_unopened_mail())
@@ -440,11 +469,13 @@ def output_login_info():
     _print_columns('Usage of /', login_infos['Usage of /'], 'Users Logged In', login_infos['Users Logged In'])
     net_infos = network_info.get_networking_infos()
     assert len(net_infos) > 0
-    _print_columns('Memory Usage', login_infos['Memory Usage'], 'IP address for {}'.format(net_infos[0].name), str(net_infos[0].ip))
-    _print_columns('Swap Usage', login_infos['Swap Usage'], 'Mac address for {}'.format(net_infos[0].name), net_infos[0].mac)
+    name = net_infos[0].name if not 'USB 10/100/1000 LAN' else 'LAN'
+    _print_columns('Memory Usage', login_infos['Memory Usage'], 'IP address for {}'.format(name), str(net_infos[0].ip))
+    _print_columns('Swap Usage', login_infos['Swap Usage'], 'Mac address for {}'.format(name), net_infos[0].mac)
     for net_info in net_infos[1:]:
-        _print_columns('', '', 'IP address for {}'.format(net_info.name), str(net_info.ip))
-        _print_columns('', '', 'Mac address for {}'.format(net_info.name), net_info.mac)
+        name = net_infos[0].name if not 'USB 10/100/1000 LAN' else 'LAN'
+        _print_columns('', '', 'IP address for {}'.format(name), str(net_info.ip))
+        _print_columns('', '', 'Mac address for {}'.format(name), net_info.mac)
 
     _print_packages_available(_get_packages_available())
     _print_quote(_get_quote())

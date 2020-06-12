@@ -176,8 +176,8 @@ def _list_all_hardware_ports_darwin():
             name_and_mac.clear()
     return hardware_ports
 
-def _get_ip_info_darwin(service, mac):
-    command = 'networksetup -getinfo \"{}\"'.format(service)
+def _get_ip_info_darwin(service):
+    command = f'networksetup -getinfo \"{service}\"'
     output = _call_external_command(command)
     for line in output:
         match = re.search(r'^IP address:\s*(?P<ip>.*)', line.strip())

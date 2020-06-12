@@ -65,7 +65,7 @@ def _sun_event(match):
     sunset_str = match.group('sunset')
     sunset = time.strptime(sunset_str, '%H:%M:%S')
     sunset_str = time.strftime('%I:%M:%S%p', sunset).lower()
-    return ', Sunrise: {},  Sunset: {}'.format(sunrise_str, sunset_str)
+    return ', Sunrise: {}, Sunset: {}'.format(sunrise_str, sunset_str)
 
 def get_one_line_weather(location):
     if location:

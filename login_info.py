@@ -27,11 +27,12 @@ user_tags = {
     'mail'        : parse('<blink><red>'),     # bliink red
     'label'       : parse('<bold><cyan>'),     # bold cyan
     'value'       : parse('<reset>'),          # white
-    'title'       : parse('<bold><yellow>'),   # bold yellow
+    'sysinfo'     : parse('<bold><yellow>'),   # bold yellow
     'quote'       : parse('<bold><cyan>'),     # bold cyan
     'location'    : parse('<bold><cyan>'),     # bold cyan
     'weather'     : parse('<reset>'),          # white
-    'tod'         : parse('<bold><green>'),    # bold green
+    'greeting'    : parse('<bold><green>'),    # bold green
+    'loginout'    : parse('<bold><green>'),    # bold green
     'apt'         : parse('<bold><yellow>'),   # bold yellow
     'reboot'      : parse('<bold><red>'),      # bold red
 }
@@ -66,120 +67,86 @@ TIME_OF_DAY = {'morning'   : MORNING_EMOJI,
                'evening'   : EVENING_EMOJI,
                'night'     : NIGHT_EMOJI}
 
-
-def _verbose_print(msg):
-    am.ansiprint('<info>INFO: {}</info>'.format(msg), file=sys.stdout)
-
-def _error_print(msg):
-    am.ansiprint('<error>ERROR: {}</error>'.format(msg), file=sys.stderr)
-
-def _assert_message(msg):
-    return am.ansistring('<error>ASSERT: {}</assert>'.format(msg))
-
-def _print_greeting(greeting):
-    am.ansiprint('<tod>{}</tod>\n'.format(greeting))
-
-def _print_title(title):
-    am.ansiprint('  <title>{}</title>\n'.format(title))
-
-#def _print_label_value(label=None, value=None, label_width=0):
-#    if label and value and label_width > 0:
-#        am.ansiprint(('<label>%-' + str(label_width) + 's:</label> <value>%s</value>') % (label, value))
-#    elif value:
-#        am.ansiprint('<value>{}</value>'.format(value))
-
 COLUMN_LH_WIDTH_1 = 15
 COLUMN_RH_WIDTH_1 = 20
 COLUMN_LH_WIDTH_2 = 25
 COLUMN_RH_WIDTH_2 = 14
 
-def _print_column(label, value):
-    label = label + ':' if len(label) > 0 else lebel
-    lh = am.ansistring('<label>{}</label>'.format(label))
-    rh = am.ansistring('<value>{}</value>'.format(value))
-    lh_width = COLUMN_LH_WIDTH_1 + lh.delta
-    rh_width = COLUMN_RH_WIDTH_1 + rh.delta
-    print(f'  {lh:{lh_width}} {rh:{rh_width}}')
+def _verbose_print(msg):
+    am.ansiprint(f'<info>INFO: {msg}</info>', file=sys.stdout)
+
+def _error_print(msg):
+    am.ansiprint(f'<error>ERROR: {msg}</error>', file=sys.stderr)
+
+def _assert_message(msg):
+    return am.ansistring(f'<error>ASSERT: {msg}</assert>')
+
+def _print_time_of_daygreeting(message):
+    am.ansiprint(f'<greeting>{message}</greeting>\n')
+
+def _print_system_info_time(sys_info):
+    am.ansiprint(f'  <sysinfo>{sys_info}</sysinfo>\n')
 
 def _print_columns(label1, value1, label2, value2):
     label1 = label1 + ':' if len(label1) > 0 else label1
     label2 = label2 + ':' if len(label2) > 0 else label2
-    col1_lh = am.ansistring('<label>{}</label>'.format(label1))
-    col1_rh = am.ansistring('<value>{}</value>'.format(value1))
-    col2_lh = am.ansistring('<label>{}</label>'.format(label2))
-    col2_rh = am.ansistring('<value>{}</value>'.format(value2))
+    col1_lh = am.ansistring(f'<label>{label1}</label>')
+    col1_rh = am.ansistring(f'<value>{value1}</value>')
+    col2_lh = am.ansistring(f'<label>{label2}</label>')
+    col2_rh = am.ansistring(f'<value>{value2}</value>')
     lh_width1 = COLUMN_LH_WIDTH_1 + col1_lh.delta
     rh_width1 = COLUMN_RH_WIDTH_1 + col1_rh.delta
     lh_width2 = COLUMN_LH_WIDTH_2 + col2_lh.delta
     rh_width2 = COLUMN_RH_WIDTH_2 + col2_rh.delta
     print(f'  {col1_lh:{lh_width1}} {col1_rh:{rh_width1}}   {col2_lh:{lh_width2}} {col2_rh:{rh_width2}}')
 
+def _print_boot_time(boot_time):
+    lh = am.ansistring('<label>Boot Time:</label>')
+    rh = am.ansistring(f'<value>{boot_time}</value>')
+    lh_width = COLUMN_LH_WIDTH_1 + lh.delta
+    rh_width = COLUMN_RH_WIDTH_1 + rh.delta
+    print(f'  {lh:{lh_width}} {rh:{rh_width}}\n')
+
+def _print_last_login(values):
+    assert len(values) >= 1, _assert_message('last login message must be at least one line long')
+    rhs = []
+    rhs_widths = []
+    for value in values:
+        if value.startswith('Log in:'):
+            s = am.ansistring(f'<loginout>Log in:<loginout> <value>{value[len("Log in: "):]}</value>')
+        elif value.startswith('Log out:'):
+            s = am.ansistring(f'<loginout>Log out:<loginout> <value>{value[len("Log out: "):]}</value>')
+        else:
+            s = am.ansistring(f'<value>{value}</value>')
+        rhs_widths.append(COLUMN_RH_WIDTH_1 + s.delta)
+        rhs.append(s)
+    lh = am.ansistring('<label>Last Login:</label>')
+    lh_width = COLUMN_LH_WIDTH_1 + lh.delta
+    for index, (rh, rh_width) in enumerate(zip(rhs, rhs_widths)):
+        if index == 0:
+            print(f'  {lh:{lh_width}} {rh:{rh_width}}')
+        else:
+            print(f'                  {rh:{rh_width}}')
+
 def _print_weather(location, weather):
-    location = location + ':' if len(location) > 0 else location 
-    lh = am.ansistring('<location>{}</location>'.format(location + ':'))
-    rh = am.ansistring('<weather>{}</weather>'.format(weather))
+    location = location + ':' if len(location) > 0 else location
+    lh = am.ansistring(f'<location>{location}</location>')
+    rh = am.ansistring(f'<weather>{weather}</weather>')
     lh_width = COLUMN_LH_WIDTH_1 + lh.delta
     rh_width = COLUMN_RH_WIDTH_1 + rh.delta
     print(f'  {lh:{lh_width}} {rh:{rh_width}}')
 
 def _print_quote(quote):
     if quote and len(quote) > 0:
-        am.ansiprint('\n<quote>{}</quote>'.format(quote))
+        am.ansiprint(f'\n<quote>{quote}</quote>')
 
 def _print_packages_available(message):
     if message:
-        am.ansiprint('\n<apt>{}</apt>'.format(message))
+        am.ansiprint(f'\n<apt>{message}</apt>')
 
 def _print_reboot_required(message):
     if message:
-        am.ansiprint('\n<reboot>{}</reboot>'.format(message))
-
-def _get_time_since(d, now=None):
-    """
-    Takes two datetime objects and returns the time between d and now
-    as a nicely formatted string, e.g. "10 minutes".  If d occurs after now,
-    then "0 minutes" is returned.
-
-    Units used are years, months, weeks, days, hours, and minutes.
-    Seconds and microseconds are ignored.  Up to two adjacent units will be
-    displayed.  For example, "2 weeks, 3 days" and "1 year, 3 months" are
-    possible outputs, but "2 weeks, 3 hours" and "1 year, 5 days" are not.
-
-    Adapted from http://blog.natbat.co.uk/archive/2003/Jun/14/time_since
-    """
-    chunks = (
-      (60 * 60 * 24 * 365, lambda n: 'year' if n == 0 else 'years'),
-      (60 * 60 * 24 * 30,  lambda n: 'month' if n == 0 else 'months'),
-      (60 * 60 * 24 * 7,   lambda n: 'week' if n == 0 else 'weeks'),
-      (60 * 60 * 24,       lambda n: 'day' if n == 0 else 'days'),
-      (60 * 60,            lambda n: 'hour' if n == 0 else 'hours'),
-      (60,                 lambda n: 'minute' if n == 0 else 'minutes')
-    )
-    assert isinstance(d, datetime.datetime), _assert_message('get time since must have a datetime argument')
-    if not now:
-        now = datetime.datetime.now() if not d.tzinfo else datetime.datetime.now(d.tzinfo)
-
-    # ignore microsecond part of 'd' since we removed it from 'now'
-    delta = now - (d - datetime.timedelta(0, 0, d.microsecond))
-    since = delta.days * 24 * 60 * 60 + delta.seconds
-    assert since >= 0, _assert_message('get time since needs to work with a datetime older than now')
-    if since == 0:
-        return '0 minutes ago'
-    s = ''
-    remaining_seconds = 0
-    for i, (seconds, name) in enumerate(chunks):
-        count = since // seconds
-        if count != 0:
-            remaining_seconds = since - (seconds * count)
-            s = '{number} {type}'.format(number=count, type=name(count))
-            break
-    if i + 1 < len(chunks):
-        # Now get the second item
-        seconds, name = chunks[i + 1]
-        count = remaining_seconds // seconds
-        if count != 0:
-            s += ', {number} {type}'.format(number=count, type=name(count))
-    return '{} ago'.format(s) if s else s
+        am.ansiprint(f'\n<reboot>{message}</reboot>')
 
 def _get_timezone_info():
     return datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
@@ -203,7 +170,7 @@ def _convert_date_time(dt):
 
 def _run_external_command(cmd):
     args = shlex.split(cmd)
-    process = subprocess.Popen(args, encoding='utf-8', shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(args, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
     if process.wait() != 0:
         _error_print(error)
@@ -212,13 +179,14 @@ def _run_external_command(cmd):
 
 def _get_macosx_name():
     license_filename = '/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf'
-    assert os.path.isfile(license_filename), _assert_message('Mac OS X software license does not exist here {}'.format(license_filename))
+    assert os.path.isfile(license_filename), _assert_message(f'Mac OS X software license does not exist here {license_filename}')
     with open(license_filename) as license:
         text = license.read()
     match = re.search(r'SOFTWARE LICENSE AGREEMENT FOR\s+(?P<os_name>[^\\]*)', text)
     assert match, _assert_message('unable to find macOS name within OSXSoftwareLicense.rtf')
     mac_name = match.group('os_name')
     output = _run_external_command('sw_vers')
+    assert output, _assert_message('sw_vers command did not return any information')
     version = build = None
     for line in output.split('\n'):
         match = re.match('^ProductVersion:\s+(?P<version>[^\n]+)$', line)
@@ -227,7 +195,7 @@ def _get_macosx_name():
         match = re.match('^BuildVersion:\s+(?P<version>[^\n]+)$', line)
         if match:
             build = match.group('version')
-    assert version and build, _assert_message('os_vers is no longer giving the ProductVersion and BuildVersion')
+    assert version and build, _assert_message('sw_vers is no longer giving the ProductVersion and BuildVersion')
     utsname = platform.uname()
     version_details = '({} {} {})'.format(utsname.system, utsname.release, utsname.machine)
     return '{} {}.{} {}'.format(mac_name, version, build, version_details)
@@ -301,10 +269,6 @@ def _get_root_partition_usage():
     usage = psutil.disk_usage(partition.mountpoint)
     total_amount = bytes2human(usage.total)
     used_percent = '{:.1%}'.format(usage.percent / 100.0)
-    return total_amount, used_percent
-
-def _get_root_partition_usage_str():
-    total_amount, used_percent = _get_root_partition_usage()
     return '{} of {}'.format(used_percent, total_amount)
 
 def _get_user_count():
@@ -364,13 +328,9 @@ def _get_quote():
     quote = _run_external_command('fortune softwareengineering')
     return quote if quote and len(quote) > 1 else ''
 
-def get_tod_greeting():
-    return _get_time_of_day_greeting()
-
 def _get_last_login():
     output = _run_external_command('last')
     assert output, _assert_message('system command "last" did not return anything')
-    last_login = None
     for line in output.split('\n'):
         line = line.strip()
         parts = line.split()
@@ -392,15 +352,17 @@ def _get_last_login():
             hour = int(match.group('hour'))
             minute = int(match.group('minute'))
             logout_time_str = _convert_date_time(_convert_time_duration(login_time, hour, minute))
+        last_login = []
         if host:
-            last_login = f'{user} logged into {terminal} from {host} login, {login_time_str} logout, {logout_time_str}'
+            last_login.append(f'{user} logged into {terminal} from {host}')
         else:
-            last_login = f'{user} logged into {terminal} login, {login_time_str} logout, {logout_time_str}'
-        if last_login:
-            break
-    return last_login
+            last_login.append(f'{user} logged into {terminal}')
+        last_login.append(f'Log in: {login_time_str}')
+        last_login.append(f'Log out: {logout_time_str}')
+        return last_login
+    return []
 
-def _get_weather_report():
+def _get_weather_info():
     location = location_info.get_location()
     weather = weather_info.get_one_line_weather(location)
     if weather:
@@ -416,66 +378,39 @@ def _get_weather_report():
     else:
         return 'Lehi Utah US', 'Unavailable'
 
-def _get_network_infos():
-    network_infos = network_info.get_networking_infos()
-    ip_addresses = mac_addresses = []
-    for net_info in network_infos:
-        ip_addresses.append(('IP address for {}'.format(net_info.name), str(net_info.ip)))
-        mac_addresses.append(('Mac address for {}'.format(net_info.name), net_info.mac))
-    return ip_addresses, mac_addresses
-
-def _get_hostname_computer_name():
+def _get_computer_name_hostname_name():
     hostname = network_info.get_host_name()
     computer_name = network_info.get_computer_name()
     computer_name = computer_name if computer_name else hostname
-    return hostname, computer_name
-
-def get_login_info1():
-    datetime_info = _get_current_time()
-    last_login = _get_last_login()
-    system_info = network_info.get_system_info()
-    mail_info = _get_unopened_mail()
-    return datetime_info + last_login + weather_report + system_info + mail_info
-
-def _get_column_width(rows):
-    # Add 1 for the colon
-    left_side_width = max([len(row[0]) + 1 for row in rows])
-    # Add 2 for the colon and space
-    column_width = max([len(row[0]) + len(row[1]) + 2 for row in rows])
-    return left_side_width, column_width
+    return computer_name, hostname
 
 def output_login_info():
-    login_infos = {}
-    login_infos['Hostname'], login_infos['Computer Name'] = _get_hostname_computer_name()
-    login_infos['Public IP'] = network_info.get_external_ip_address()
-    login_infos['System Load'] = _get_load_average()
-    login_infos['Processes'] = _get_process_count()
-    login_infos['Usage of /'] = _get_root_partition_usage_str()
-    login_infos['Users Logged In'] = _get_user_count()
-    login_infos['Memory Usage'] = _get_virtual_memory_usage()
-    login_infos['Swap Usage'] = _get_swap_memory_usage()
+    _print_time_of_daygreeting(_get_time_of_day_greeting())
+    _print_system_info_time(_get_system_information_time())
 
-    _print_greeting(get_tod_greeting())
-    _print_title(_get_system_information_time())
-
-    location, weather = _get_weather_report()
+    location, weather = _get_weather_info()
     _print_weather(location, weather)
-    _print_column('Last Login', _get_last_login())
-    _print_column('Boot Time', _get_boot_time() + '\n')
+    _print_last_login(_get_last_login())
+    _print_boot_time(_get_boot_time())
 
-    _print_columns('Computer Name', login_infos['Computer Name'], 'Hostname', login_infos['Hostname'])
-    _print_columns('Public IP', login_infos['Public IP'], 'Mail', _get_unopened_mail())
-    _print_columns('System Load', login_infos['System Load'], 'Processes', login_infos['Processes'])
-    _print_columns('Usage of /', login_infos['Usage of /'], 'Users Logged In', login_infos['Users Logged In'])
+    computer_name, hostname = _get_computer_name_hostname_name()
+    _print_columns('Computer Name', computer_name, 'Hostname', hostname)
+    _print_columns('Public IP', network_info.get_external_ip_address(), 'Mail', _get_unopened_mail())
+    _print_columns('System Load', _get_load_average(), 'Processes', _get_process_count())
+    _print_columns('Usage of /', _get_root_partition_usage(), 'Users Logged In', _get_user_count())
+
     net_infos = network_info.get_networking_infos()
-    assert len(net_infos) > 0
-    name = net_infos[0].name if not 'USB 10/100/1000 LAN' else 'LAN'
-    _print_columns('Memory Usage', login_infos['Memory Usage'], 'IP address for {}'.format(name), str(net_infos[0].ip))
-    _print_columns('Swap Usage', login_infos['Swap Usage'], 'Mac address for {}'.format(name), net_infos[0].mac)
-    for net_info in net_infos[1:]:
-        name = net_infos[0].name if not 'USB 10/100/1000 LAN' else 'LAN'
-        _print_columns('', '', 'IP address for {}'.format(name), str(net_info.ip))
-        _print_columns('', '', 'Mac address for {}'.format(name), net_info.mac)
+    if not net_infos or len(net_infos) == 0:
+        _print_columns('Memory Usage', _get_virtual_memory_usage(), '', '')
+        _print_columns('Swap Usage', _get_swap_memory_usage(), '', '')
+    else:
+        name = 'Lan' if net_infos[0].name == 'USB 10/100/1000 LAN' else net_infos[0].name
+        _print_columns('Memory Usage', _get_virtual_memory_usage(), 'IP address for {}'.format(name), str(net_infos[0].ip))
+        _print_columns('Swap Usage', _get_swap_memory_usage(), 'Mac address for {}'.format(name), net_infos[0].mac)
+        for net_info in net_infos[1:]:
+            name = 'Lan' if net_info.name == 'USB 10/100/1000 LAN' else net_info.name
+            _print_columns('', '', 'IP address for {}'.format(name), str(net_info.ip))
+            _print_columns('', '', 'Mac address for {}'.format(name), net_info.mac)
 
     _print_packages_available(_get_packages_available())
     _print_quote(_get_quote())

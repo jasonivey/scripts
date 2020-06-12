@@ -190,7 +190,7 @@ def _get_network_infos_darwin():
     networking_infos = []
     hardware_ports = _list_all_hardware_ports_darwin()
     for hardware_port in hardware_ports:
-        ip = _get_ip_info_darwin(hardware_port.name, hardware_port)
+        ip = _get_ip_info_darwin(hardware_port.name)
         if not ip:
             continue
         networking_infos.append(NetworkInfo(hardware_port.name, ip, hardware_port.mac))

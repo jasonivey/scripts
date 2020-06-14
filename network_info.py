@@ -146,7 +146,7 @@ class NetworkInfos:
                         ip_type = 'IPv4'
                         address_str = address.address if '%' not in address.address else address.address[:address.address.find('%')]
                         ip = ipaddress.ip_address(address_str) if not address_str.startswith('127.') else None
-                    if address.family == socket.AF_INET6:
+                    if address.family == socket.AF_INET6 and not ip:
                         ip_type = 'IPv6'
                         address_str = address.address
                         if '%' in address.address:

@@ -20,7 +20,7 @@ user_tags = {
     'info'        : parse('<bold><green>'),    # bold green
     'error'       : parse('<bold><red>'),      # bold red
     'label'       : parse('<bold><cyan>'),     # bold cyan
-    'value'       : parse('<bold><yellow>'),   # bold yellow
+    'value'       : parse('<light-blue>'),     # magenta
 }
 
 am = AnsiMarkup(tags=user_tags)
@@ -114,16 +114,15 @@ class NetworkInfos:
     def __darwin_get_ip_address(self, service_name):
         command = f'networksetup -getinfo \"{service_name}\"'
         output = _call_external_command(command)
+        IPv4_ADDRESS_REGEX = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
         ip, router = None, None
         for line in output:
-            ip_match = re.search(r'^IP address:\s*(?P<ip>.*)', line.strip())
+            ip_match = re.search(f'^IP address:\s*(?P<ip>{IPv4_ADDRESS_REGEX})', line.strip())
             if ip_match:
-                ip_str = ip_match.group('ip').strip()
-                ip = ipaddress.ip_address(ip_str)
-            router_match = re.search(r'^Router:\s*(?P<router>.*)', line.strip())
+                ip = ipaddress.ip_address(ip_match.group('ip'))
+            router_match = re.search(f'^Router:\s*(?P<router>{IPv4_ADDRESS_REGEX})', line.strip())
             if router_match:
-                router_str = router_match.group('router').strip()
-                router = ipaddress.ip_address(router_str) if router_str else None
+                router = ipaddress.ip_address(router_match.group('router'))
         return ip if ip and router else None
 
     def __darwin_find_network_devices(self):

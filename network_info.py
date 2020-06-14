@@ -2,10 +2,11 @@
 # vim: awa:sts=4:ts=4:sw=4:et:cin:fdm=manual:tw=120:ft=python
 # autowriteall, softtabstop, tabstop, shiftwidth, expandtab, cindent, foldmethod, textwidth, filetype
 
+from ansimarkup import AnsiMarkup, parse
 import argparse
-import copy
 import ipaddress
 import os
+import psutil
 import re
 import shlex
 import socket
@@ -13,140 +14,28 @@ import subprocess
 import sys
 import traceback
 
-import psutil
 import location_info
+
+user_tags = {
+    'info'        : parse('<bold><green>'),    # bold green
+    'error'       : parse('<bold><red>'),      # bold red
+    'label'       : parse('<bold><cyan>'),     # bold cyan
+    'value'       : parse('<bold><yellow>'),   # bold yellow
+}
+
+am = AnsiMarkup(tags=user_tags)
 
 _VERBOSE = False
 
-def _verbose_print(s):
+def _verbose_print(msg):
     if _VERBOSE:
-        print(s, file=sys.stdout)
+        am.ansiprint(f'<info>INFO: {msg}</info>', file=sys.stdout)
 
-class NameAndMac:
-    def __init__(self, name=None, mac=None):
-        self._name = name
-        self._mac = mac
-
-    def __copy__(self):
-        return NameAndMac(copy.copy(self.name), copy.copy(self.mac))
-
-    def clear(self):
-        self._name = None
-        self._mac = None
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-    @property
-    def mac(self):
-        return self._mac
-
-    @mac.setter
-    def mac (self, value):
-        self._mac = value
-
-    @property
-    def is_valid(self):
-        return self._name and self._mac
-
-    def __str__(self):
-        return '{}: {}'.format(self._name, self._mac)
-
-
-class NetworkInfo:
-    def __init__(self, name=None, ip=None, mac=None):
-        self._name = name
-        self._ip = ip
-        self._mac = mac
-
-    def __copy__(self):
-        return NetworkInfo(copy.copy(self.name), copy.copy(self.ip), copy.copy(self.mac))
-
-    def clear(self):
-        self._name = None
-        self._ip = None
-        self._mac = None
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-    @property
-    def ip(self):
-        return self._ip
-
-    @ip.setter
-    def ip(self, value):
-        self._ip = value
-
-    @property
-    def mac(self):
-        return self._mac
-
-    @mac.setter
-    def mac (self, value):
-        self._mac = value
-
-    @property
-    def is_valid(self):
-        return self._name and self._ip and self._mac
-
-    def __str__(self):
-        return '{}: {}, {}'.format(self._name, self._ip, self._mac)
-
-
-class SystemInfo:
-    def __init__(self, hostname=None, public_ip=None, network_infos=None):
-        self._hostname = hostname
-        self._public_ip = public_ip
-        self._network_infos = network_infos
-
-    def __copy__(self):
-        return SystemInfo(copy.copy(self.hostname), copy.copy(self.public_ip), copy.copy(self.network_infos))
-
-    @property
-    def hostname(self):
-        return self._hostname
-
-    @hostname.setter
-    def hostname(self, value):
-        self._hostname = value
-
-    @property
-    def computer_name(self):
-        return self._hostname[:self.hostname.find('.')] if self.hostname.find('.') != -1 else None
-
-    @property
-    def public_ip(self):
-        return self._public_ip
-
-    @public_ip.setter
-    def public_ip(self, value):
-        self._public_ip = value
-
-    @property
-    def network_infos(self):
-        return self._network_infos
-
-    @network_infos.setter
-    def network_infos(self, value):
-        self._network_infos = value
-
-    def __str__(self):
-        s = ''
-        return s
+def _error_print(msg):
+    am.ansiprint(f'<error>ERROR: {msg}</error>', file=sys.stderr)
 
 def _call_external_command(command):
-    _verbose_print('INFO: command: %s' % command)
+    _verbose_print(f'command: {command}')
     args = shlex.split(command)
     process = subprocess.Popen(args, encoding='utf-8', universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
@@ -154,139 +43,181 @@ def _call_external_command(command):
         excusable_error = 'is not a recognized network service'
         if command.find('-getinfo') != -1 and (error.find(excusable_error) != -1 or output.find(excusable_error) != -1):
             return []
-        print('ERROR:  {}'.format(command), file=sys.stderr)
-        print('stderr: {}'.format(error), file=sys.stderr)
-        print('stdout: {}'.format(output), file=sys.stderr)
+        _error_print(f'{command}')
+        _error_print(f'stderr, {error}')
+        _error_print(f'stdout, {output}')
         return []
     return output.split('\n')
 
-def _list_all_hardware_ports_darwin():
-    output = _call_external_command('networksetup -listallhardwareports')
-    hardware_ports = []
-    name_and_mac = NameAndMac()
-    for line in output:
-        port_match = re.search(r'^Hardware Port:\s*(?P<port>.*)', line.strip())
-        if port_match:
-            name_and_mac.name = port_match.group('port').strip()
-        mac_match = re.search(r'^Ethernet Address:\s*(?P<mac>.*)', line.strip())
-        if mac_match:
-            name_and_mac.mac = mac_match.group('mac').strip()
-        if name_and_mac.is_valid:
-            hardware_ports.append(copy.copy(name_and_mac))
-            name_and_mac.clear()
-    return hardware_ports
+class NetworkInfo:
+    def __init__(self, name=None, ip=None, mac=None):
+        self._name = name
+        self._ip = ip
+        self._mac = mac
 
-def _get_ip_info_darwin(service):
-    command = f'networksetup -getinfo \"{service}\"'
-    output = _call_external_command(command)
-    for line in output:
-        match = re.search(r'^IP address:\s*(?P<ip>.*)', line.strip())
-        if match:
-            ip = match.group('ip').strip()
-            return ipaddress.ip_address(ip)
-    return None
+    @property
+    def name(self):
+        return 'Lan' if self._name == 'USB 10/100/1000 LAN' else self._name
 
-def _get_network_infos_darwin():
-    networking_infos = []
-    hardware_ports = _list_all_hardware_ports_darwin()
-    for hardware_port in hardware_ports:
-        ip = _get_ip_info_darwin(hardware_port.name)
-        if not ip:
-            continue
-        networking_infos.append(NetworkInfo(hardware_port.name, ip, hardware_port.mac))
-    return networking_infos
+    @property
+    def ip(self):
+        return str(self._ip)
 
-def _get_network_infos():
-    networking_infos = []
-    nics = psutil.net_if_addrs()
-    for name, addresses in nics.items():
-        _verbose_print('name: %s' % name)
-        network_info = NetworkInfo(name=name)
-        for address in addresses:
-            _verbose_print('address: {}'.format(address))
-            if address.family == socket.AF_INET:
+    @property
+    def mac(self):
+        return self._mac
+
+    def __str__(self):
+        s = 'IP Address {name}: {self.ip}\n'
+        return s + 'Mac Address {self.name}: {self.mac}\n'
+
+class NetworkInfos:
+    def __init__(self):
+        self._infos = []
+        self._index = -1
+        if sys.platform != 'darwin':
+            self.__linux_find_network_devices()
+        else:
+            self.__darwin_find_network_devices()
+        _verbose_print(f'number of networ devices: {len(self._infos)}')
+
+    def __iter__(self):
+        if len(self._infos) > 0:
+            self._index = 0
+        return self
+
+    def __next__(self):
+        if self._index == -1 or self._index >= len(self._infos):
+            self._index = -1
+            raise StopIteration
+        i = self._index
+        self._index += 1
+        return self._infos[i]
+
+    def __len__(self):
+        return len(self._infos)
+
+    def __darwin_get_all_network_devices(self):
+        output = _call_external_command('networksetup -listallhardwareports')
+        name, mac = None, None
+        for line in output:
+            port_match = re.search(r'^Hardware Port:\s*(?P<port>.*)', line.strip())
+            if port_match:
+                name = port_match.group('port').strip()
+            mac_match = re.search(r'^Ethernet Address:\s*(?P<mac>.*)', line.strip())
+            if mac_match:
+                mac = mac_match.group('mac').strip()
+            if name and mac:
+                yield (name, mac)
+                name, mac = None, None
+
+    def __darwin_get_ip_address(self, service_name):
+        command = f'networksetup -getinfo \"{service_name}\"'
+        output = _call_external_command(command)
+        ip, router = None, None
+        for line in output:
+            ip_match = re.search(r'^IP address:\s*(?P<ip>.*)', line.strip())
+            if ip_match:
+                ip_str = ip_match.group('ip').strip()
+                ip = ipaddress.ip_address(ip_str)
+            router_match = re.search(r'^Router:\s*(?P<router>.*)', line.strip())
+            if router_match:
+                router_str = router_match.group('router').strip()
+                router = ipaddress.ip_address(router_str) if router_str else None
+        return ip if ip and router else None
+
+    def __darwin_find_network_devices(self):
+        for (name, mac) in self.__darwin_get_all_network_devices():
+            ip = self.__darwin_get_ip_address(name)
+            if not ip:
+                continue
+            self._infos.append(NetworkInfo(name, ip, mac))
+
+    def __linux_find_network_devices(self):
+        nics = psutil.net_if_addrs()
+        for name, addresses in nics.items():
+            _verbose_print(f'name: {name}')
+            ip, mac = None, None
+            for address in addresses:
+                _verbose_print(f'address: {address}')
+                ip_type = ''
                 try:
-                    address_str = address.address if '%' not in address.address else address.address[:address.address.find('%')]
-                    ip = ipaddress.ip_address(address_str) if not address_str.startswith('127.') else None
-                    network_info.ip = ip
+                    if address.family == socket.AF_INET:
+                        ip_type = 'IPv4'
+                        address_str = address.address if '%' not in address.address else address.address[:address.address.find('%')]
+                        ip = ipaddress.ip_address(address_str) if not address_str.startswith('127.') else None
+                    if address.family == socket.AF_INET6:
+                        ip_type = 'IPv6'
+                        address_str = address.address
+                        if '%' in address.address:
+                            address_str = address.address[:address.address.find('%')]
+                        ip = ipaddress.ip_address(address_str) if not address_str.startswith('::1') else None
+                    if address.family == psutil.AF_LINK:
+                        mac = address.address
                 except ValueError as e:
-                    ip = None
-                    print('ERROR: {} is not a valid IPv4 address'.format(address.address), file=sys.stderr)
-            if address.family == socket.AF_INET6 and not ip:
-                try:
-                    address_str = address.address
-                    if '%' in address.address:
-                        address_str = address.address[:address.address.find('%')]
-                    ip = ipaddress.ip_address(address_str) if not address_str.startswith('::1') else None
-                    network_info.ip = ip
-                except ValueError as e:
-                    ip = None
-                    print('ERROR: {} is not a valid IPv6 address'.format(address.address), file=sys.stderr)
-            elif address.family == psutil.AF_LINK:
-                mac = address.address
-                network_info.mac = mac
-            if network_info.is_valid:
-                networking_infos.append(copy.copy(network_info))
-                network_info.clear()
-                network_info.name = name
-                break
-        _verbose_print('')
-    return networking_infos
+                    _error_print(f'{address.address} is not a valid {ip_type} address')
+                if name and ip and mac:
+                    self._infos.append(NetworkInfo(name, ip, mac))
+                    break
+            _verbose_print('')
 
-def get_networking_infos():
-    net_infos = _get_network_infos() if sys.platform != 'darwin' else _get_network_infos_darwin()
-    return net_infos
+    def __str__(self):
+        s = ''
+        for info in self._infos:
+            s += str(info)
+        return s
 
-def get_ip_addresses():
-    network_infos = get_networking_infos()
-    return [(network_info.name, network_info.ip) for network_info in network_infos]
+class SystemInfo:
+    def __init__(self):
+        self._hostname = socket.gethostname()
+        self._public_ip = location_info.get_ip_address()
+        self._network_infos = NetworkInfos()
 
-def get_mac_addresses():
-    network_infos = get_networking_infos()
-    return [(network_info.name, network_info.mac) for network_info in network_infos]
+    @property
+    def hostname(self):
+        return self._hostname
 
-def _get_displayable_networking_infos():
-    network_infos = get_networking_infos()
-    infos = []
-    for network_info in network_infos:
-        infos.append(('IP Address {}'.format(network_info.name), network_info.ip))
-        infos.append(('Mac Address {}'.format(network_info.name), network_info.mac))
-    return infos
+    @property
+    def computer_name(self):
+        if self.hostname:
+            index = self.hostname.find('.')
+            if index != -1:
+                return self.hostname[:index]
+            return self.hostname
+        return ''
 
-def get_external_ip_address():
-    public_ip = location_info.get_ip_address()
-    return str(ipaddress.ip_address(public_ip)) if public_ip else None
+    @property
+    def public_ip(self):
+        return str(self._public_ip)
 
-def get_public_ip_address():
-    public_ip = location_info.get_ip_address()
-    return [('Public IP', ipaddress.ip_address(public_ip))] if public_ip else []
+    @property
+    def network_infos(self):
+        return self._network_infos
 
-def get_host_name():
-    return socket.gethostname()
+    @property
+    def network_infos_length(self):
+        return len(self._network_infos)
 
-def get_computer_name():
-    host_name = socket.gethostname()
-    if host_name:
-        index = host_name.find('.')
-        if index != -1:
-            return host_name[:index]
-    return None
+    def __str__(self):
+        s = ''
+        return s
 
-def get_hostname_info():
-    hostnames = []
-    hostname = socket.gethostname()
-    if hostname:
-        hostnames.append(('Hostname', hostname))
-        index = hostname.find('.')
-        if index != -1:
-            hostnames.append(('Computer Name', hostname[:index]))
-    return hostnames
+def _get_label(label_str):
+    return am.ansistring(f'<label>{label_str}</label>')
 
-def get_system_info():
-    hostnames = get_hostname_info()
-    public_ip = get_public_ip_address()
-    networking_infos = _get_displayable_networking_infos()
-    return hostnames + public_ip + networking_infos
+def _get_value(value_str):
+    return am.ansistring(f'<value>{value_str}</value>')
+
+def _get_formatted_system_info():
+    system_info = SystemInfo()
+    info = []
+    info.append((_get_label('Hostname:'), _get_value(system_info.hostname)))
+    info.append((_get_label('Computer Name:'), _get_value(system_info.computer_name)))
+    info.append((_get_label('Public IP:'), _get_value(system_info.public_ip)))
+    for network_info in system_info.network_infos:
+        info.append((_get_label(f'IP Address {network_info.name}:'), _get_value(network_info.ip)))
+        info.append((_get_label(f'IP Address {network_info.name}:'), _get_value(network_info.mac)))
+    return info
 
 def _parse_args():
     parser = argparse.ArgumentParser(description='Output or return various IP and Mac address info on the current system')
@@ -298,12 +229,12 @@ def _parse_args():
 def main():
     _parse_args()
     try:
-        infos = get_system_info()
-        name_width = max([len(label) for (label, value) in infos])
+        infos = _get_formatted_system_info()
+        max_label_width = max([len(am.strip(label)) for (label, value) in infos])
         for (label, value) in infos:
-            print(('%-' + str(name_width) + 's : %s') % (label, value))
+            print(f'{label:{max_label_width}} {value}')
     except:
-        print('ERROR: network_info failed -- uncomment traceback info to fix', file=sys.stderr)
+        _error_print('network_info failed -- uncomment traceback info to fix')
         #exc_type, exc_value, exc_traceback = sys.exc_info()
         #traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
         return 1

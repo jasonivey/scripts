@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # vim: awa:sts=4:ts=4:sw=4:et:cin:fdm=manual:tw=120:ft=python
 
+from ansimarkup import AnsiMarkup, parse
 import argparse
 import datetime
 import os
@@ -16,10 +17,9 @@ import traceback
 
 import location_info
 import network_info
-#from network_info import NetworkInfo
+from network_info import NetworkInfo, NetworkInfos, SystemInfo
 import weather_info
 
-from ansimarkup import AnsiMarkup, parse
 
 user_tags = {
     'info'        : parse('<bold><green>'),    # bold green
@@ -378,12 +378,6 @@ def _get_weather_info():
     else:
         return 'Lehi Utah US', 'Unavailable'
 
-def _get_computer_name_hostname_name():
-    hostname = network_info.get_host_name()
-    computer_name = network_info.get_computer_name()
-    computer_name = computer_name if computer_name else hostname
-    return computer_name, hostname
-
 def output_login_info():
     _print_time_of_daygreeting(_get_time_of_day_greeting())
     _print_system_info_time(_get_system_information_time())
@@ -393,24 +387,22 @@ def output_login_info():
     _print_last_login(_get_last_login())
     _print_boot_time(_get_boot_time())
 
-    computer_name, hostname = _get_computer_name_hostname_name()
-    _print_columns('Computer Name', computer_name, 'Hostname', hostname)
-    _print_columns('Public IP', network_info.get_external_ip_address(), 'Mail', _get_unopened_mail())
+    system_info = SystemInfo()
+    _print_columns('Computer Name', system_info.computer_name, 'Hostname', system_info.hostname)
+    _print_columns('Public IP', system_info.public_ip, 'Mail', _get_unopened_mail())
     _print_columns('System Load', _get_load_average(), 'Processes', _get_process_count())
     _print_columns('Usage of /', _get_root_partition_usage(), 'Users Logged In', _get_user_count())
 
-    net_infos = network_info.get_networking_infos()
-    if not net_infos or len(net_infos) == 0:
+    if len(system_info.network_infos) == 0:
         _print_columns('Memory Usage', _get_virtual_memory_usage(), '', '')
         _print_columns('Swap Usage', _get_swap_memory_usage(), '', '')
-    else:
-        name = 'Lan' if net_infos[0].name == 'USB 10/100/1000 LAN' else net_infos[0].name
-        _print_columns('Memory Usage', _get_virtual_memory_usage(), 'IP address for {}'.format(name), str(net_infos[0].ip))
-        _print_columns('Swap Usage', _get_swap_memory_usage(), 'Mac address for {}'.format(name), net_infos[0].mac)
-        for net_info in net_infos[1:]:
-            name = 'Lan' if net_info.name == 'USB 10/100/1000 LAN' else net_info.name
-            _print_columns('', '', 'IP address for {}'.format(name), str(net_info.ip))
-            _print_columns('', '', 'Mac address for {}'.format(name), net_info.mac)
+    for i, network_info in enumerate(system_info.network_infos):
+        if i == 0:
+            _print_columns('Memory Usage', _get_virtual_memory_usage(), f'IP address for {network_info.name}', network_info.ip)
+            _print_columns('Swap Usage', _get_swap_memory_usage(), f'Mac address for {network_info.name}', network_info.mac)
+        else:
+            _print_columns('', '', f'IP address for {network_info.name}', network_info.ip)
+            _print_columns('', '', f'Mac address for {network_info.name}', network_info.mac)
 
     _print_packages_available(_get_packages_available())
     _print_quote(_get_quote())

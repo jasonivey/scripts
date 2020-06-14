@@ -127,7 +127,7 @@ def _get_ip_address(json_data):
         updated_ip = get_public_ip_address()
         if updated_ip:
             public_ip = updated_ip
-    _verbose_print('Public IP: {}'.format(public_ip))
+    _verbose_print('public ip: {}'.format(public_ip))
     return str(public_ip)
 
 def get_ip_address():

@@ -72,8 +72,11 @@ COLUMN_RH_WIDTH_1 = 20
 COLUMN_LH_WIDTH_2 = 25
 COLUMN_RH_WIDTH_2 = 14
 
+_VERBOSE = False
+
 def _verbose_print(msg):
-    am.ansiprint(f'<info>INFO: {msg}</info>', file=sys.stdout)
+    if _VERBOSE:
+        am.ansiprint(f'<info>INFO: {msg}</info>', file=sys.stdout)
 
 def _error_print(msg):
     am.ansiprint(f'<error>ERROR: {msg}</error>', file=sys.stderr)
@@ -410,7 +413,15 @@ def output_login_info():
     _print_quote(_get_quote())
     _print_reboot_required(_is_reboot_required())
 
+def _parse_args():
+    parser = argparse.ArgumentParser(description='Replacement for standard Linux banner for both OS X and Linux')
+    parser.add_argument('-v', '--verbose', action="store_true", help='increase output verbosity')
+    args = parser.parse_args()
+    global _VERBOSE
+    _VERBOSE = args.verbose
+
 def main():
+    _parse_args()
     try:
         output_login_info()
     except:

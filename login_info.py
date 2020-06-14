@@ -312,7 +312,9 @@ def _get_macosx_available_mail():
 def _get_linux_available_mail():
     cmd = r'pam_tally --file /var/mail/{0} --user {0}'.format(os.getlogin())
     output = _run_external_command(cmd)
-    assert output, _assert_message('pam_tally did not return any output')
+    if not output:
+        _verbose_print('pam_tally did not return any info -- possible /var/mail/{os.getlogin()} doesn\'t exist')
+        return 0
     match = re.match(r'^User\s+{}\s*\(\d+\)\s*has\s*(?P<mail>\d+)$'.format(os.getlogin()), output.strip())
     assert match, _assert_message('definition of pam_tally output has changed')
     return int(match.group('mail'))

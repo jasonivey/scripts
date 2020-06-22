@@ -14,9 +14,9 @@ import traceback
 
 _VERBOSE = False
 _EXTENSIONS = ['.webm', '.mpg', '.mp2', '.mpeg',
-               '.mpe', '.mpv', '.ogg', '.mp4', 
-               '.m4p', '.m4v', '.avi', '.wmv', 
-               '.mov', '.qt', '.flv', '.swf', 
+               '.mpe', '.mpv', '.ogg', '.mp4',
+               '.m4p', '.m4v', '.avi', '.wmv',
+               '.mov', '.qt', '.flv', '.swf',
                '.avchd', '.mkv']
 
 def _verbose_print(s):
@@ -57,7 +57,7 @@ def _parse_args():
                 raise parser.error('the files specified for metadata removal must be a video type file')
             else:
                 input_files.append(os.path.abspath(filename))
-    
+
     input_dir = args.dir
     if len(input_files) == 0:
         if not input_dir:

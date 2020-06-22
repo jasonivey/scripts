@@ -1,0 +1,13 @@
+ansimarkup
+distro
+ipython
+lxml
+numpy
+osascript; sys_platform == 'darwin'
+psutil
+pymediainfo
+recommonmark
+regex
+requests
+urllib3
+virtualenv

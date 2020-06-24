@@ -180,34 +180,64 @@ def _run_external_command(cmd):
         return None
     return output
 
+class MacOsVersionNames:
+    def __init__(self):
+        self._platform_names = {10.11 : 'Mac OS X', 10.15 : 'macOS 10', 11.0 : 'macOS 11',}
+        self._version_names = {10.0 : 'Cheetah', 10.1 : 'Puma', 10.2 : 'Jaguar', 10.3 : 'Panther', \
+                               10.4 : 'Tiger', 10.5 : 'Leopard', 10.6 : 'Snow Leopard', 10.7 : 'Lion', \
+                               10.8 : 'Mountain Lion', 10.9 : 'Mavericks', 10.10 : 'Yosemite', \
+                               10.11 : 'El Capitan', 10.12 : 'Sierra', 10.13 : 'High Sierra', \
+                               10.14 : 'Mojave', 10.15 : 'Catalina', 11.0 : 'Big Sur',}
+
+    def _get_platform_name(self, version):
+        for max_version, platform_name in self._platform_names.items():
+            if version <= max_version:
+                return platform_name
+        return 'macOS'
+
+    def _get_version_name(self, version):
+        return self._version_names[version] if version in self._version_names else 'Unknown'
+
+    def get_version(self, version):
+        return f'{self._get_platform_name(version)} {self._get_version_name(version)}'
+
+class MacOsVersionName:
+    def __init__(self, version):
+        # default version number to infinity == real large
+        self._version = float('inf')
+        if isinstance(version, float):
+            self._version = version
+        elif isinstance(version, int):
+            self._version = float(version)
+        elif isinstance(version, str):
+            match = re.search(r'(?P<version_number>\d+(?:\.\d+)?)', version)
+            if match:
+                self._version = float(match.group('version_number'))
+
+    def __str__(self):
+        return MacOsVersionNames().get_version(self._version)
+
 def _get_macosx_name():
-    license_filename = '/System/Library/CoreServices/Setup Assistant.app/Contents/Resources/en.lproj/OSXSoftwareLicense.rtf'
-    assert os.path.isfile(license_filename), _assert_message(f'Mac OS X software license does not exist here {license_filename}')
-    with open(license_filename) as license:
-        text = license.read()
-    match = re.search(r'SOFTWARE LICENSE AGREEMENT FOR\s+(?P<os_name>[^\\]*)', text)
-    assert match, _assert_message('unable to find macOS name within OSXSoftwareLicense.rtf')
-    mac_name = match.group('os_name')
     output = _run_external_command('sw_vers')
     assert output, _assert_message('sw_vers command did not return any information')
     version = build = None
-    for line in output.split('\n'):
-        match = re.match('^ProductVersion:\s+(?P<version>[^\n]+)$', line)
+    for line in output.splitlines():
+        match = re.match('^ProductVersion:\s+(?P<product_version>.*)$', line)
         if match:
-            version = match.group('version')
-        match = re.match('^BuildVersion:\s+(?P<version>[^\n]+)$', line)
+            version = match.group('product_version')
+        match = re.match('^BuildVersion:\s+(?P<build_version>.*)$', line)
         if match:
-            build = match.group('version')
+            build = match.group('build_version')
     assert version and build, _assert_message('sw_vers is no longer giving the ProductVersion and BuildVersion')
     utsname = platform.uname()
     version_details = '({} {} {})'.format(utsname.system, utsname.release, utsname.machine)
-    return '{} {}.{} {}'.format(mac_name, version, build, version_details)
+    return '{} {}.{} {}'.format(MacOsVersionName(version), version, build, version_details)
 
 def _get_linux_name():
     name = version = None
     with open('/etc/os-release') as release_info:
         text = release_info.read()
-    for line in text.split('\n'):
+    for line in text.splitlines():
         match = re.match(r'^PRETTY_NAME="(?P<name>[^\"]+)"$', line.strip())
         if match:
             name = match.group('name')
@@ -336,7 +366,7 @@ def _get_quote():
 def _get_last_login():
     output = _run_external_command('last')
     assert output, _assert_message('system command "last" did not return anything')
-    for line in output.split('\n'):
+    for line in output.splitlines():
         line = line.strip()
         parts = line.split()
         # if the list of parts is not 9-10 items long

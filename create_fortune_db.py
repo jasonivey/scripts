@@ -4,18 +4,11 @@
 
 from ansimarkup import AnsiMarkup, parse
 import argparse
-#from lxml import etree
-#import math
-#import numpy as np
 import os
 import pathlib
 import regex
-#import requests
-#import subprocess
 import sqlite3
 import sys
-#import textwrap
-#import time
 import traceback
 
 user_tags = {

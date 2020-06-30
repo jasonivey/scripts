@@ -1,5 +1,6 @@
 *.py[co]
 *.suo
 .DS_Store
+__pycache__
 go/pkg
 go/src/github.com/

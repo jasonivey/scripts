@@ -15,7 +15,7 @@ import traceback
 
 user_tags = {
     'info'     : parse('<bold><green>'),    # bold green
-    #'text'      : parse('<bold><white>'),    # bold white
+    'text'      : parse('<bold><white>'),    # bold white
     #'alttext'   : parse('<white>'),          # white
     #'name'      : parse('<bold><cyan>'),     # bold cyan
     #'altname'   : parse('<cyan>'),           # cyan
@@ -24,6 +24,7 @@ user_tags = {
 
 am = AnsiMarkup(tags=user_tags)
 
+_COUNTER_WIDTH = 2
 _VERBOSE = False
 _EXTENSIONS = ['.webm', '.mpg', '.mp2', '.mpeg',
                '.mpe', '.mpv', '.ogg', '.mp4',
@@ -31,9 +32,10 @@ _EXTENSIONS = ['.webm', '.mpg', '.mp2', '.mpeg',
                '.mov', '.qt', '.flv', '.swf',
                '.avchd', '.mkv']
 
+
 def _verbose_print(msg):
     if _VERBOSE: 
-        am.ansiprint(f'<info>INFO: {msg}</info>', file=sys.stdout)
+        am.ansiprint(f'<info>INFO:</info> <text>{msg}</text>', file=sys.stdout)
 
 def _error_print(msgp, prefix=True):
     if prefix:
@@ -90,6 +92,15 @@ def _parse_args():
 
     return input_files, args.dry_run, args.force
 
+def _get_index_width(input_file_count):
+    if input_file_count >= 100:
+        # Once it gets to 100 convert the number to a str and then get the length of that
+        #  I.E if the number of input files is 5980 this wil give an len('5980') or width
+        #  of 4.  This allows output of the indexes from 1-5980 in a fixed column width.
+        return len(str(input_file_count))
+    # Default to a minimum width of 2
+    return 2
+
 class MediaMetadataParser:
     def __init__(self, file_name, force):
         self._file_name = file_name
@@ -110,6 +121,7 @@ class MediaMetadataParser:
             return False
 
         if self._force:
+            self._metadata = 'Unknown: use of --force flag'
             _verbose_print('forcing has_metadata to return \'True\' via --force flag')
             return True
 
@@ -121,7 +133,7 @@ class MediaMetadataParser:
             if not track_data:
                 _error_print(f'unable to convert {track_name} properties to a dictionary in media {self._file_name}')
                 continue
-            if self._get_metadata(track_data, track_name):
+            if self._get_metadata(track_data, track.track_type):
                 return True
         return False
 
@@ -142,7 +154,7 @@ class MediaMetadataParser:
             return False
 
         track_key = strippable_metadata_in_track.pop()
-        self._metadata = '{}: {}'.format(track_key, track[track_key])
+        self._metadata = f'{track_key}: {track[track_key]}'
         _verbose_print(f'extraneous metadata was found in the \'{track_name}\' track')
         return True
 
@@ -150,27 +162,19 @@ class MediaMetadataParser:
     def metadata(self):
         return self._metadata if self._metadata else ''
 
-def _get_files_with_metadata(file_names, force):
-    file_names_with_metadata = []
+def get_files_with_metadata(file_names, force):
+    index_width = _get_index_width(len(file_names))
     for i, file_name in enumerate(file_names, start=1):
-        _verbose_print(f'{i:3}: checking for custom metadata {file_name}')
+        _verbose_print(f'{i:{index_width}}: checking for custom metadata {file_name}')
         media_metadata_parser = MediaMetadataParser(file_name, force)
         if media_metadata_parser.has_metadata():
-            file_names_with_metadata.append((file_name, media_metadata_parser.metadata))
-    if len(file_names_with_metadata) > 0:
-        _verbose_print('')
-    for i, file_name_with_metadata in enumerate(file_names_with_metadata, start=1):
-        file_name = file_name_with_metadata[0]
-        metadata = file_name_with_metadata[1]
-        _verbose_print('{i:3}: custom metadata found {file_name}')
-        _verbose_print(f'  {metadata}')
-
-    # return just a list of the paths to the files
-    return [file_name_with_metadata[0] for file_name_with_metadata in file_names_with_metadata]
+            _verbose_print(f'{i:{index_width}}: custom metadata found {file_name}')
+            _verbose_print(f'  metadata: {media_metadata_parser.metadata}')
+            yield file_name
 
 def _create_temp_name(file_name):
     basename, ext = os.path.splitext(file_name)
-    return '{}.new{}'.format(basename, ext)
+    return f'{basename}.new{ext}'
 
 def _clean_up_on_error(file_name):
     _verbose_print(f'cleaning up by deleting the destination file if it exists here {file_name}')
@@ -187,9 +191,9 @@ def _clean_up_on_error(file_name):
         _error_print(f'  unable to remove the destination file {file_name}', prefix=False)
 
 def _remove_metadata_from_file(file_name):
-    _verbose_print(f'removing metadata from: {file_name}')
+    _verbose_print(f'removing metadata from {file_name}')
     new_file_name = _create_temp_name(file_name)
-    _verbose_print(f'destination metadata free file: {new_file_name}')
+    _verbose_print(f'temporary metadata free file will be named {new_file_name}')
     command = 'ffmpeg -i "{}" -map_chapters -1 -map_metadata -1 -c:v copy -c:a copy "{}"'.format(file_name, new_file_name)
     _verbose_print(f'command \'{command}\'')
     process = subprocess.Popen(command, shell=True, bufsize=1, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -200,32 +204,33 @@ def _remove_metadata_from_file(file_name):
         _error_print(stderrdata.decode('utf-8'), prefix=False)
         _clean_up_on_error(new_file_name)
         return False
-    _verbose_print(f'created identical file and removed the metadata: {new_file_name}')
+    _verbose_print(f'created {new_file_name} and removed the metadata')
     shutil.move(new_file_name, file_name)
-    _verbose_print(f'moved new {new_file_name} over top of old {file_name}')
+    _verbose_print(f'moved {new_file_name} over top of {file_name}')
     return True
 
-def _remove_metadata_from_files(file_names, dry_run):
-    _verbose_print('there are {len(file_names)} file(s) which need to have extraneous metadata removed')
-    if dry_run and len(file_names) > 0:
+def remove_metadata_from_file(file_name, dry_run):
+    if dry_run:
         _verbose_print('dry run enabled -- NO METADATA BEING REMOVED')
         return True
-
-    file_names_updated = list(takewhile(_remove_metadata_from_file, file_names))
-    return len(file_names_updated) == len(file_names)
+    return _remove_metadata_from_file(file_name)
 
 def main():
     input_files, dry_run, force = _parse_args()
     _verbose_print(f'args:\n' \
-                   '  input files: {input_files}\n' \
-                   '  verbose: {_is_verbose_mode_on()}\n'
-                   '  dry run: {dry_run}\n' \
-                   '  force: {force}')
+                   f'  input files: {", ".join(input_files)}\n' \
+                   f'  verbose: {_is_verbose_mode_on()}\n'
+                   f'  dry run: {dry_run}\n' \
+                   f'  force: {force}')
 
     retval = 0
     try:
-        file_names = _get_files_with_metadata(input_files, force)
-        retval = 0 if _remove_metadata_from_files(file_names, dry_run) else 1
+        first = True
+        for file_name in get_files_with_metadata(input_files, force):
+            if first: first = False
+            else: print('')
+            if not remove_metadata_from_file(file_name, dry_run):
+                retval = 1
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)

@@ -8,6 +8,7 @@ import hashlib
 from itertools import takewhile
 from pymediainfo import MediaInfo
 import sqlite3
+import shlex
 import shutil
 import subprocess
 import sys
@@ -37,7 +38,7 @@ def _verbose_print(msg):
     if _VERBOSE: 
         am.ansiprint(f'<info>INFO:</info> <text>{msg}</text>', file=sys.stdout)
 
-def _error_print(msgp, prefix=True):
+def _error_print(msg, prefix=True):
     if prefix:
         am.ansiprint(f'<error>ERROR: {msg}</error>', file=sys.stderr)
     else:
@@ -48,6 +49,19 @@ def _title_print(title):
 
 def _is_verbose_mode_on():
     return _VERBOSE
+
+def _call_external_process(command):
+    args = shlex.split(command)
+    try:
+        _verbose_print(f'executing \'{command}\'')
+        subprocess.run(args, check=True, encoding='utf-8', stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.SubprocessError as err:
+        _error_print(f'error executing \'{command}\', {err}')
+        return False
+    except Exception as err:
+        _error_print(f'error executing \'{command}\', {err}')
+        return False
 
 def _is_video_file(file_name):
     extension = os.path.splitext(file_name)[1]
@@ -194,14 +208,8 @@ def _remove_metadata_from_file(file_name):
     _verbose_print(f'removing metadata from {file_name}')
     new_file_name = _create_temp_name(file_name)
     _verbose_print(f'temporary metadata free file will be named {new_file_name}')
-    command = 'ffmpeg -i "{}" -map_chapters -1 -map_metadata -1 -c:v copy -c:a copy "{}"'.format(file_name, new_file_name)
-    _verbose_print(f'command \'{command}\'')
-    process = subprocess.Popen(command, shell=True, bufsize=1, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    stdoutdata, stderrdata = process.communicate()
-    if process.wait() != 0:
-        _error_print(f'while running command \'{command}\'')
-        _error_print('DETAILS:', prefix=False)
-        _error_print(stderrdata.decode('utf-8'), prefix=False)
+    command = f'ffmpeg -i "{file_name}" -map_chapters -1 -map_metadata -1 -c:v copy -c:a copy "{new_file_name}"'
+    if not _call_external_process(command):
         _clean_up_on_error(new_file_name)
         return False
     _verbose_print(f'created {new_file_name} and removed the metadata')

@@ -22,9 +22,6 @@ user_tags = {
 
 am = AnsiMarkup(tags=user_tags)
 
-def _error_print(msg):
-    am.ansiprint(f'<error>ERROR: {msg}</error>', file=sys.stderr)
-
 def _title_print(title):
     am.ansiprint(f'<title>{title}</title>')
 
@@ -45,7 +42,8 @@ def _parse_args():
     parser.add_argument('-i', '--identifier', metavar='<VALUE1:VALUE2:VALUE3>', help='out a specified list of identifiers by splitting them to using the <seperator>')
     parser.add_argument('variables', nargs='*', metavar='<ENV-VAR>', help='specify which environment variables should be printed')
     args = parser.parse_args()
-    app_settings.set(vars(args))
+    app_settings.update(vars(args))
+    app_settings.print_settings(print_always=True)
 
     if _is_only_defaults_set():
         app_settings.variables.append('PATH')
@@ -95,7 +93,7 @@ def _output_environment_variables_names_values(raw):
             for value_part in value_parts:
                 if value_part not in value_parts_dups and value_parts.count(value_part) > 1:
                     value_parts_dups.append(value_part)
-                    #return _error_print(f'environment variable {name} has multiple values of {value_part}')
+                    #return app_settings.error(f'environment variable {name} has multiple values of {value_part}')
                 if not updated_value:
                     current_line_len += len(value_part)
                     updated_value = value_part
@@ -111,7 +109,7 @@ def _output_environment_variables_names_values(raw):
             for value_part in value_parts:
                 if value_part not in value_parts_dups and value_parts.count(value_part) > 1:
                     value_parts_dups.append(value_part)
-                    #return _error_print(f'environment variable {name} has multiple values of {value_part}')
+                    #return app_settings.error(f'environment variable {name} has multiple values of {value_part}')
                 updated_value += f', {value_part}' if updated_value else value_part
         if index % 2 == 0:
             name_values.append((am.ansistring(f'<name>{name}:</name>'), am.ansistring(f'<text>{updated_value}</text>')))
@@ -171,7 +169,7 @@ def _output_environment_variable_values(environment_variables, raw, print_one_li
             else:
                 am.ansiprint(f'<name>{environment_variable}:</name> <text>{_get_information_on_value(value)}</text>')
         else:
-            return _error_print(f'{environment_variable} is not defined within the current environment')
+            return app_settings.error(f'{environment_variable} is not defined within the current environment')
     return True
 
 def _output_identifiers(values, seperator):

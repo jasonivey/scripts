@@ -49,5 +49,55 @@ function test_unicode {
     fi
 }
 
-test_unicode
+function find_all_files_in_package {
+    package_name=$1
+    files=$(pkgutil --files $package_name)
+    printf "\e[31m%s\e[1;37m %s\n\e[0m" "Scanning For Files:" "$package_name"
+    count=0
+    while IFS= read -r file;
+    do
+        if [ -f "$file" ]; then
+            printf "\e[31m%s\e[1;37m %s\n\e[0m" "$file" "EXISTS"
+            found_file_count=$($found_file_count + 1)
+            ((count++))
+        #else
+        #    printf "\e[36m%s\e[1;37m %s\n\e[0m" "$file" "IS MISSING"
+        fi
+    done <<< "$files"
+
+    printf "\e[31m%s\e[1;37m %s\n\e[0m" "Total files:" "$count"
+    if [[ "$count" -eq 0 ]]; then
+        printf "\e[31m%s\e[1;37m %s\n\e[0m" "Uninstalling:" "$package_name"
+        # test this scirpt before use!
+        #result=$(pkgutil --forget $package_name)
+        exit;
+        result="0"
+        if [[ "$result" != "0" ]]; then
+            printf "\e[31m%s\e[1;37m %s\n\e[0m" "ERROR:" "uninstalling $package_name"
+        fi
+    fi
+}
+
+function find_all_files_in_packages  {
+    packages=$(pkgutil --pkgs com.apple.pkg.XcodeSystemResources)
+    while IFS= read -r package;
+    do
+        find_all_files_in_package "$package"
+    done <<< "$packages"
+
+}
+
+function test_find_files {
+    list=$(pkgutil --files com.apple.pkg.XcodeSystemResources)
+    while IFS= read -r line;
+    do
+        if [ -f "$line" ]; then
+            printf "\e[31m%s\e[1;37m EXISTS\n\e[0m" "$line"
+        else
+            printf "\e[36m%s\e[1;37m IS MISSING\n\e[0m" "$line"
+        fi
+    done <<< "$list"
+}
+
+find_all_files_in_packages
 unset test_unicode

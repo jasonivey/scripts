@@ -2,6 +2,7 @@
 # vim: awa:sts=4:ts=4:sw=4:et:cin:fdm=manual:tw=120:ft=python
 
 from ansimarkup import AnsiMarkup, parse
+from app_settings import app_settings
 import argparse
 import datetime
 import os
@@ -72,18 +73,6 @@ COLUMN_RH_WIDTH_1 = 20
 COLUMN_LH_WIDTH_2 = 25
 COLUMN_RH_WIDTH_2 = 14
 
-_VERBOSE = False
-
-def _verbose_print(msg):
-    if _VERBOSE:
-        am.ansiprint(f'<info>INFO: {msg}</info>', file=sys.stdout)
-
-def _error_print(msg):
-    am.ansiprint(f'<error>ERROR: {msg}</error>', file=sys.stderr)
-
-def _assert_message(msg):
-    return am.ansistring(f'<error>ASSERT: {msg}</assert>')
-
 def _print_time_of_daygreeting(message):
     am.ansiprint(f'<greeting>{message}</greeting>\n')
 
@@ -111,7 +100,7 @@ def _print_boot_time(boot_time):
     print(f'  {lh:{lh_width}} {rh:{rh_width}}\n')
 
 def _print_last_login(values):
-    assert len(values) >= 1, _assert_message('last login message must be at least one line long')
+    assert len(values) >= 1, app_settings.assertion('last login message must be at least one line long')
     rhs = []
     rhs_widths = []
     for value in values:
@@ -169,14 +158,14 @@ def _convert_time_duration(dt, hour, minute):
     return dt + delta
 
 def _convert_date_time(dt):
-    return '{:%d-%b-%Y %I:%M:%S%p %Z}'.format(dt).replace('AM', 'am').replace('PM', 'pm')
+    return f'{dt:%d-%b-%Y %I:%M:%S%p %Z}'.replace('AM', 'am').replace('PM', 'pm')
 
 def _run_external_command(cmd):
     args = shlex.split(cmd)
     process = subprocess.Popen(args, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
     if process.wait() != 0:
-        _error_print(error)
+        app_settings.error(error)
         return None
     return output
 
@@ -219,7 +208,7 @@ class MacOsVersionName:
 
 def _get_macosx_name():
     output = _run_external_command('sw_vers')
-    assert output, _assert_message('sw_vers command did not return any information')
+    assert output, app_settings.assertion('sw_vers command did not return any information')
     version = build = None
     for line in output.splitlines():
         match = re.match('^ProductVersion:\s+(?P<product_version>.*)$', line)
@@ -228,10 +217,10 @@ def _get_macosx_name():
         match = re.match('^BuildVersion:\s+(?P<build_version>.*)$', line)
         if match:
             build = match.group('build_version')
-    assert version and build, _assert_message('sw_vers is no longer giving the ProductVersion and BuildVersion')
+    assert version and build, app_settings.assertion('sw_vers is no longer giving the ProductVersion and BuildVersion')
     utsname = platform.uname()
-    version_details = '({} {} {})'.format(utsname.system, utsname.release, utsname.machine)
-    return '{} {}.{} {}'.format(MacOsVersionName(version), version, build, version_details)
+    version_details = f'({utsname.system} {utsname.release} {utsname.machine})'
+    return f'{MacOsVersionName(version)} {version}.{build} {version_details}'
 
 def _get_linux_name():
     name = version = None
@@ -247,11 +236,11 @@ def _get_linux_name():
     if not name:
         name = 'Linux'
     utsname = platform.uname()
-    version_details = '(GNU/{} {} {})'.format(utsname.system, utsname.release, utsname.machine)
+    version_details = f'(GNU/{utsname.system} {utsname.release} {utsname.machine})'
     if not version:
-        return '{} {}'.format(name, version_details)
+        return f'{name} {version_details}'
     else:
-        return '{} {} {}'.format(name, version, version_details)
+        return f'{name} {version} {version_details}'
 
 def _get_os_name():
     return _get_macosx_name() if sys.platform == 'darwin' else _get_linux_name()
@@ -273,47 +262,47 @@ def _get_time_of_day():
     elif hour >= AFTERNOON_HOUR:
         return AFTERNOON_LABEL
     else:
-        assert hour >= MORNING_HOUR and hour < AFTERNOON_HOUR, _assert_message('hour "{}" is out of the 0-23 range').format(hour)
+        assert hour >= MORNING_HOUR and hour < AFTERNOON_HOUR, app_settings.assertion(f'hour "{hour}" is out of the 0-23 range')
         return MORNING_LABEL
 
 def _get_time_of_day_greeting():
     label = _get_time_of_day()
-    assert label in TIME_OF_DAY, _assert_message('unknown label "{}" found for time of day'.format(label))
+    assert label in TIME_OF_DAY, app_settings.assertion(f'unknown label "{label}" found for time of day')
     os_name = _get_os_name()
-    assert os_name, _assert_message('unable to retrieve the operating system version details')
-    return 'Good {} {} and welcome to {}'.format(label, TIME_OF_DAY[label], os_name)
+    assert os_name, app_settings.assertion('unable to retrieve the operating system version details')
+    return f'Good {label} {TIME_OF_DAY[label]} and welcome to {os_name}'
 
 def _get_time_of_day_emoji():
     label = _get_time_of_day()
-    assert label in TIME_OF_DAY, _assert_message('unknown label "{}" found for time of day'.format(label))
+    assert label in TIME_OF_DAY, app_settings.assertion(f'unknown label "{label}" found for time of day')
     return TIME_OF_DAY[label]
 
 def _get_load_average():
     load_average = psutil.getloadavg()[0]
-    return '{:.2%}'.format(load_average / 100.0)
+    return f'{load_average / 100.0:.2%}'
 
 def _get_process_count():
     return str(len(psutil.pids()))
 
 def _get_root_partition_usage():
     partitions = [partition for partition in psutil.disk_partitions() if partition.mountpoint == '/']
-    assert len(partitions) == 1, _assert_message('found {} partitions with the "/" mount point', len(partitions))
+    assert len(partitions) == 1, app_settings.assertion(f'found {len(partitions)} partitions with the "/" mount point')
     partition = partitions[0]
     usage = psutil.disk_usage(partition.mountpoint)
     total_amount = bytes2human(usage.total)
-    used_percent = '{:.1%}'.format(usage.percent / 100.0)
-    return '{} of {}'.format(used_percent, total_amount)
+    used_percent = f'{usage.percent / 100.0:.1%}'
+    return f'{used_percent} of {total_amount}'
 
 def _get_user_count():
     return str(len(psutil.users()))
 
 def _get_virtual_memory_usage():
     virtual_memory = psutil.virtual_memory()
-    return '{:.0%}'.format(virtual_memory.percent / 100)
+    return f'{virtual_memory.percent / 100:.0%}'
 
 def _get_swap_memory_usage():
     swap_memory = psutil.swap_memory()
-    return '{:.0%}'.format(swap_memory.percent / 100)
+    return f'{swap_memory.percent / 100:.0%}'
 
 def _is_reboot_required():
     filename = '/var/run/reboot-required'
@@ -325,31 +314,30 @@ def _is_reboot_required():
 def _get_boot_time():
     boot_timestamp = psutil.boot_time()
     boot_time = datetime.datetime.fromtimestamp(boot_timestamp, _get_timezone_info())
-    return '{:%a, %d-%b-%Y %I:%M:%S%p %Z}'.format(boot_time).replace('AM', 'am').replace('PM', 'pm')
+    return f'{boot_time:%a, %d-%b-%Y %I:%M:%S%p %Z}'.replace('AM', 'am').replace('PM', 'pm')
 
 def _get_system_information_time():
     now = _get_now()
     time_emoji = _get_time_of_day_emoji()
     prefix = 'System information as of'
-    return '{0} {1:%a, %d-%b-%Y} {2} {1:%I:%M:%S%p %Z}'.format(prefix, now, time_emoji).replace('AM', 'am').replace('PM', 'pm')
+    return f'{prefix} {now:%a, %d-%b-%Y} {time_emoji} {now:%I:%M:%S%p %Z}'.replace('AM', 'am').replace('PM', 'pm')
 
 def _get_macosx_available_mail():
-    cmd = 'mailq'
-    output = _run_external_command(cmd)
-    assert output, _assert_message('mailq did not return any output')
+    output = _run_external_command('mailq')
+    assert output, app_settings.assertion('mailq did not return any output')
     if output.strip() == 'Mail queue is empty':
         return 0
     else:
         return 1
 
 def _get_linux_available_mail():
-    cmd = r'pam_tally --file /var/mail/{0} --user {0}'.format(os.getlogin())
+    cmd = f'pam_tally --file /var/mail/{os.getlogin()} --user {os.getlogin()}'
     output = _run_external_command(cmd)
     if not output:
-        _verbose_print('pam_tally did not return any info -- possible /var/mail/{os.getlogin()} doesn\'t exist')
+        app_settings.verbose(f'pam_tally did not return any info -- possible /var/mail/{os.getlogin()} doesn\'t exist')
         return 0
-    match = re.match(r'^User\s+{}\s*\(\d+\)\s*has\s*(?P<mail>\d+)$'.format(os.getlogin()), output.strip())
-    assert match, _assert_message('definition of pam_tally output has changed')
+    match = re.match(fr'^User\s+{os.getlogin()}\s*\(\d+\)\s*has\s*(?P<mail>\d+)$', output.strip())
+    assert match, app_settings.assertion('definition of pam_tally output has changed')
     return int(match.group('mail'))
 
 def _get_unopened_mail():
@@ -365,7 +353,7 @@ def _get_quote():
 
 def _get_last_login():
     output = _run_external_command('last')
-    assert output, _assert_message('system command "last" did not return anything')
+    assert output, app_settings.assertion('system command "last" did not return anything')
     for line in output.splitlines():
         line = line.strip()
         parts = line.split()
@@ -383,7 +371,7 @@ def _get_last_login():
             logout_time_str = 'still logged in'
         else:
             match = re.match('^(?P<hour>\d\d):(?P<minute>\d\d)$', parts[-2])
-            assert match, _assert_message('the last command did not return the duration of the last login')
+            assert match, app_settings.assertion('the last command did not return the duration of the last login')
             hour = int(match.group('hour'))
             minute = int(match.group('minute'))
             logout_time_str = _convert_date_time(_convert_time_duration(login_time, hour, minute))
@@ -445,10 +433,10 @@ def output_login_info():
 
 def _parse_args():
     parser = argparse.ArgumentParser(description='Replacement for standard Linux banner for both OS X and Linux')
-    parser.add_argument('-v', '--verbose', action="store_true", help='increase output verbosity')
+    parser.add_argument('-v', '--verbose', action='count', default=0, help='increase output verbosity')
     args = parser.parse_args()
-    global _VERBOSE
-    _VERBOSE = args.verbose
+    app_settings.update(vars(args))
+    app_settings.print_settings(print_always=False)
 
 def main():
     _parse_args()

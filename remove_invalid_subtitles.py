@@ -18,14 +18,12 @@ def _is_valid_directory(dir_name):
 
 def _parse_args():
     parser = argparse.ArgumentParser(description='Find all of the subtitle files which are invalid')
-    parser.add_argument('-v', '--verbose', action="store_true", help='increase output verbosity')
+    parser.add_argument('-v', '--verbose', action='count', default=0, help='increase output verbosity')
     parser.add_argument('-l', '--live-run', action="store_true", help='remove all of the invalid subtitle')
-    parser.add_argument('directory', metavar='PATH', type=_is_valid_directory, nargs='+', help='one or more directories to search for invalid subtitles')
+    parser.add_argument('directories', metavar='PATH', type=_is_valid_directory, nargs='+', help='one or more directories to search for invalid subtitles')
     args = parser.parse_args()
-    app_settings.verbose = args.verbose
-    app_settings.live_run = args.live_run
-    app_settings.directories = args.directory
-    print(app_settings)
+    app_settings.update(vars(args))
+    app_settings.print_settings(print_always=False)
 
 def _get_subtitle_filenames(dir_name):
     for root, dirs, files in os.walk(dir_name):
@@ -39,31 +37,31 @@ def _get_subtitle_line_count(filename):
     process = subprocess.Popen(args, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
     if process.wait() != 0:
-        app_settings.print('ERROR: {} while getting line count on {}'.format(error, filename))
+        app_settings.error(f'{error} while getting line count on {filename}')
     match = re.match(r'^(?P<count>\d+)\s+.*$', output.strip())
     line_count = int(match.group('count')) if match else 0
     return line_count
 
 def _get_invalid_subtitle_filenames(dir_name):
     for filename in _get_subtitle_filenames(dir_name):
-        #app_settings.print('File: {}'.format(filename))
+        app_settings.debug(f'File: {filename}')
         line_count = _get_subtitle_line_count(filename)
-        #app_settings.print('File: {}\n    : {} lines'.format(filename, line_count))
+        app_settings.debug(f'File: {filename}\n    : {line_count} lines')
         if line_count < 1000:
-            app_settings.print('    : {} - {} INVALID'.format(line_count, filename))
+            app_settings.info(f'{line_count} - {filename} INVALID')
             yield filename
 
 def remove_invalid_subtitles(dir_name):
     for filename in _get_invalid_subtitle_filenames(dir_name):
         if app_settings.live_run:
             try:
-                app_settings.print('    : {} live run -- deleting'.format(filename))
+                app_settings.info(f'{filename} live run -- deleting')
                 os.remove(path)
-                app_settings.print('    : {} live run -- deleted'.format(filename))
+                app_settings.info(f'{filename} live run -- deleted')
             except OSError as e:
-                app_settings.print('    : ERROR {} - {} file: {}'.format(e.code, e.stderr, filename))
+                app_settings.error(f'{e.code} - {e.stderr} file: {filename}')
         else:
-            app_settings.print('    : {} dry run -- doing nothing'.format(filename))
+            app_settings.info(f'{filename} dry run -- doing nothing')
 
 def main():
     _parse_args()

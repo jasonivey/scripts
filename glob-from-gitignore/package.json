@@ -1,0 +1,20 @@
+{
+  "name": "glob-from-gitignore",
+  "version": "0.0.1",
+  "description": "Convert all gitignore patterns and gitignore global patterns to glob patterns",
+  "main": "bin/glob-from-gitignore.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Jason Ivey (https://github.com/jasonivey)",
+  "license": "MIT",
+  "bin": {
+    "glob-from-gitignore": "./bin/glob-from-gitignore.js"
+  },
+  "devDependencies": {
+    "expandenv": "^1.0.0",
+    "gitignore-to-glob": "^0.3.0",
+    "yargs": "^15.4.1"
+  }
+}

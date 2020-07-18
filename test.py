@@ -1,91 +1,80 @@
 #!/usr/bin/env python3
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
 
-import ipaddress
+from ansimarkup import AnsiMarkup, parse
+import csv
+import datetime
+import operator
 import os
+from pathlib import Path
 import re
-import shlex
 import sys
-import subprocess
 import traceback
 
 _VERBOSE = False
-'''
-def _verbose_print(s):
-    if _VERBOSE:
-        print(s, file=sys.stdout)
+user_tags = {
+    'error' : parse('<bold><red>'),
+    'name'  : parse('<bold><cyan>'),
+    'value' : parse('<bold><white>'),
+}
 
-def call_external_command(command):
-    _verbose_print('INFO: command: %s' % command)
-    args = shlex.split(command)
-    process = subprocess.Popen(args, encoding='utf-8', universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output, error = process.communicate()
-    if process.wait() != 0:
-        excusable_error = 'is not a recognized network service'
-        if command.find('-getinfo') != -1 and (error.find(excusable_error) != -1 or output.find(excusable_error) != -1):
-            return []
-        print('ERROR:  {}'.format(command), file=sys.stderr)
-        print('stderr: {}'.format(error), file=sys.stderr)
-        print('stdout: {}'.format(output), file=sys.stderr)
-        return []
-    return output.split('\n')
+am = AnsiMarkup(tags=user_tags)
 
-def list_all_hardware_ports():
-    output = call_external_command('networksetup -listallhardwareports')
-    hardware_ports = []
-    port = device = mac = None
-    for line in output:
-        match = re.search(r'^Hardware Port:\s*(?P<port>.*)', line.strip())
-        if match:
-            port = match.group('port').strip()
-            continue
-        match = re.search(r'^Device:\s*(?P<device>.*)', line.strip())
-        if match:
-            device = match.group('device').strip()
-            continue
-        match = re.search(r'^Ethernet Address:\s*(?P<mac>.*)', line.strip())
-        if match:
-            mac = match.group('mac').strip()
-        if port and device and mac:
-            hardware_ports.append((port, device, mac))
-            port = device = mac = None
+def _assert_msg(msg):
+    return am.ansistring(f'<error>{msg}</error>')
 
-    return hardware_ports
+def _print_name_value(name, max_name_len, value, prefix=None, postfix=None):
+    prefix = prefix if prefix is not None else ''
+    postfix = postfix if postfix is not None else ''
+    lh = am.ansistring(f'<name>{name}</name>')
+    rh = am.ansistring(f'<value>{value}</value>')
+    print(f'{prefix}{lh:{max_name_len + lh.delta}} {rh}{postfix}')
 
-def get_ip_info(service, mac):
-    command = 'networksetup -getinfo \"{}\"'.format(service)
-    output = call_external_command(command)
-    hardware_ports = []
-    ip = new_mac = None
-    for line in output:
-        match = re.search(r'^IP address:\s*(?P<ip>.*)', line.strip())
-        if match:
-            ip = match.group('ip').strip()
-            continue
-        match = re.search(r'^{} ID:\s*(?P<mac>.*)'.format(service), line.strip())
-        if match:
-            new_mac = match.group('mac').strip()
-        if ip and new_mac:
-            if mac != new_mac:
-                raise Exception('ERROR: mac address found with networksetup -listallhardwareports {} is not the same as found when calling {} {}'.format(mac, command, new_mac))
-            return ipaddress.ip_address(ip)
-    return None
+def _get_name_value_compact(name, max_name_len, value, prefix=None, postfix=None):
+    prefix = prefix if prefix is not None else ''
+    postfix = postfix if postfix is not None else ''
+    return am.ansistring(f'{prefix}<name>{name}</name> <value>{value}</value>{postfix}')
 
-def find_networks():
-    networks = {}
-    for hardware_port in list_all_hardware_ports():
-        (port, device, mac) = hardware_port
-        ip = get_ip_info(port, mac)
-        if not ip:
-            continue
-        networks[port] = (ip, mac)
-    return networks
-    #print('Hardware Port: {}\nDevice: {}\nEthernet Address: {}\nIP address: {}\n'.format(hardware_port[0], hardware_port[1], hardware_port[2], ip))
-'''
+def _get_timezone_info():
+    return datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+
+def _convert_date_time(dt):
+    return f'{dt:%d-%b-%Y %I:%M:%S%p %Z}'.replace('AM', 'am').replace('PM', 'pm')
+
+def _parse_datetime(dt_str):
+    dt = datetime.datetime.strptime(dt_str, '%m/%d/%Y %I:%M %p') # Example '11/08/2011 03:00 PM'
+    tz = _get_timezone_info()
+    return dt.replace(tzinfo=tz)
+
+def _parse_datetime_row(row):
+    return _parse_datetime(' '.join(row[2:4]))
+
+def _parse_appointment_row(row, index):
+    assert len(row) >= 4, _assert_msg(f'row {index} does not have 4 or more columns as required')
+    appt_time = _parse_datetime(' '.join(row[2:4]))
+    appt_type = row[0].title()
+    doctor = row[1].title()
+    return appt_time, appt_type, doctor
+
+def parse_doctor_appointments(file_name):
+    path = Path(os.path.expandvars(file_name))
+    with path.open(newline='', encoding='utf-8') as handle:
+        reader = csv.reader(handle)
+        sorted_rows = sorted(reader, key=lambda x: _parse_datetime_row(x))
+        for index, row in enumerate(sorted_rows):
+            yield _parse_appointment_row(row, index)
+
+def get_doctors_appointments():
+    MAX_WIDTH = len('Appointment:')
+    file_name = '$HOME/Downloads/crump-visits.csv'
+    for appt_time, appt_type, doctor in parse_doctor_appointments(file_name):
+        s = _get_name_value_compact('Appointment:', None, _convert_date_time(appt_time), postfix=', ')
+        s += _get_name_value_compact('Type:', None,  appt_type, postfix=', ')
+        print(s + _get_name_value_compact('Doctor:', None, doctor))
 
 def main(args):
     try:
-        print('All you lovely people like to come outside and play!')
+        get_doctors_appointments()
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)

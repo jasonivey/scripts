@@ -46,9 +46,8 @@ def _parse_args():
     _verbose_print('Args, verbose: {}, color: {}'.format(_VERBOSE, color))
     return color
 
-# I was unable to get this working for a long time. It would succeed in calling the command but it would not affect
-#  the tab color. I thought it was due to the starting of the child process but I finally got it working once I
-#  started splitting the arguments, passing shell=False and passing the os.environ in as the new env.
+# Previous versions contain various attempts at trying to call the operating system to
+#  change the tab color in iTerm2.
 def _call_subprocess_run(cmd):
     try:
         _verbose_print('INFO: command: %s' % cmd)
@@ -61,58 +60,8 @@ def _call_subprocess_run(cmd):
         print('ERROR: subprocess run error calling {}'.format(cmd))
         return False
 
-# Attempting to figure out why subprocess.call wouldn't work I also tested the following os.spawn calls. There didn't
-#  seem to be a problem with these calls at all and I was able to change the tab color successfully.
-def _call_os_spawn(cmd):
-    _verbose_print('INFO: command: %s' % cmd)
-    args = shlex.split(cmd)
-    exit_code = os.spawnvpe(os.P_WAIT, args[0], args, os.environ)
-    if exit_code == 0:
-        _verbose_print('INFO: calling {} returned success'.format(cmd))
-        return True
-    else:
-        print('ERROR: calling {} returned error {}'.format(cmd, exit_code), file=sys.stderr)
-        return False
-
-# This worked where I had trouble with subprocess.call due to it creating another process
-def _call_os_system(cmd):
-    _verbose_print('INFO: command: %s' % cmd)
-    status = os.system(cmd)
-    if os.WIFEXITED(status):
-        exit_code = os.WEXITSTATUS(status)
-        if exit_code == 0:
-            _verbose_print('INFO: calling {} returned success'.format(cmd))
-        else:
-            print('ERROR: calling {} returned error {}'.format(cmd, exit_code), file=sys.stderr)
-        return exit_code == 0
-    elif os.WIFSIGNALED(status):
-        if os.WCOREDUMP(status):
-            print('ERROR: the call to {} signaled that it core dumped'.format(cmd), file=sys.stderr)
-        else:
-            _verbose_print('INFO: the call to {} was TERMINATED by a signal'.format(cmd))
-            signal = os.WTERMSIG(status)
-            print('ERROR: the call to {} was TERMINATED by signal {}'.format(cmd, signal), file=sys.stderr)
-        return False
-    elif os.WIFSTOPPED(status):
-        _verbose_print('INFO: the call to {} was STOPPED by a signal'.format(cmd))
-        signal = os.WSTOPSIG(status)
-        print('ERROR: the call to {} was STOPPED by signal {}'.format(cmd, signal), file=sys.stderr)
-        return False
-    return True
-
 def _call_echo_command(color_str):
-    cmd_name = 'echo'
-    cmd_args = '-n -e'
-    post_cmd = ''
-    if sys.platform == 'darwin':
-        _verbose_print('INFO: running in a mac OS environment')
-        if shutil.which('gecho'):
-            _verbose_print('INFO: found the gnu version of echo (gecho), using that instead')
-            cmd_name = 'gecho'
-        else:
-            _verbose_print('INFO: unable to find the gnu version of echo (gecho), using standard version and redirecting output to null')
-            post_cmd = '> /dev/null 2>&1'
-    cmd = '{} {} {} {}'.format(cmd_name, cmd_args, color_str, post_cmd)
+    cmd = f'printf {color_str}'
     _call_subprocess_run(cmd)
 
 def set_tab_color(color):

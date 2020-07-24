@@ -8,8 +8,9 @@ import traceback
 from verbose import Verbose
 
 def main():
-    = _parse_args()
+    #= _parse_args()
     try:
+        pass
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
@@ -18,4 +19,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-

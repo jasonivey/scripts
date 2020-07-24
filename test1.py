@@ -10,14 +10,14 @@ import traceback
 class Foo(object):
     def __init__(self, number):
         self._number = number
-    
+
     @property
     def number(self):
         return self._number
-    
+
     def __hash__(self):
         return hash(self._number)
-    
+
     def __str__(self):
         return str(self._number)
 
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     metadata = '''# ss component
 
 [component dependencies]
-nlplib : code, 
+nlplib : code,
 PsFederator : code,
 
 [misc]
@@ -69,7 +69,7 @@ rpmbuild: any, linux, rpmbuild --version, Run 'yum install rpm-build' on yum-bas
 valgrind: any, linux|osx, valgrind --version, Run 'yum install valgrind' on yum-based distros
 
 [run tools]
-''' 
+'''
     import configparser
     config = configparser.SafeConfigParser()
     config.optionxform = str
@@ -79,5 +79,4 @@ valgrind: any, linux|osx, valgrind --version, Run 'yum install valgrind' on yum-
     for section in ['build tools', 'test tools', 'run tools']:
         for name, value in config.items(section):
             print(name, value)
-
-	sys.exit(main())
+    sys.exit(main())

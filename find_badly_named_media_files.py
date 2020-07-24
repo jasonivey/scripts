@@ -63,7 +63,7 @@ class TelevisionShow(object):
         self.__path = path
         self.__name = name
         self.__seasons = {}
-        
+
     @property
     def seasons(self):
         return self.__seasons
@@ -142,7 +142,6 @@ def _parse_tv_data(match, filename, tv_data, shows):
     season_num = int(match.group('season_num'))
     episode_num = int(match.group('episode_num'))
     subname = '' if not match.group('subname') else match.group('subname')
-    
     data = {}
     data['name'] = name
     data['season'] = season_num
@@ -151,8 +150,8 @@ def _parse_tv_data(match, filename, tv_data, shows):
     data['path'] = filename
     if show not in shows:
         shows[show] = TelevisionShow(filename)
-    if season not in shows[show].seasons
-        
+    if season not in shows[show].seasons:
+        pass
     if show not in tv_data:
         tv_data[show] = {}
     if season not in tv_data[show]:
@@ -161,14 +160,14 @@ def _parse_tv_data(match, filename, tv_data, shows):
     return tv_data
 
 def _parse_movie_data(match, filename):
-    #regex = r'(?P<name>[^)]+)\((?P<year>\d{4})\)(?:\s-\s(?P<type>.*))?' 
+    #regex = r'(?P<name>[^)]+)\((?P<year>\d{4})\)(?:\s-\s(?P<type>.*))?'
     name = match.group('name')
     year = int(match.group('year'))
     release_type = '' if not match.group('type') else match.group('type')
     data = {}
     data['name'] = name
-    data['year'] = year 
-    data['release_type'] = release_type 
+    data['year'] = year
+    data['release_type'] = release_type
     return filename, data
 
 def _parse_audio_data(match, filename):
@@ -213,7 +212,7 @@ def _scan_media_directory_impl(directory, regex, media_type, verbose, find_prere
         relative_name = fullname[len(directory) + 1:]
         match = re.match(regex, relative_name)
         if not match:
-            print('Found unknown file naming convention: %s' % fullname) 
+            print('Found unknown file naming convention: %s' % fullname)
             errors_found += 1
             continue
 
@@ -243,7 +242,7 @@ def _scan_media_directory(directory, media_type, verbose, find_prerelease=False)
         #regex = r'(?:(?P<name>.*)\s-\s)?s(?P<season>\d{2})e(?P<episode>\d{2})(?:\s-\s(?P<subname>.*))?'
         return _scan_media_directory_impl(directory, regex, media_type, verbose, find_prerelease)
     elif media_type == MediaType.MOVIES:
-        regex = r'(?P<name>[^)]+)\((?P<year>\d{4})\)(?:\s-\s(?P<type>.*))?' 
+        regex = r'(?P<name>[^)]+)\((?P<year>\d{4})\)(?:\s-\s(?P<type>.*))?'
         return _scan_media_directory_impl(directory, regex, media_type, verbose, find_prerelease)
     else:
         assert media_type == MediaType.AUDIO

@@ -52,18 +52,20 @@ def cache_motd_info():
     pass
 
 def write_motd_config(path):
+    pass
+    '''
     app_settings.verbose('creating new motd config in {path}')
     path.parent.mkdir(parents=True, exist_ok=True)
     config = configparser.ConfigParser()
-    config['DEFAULT'] = {} 
+    config['DEFAULT'] = {}
     config['DEFAULT']['database'] = str(path.with_name('motd.db'))
-    config['DEFAULT']['values'] = [ 
-    'computer-name', 'hostname', 'public-ip', 'mail', 
-    'system-load', 'processes', 
+    config['DEFAULT']['values'] = [
+    'computer-name', 'hostname', 'public-ip', 'mail',
+    'system-load', 'processes',
     'root-usage', 'users-logged-in',
-    'memory-usage', 'swap-usage', 
+    'memory-usage', 'swap-usage',
     config[
-
+    '''
 
 def main():
     _parse_args()

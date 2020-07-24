@@ -9,7 +9,7 @@ def RecurseDirectory( dir ):
         newname = ''
 
         if oldname.find( ',' ) != -1:
-	    newname = string.replace( oldname, ',', ' -' )
+            newname = string.replace( oldname, ',', ' -' )
             print(f)
 
         if len( newname ) != 0:
@@ -18,11 +18,10 @@ def RecurseDirectory( dir ):
             newname = oldname
 
         mode = os.stat( newname ).st_mode
-       
+
         if S_ISDIR( mode ):
             RecurseDirectory( newname )
 
 
 if __name__ == '__main__':
     RecurseDirectory( '.' )
-    

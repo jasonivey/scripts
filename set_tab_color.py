@@ -3,6 +3,7 @@
 # autowrite, softtabstop, tabstop, shiftwidth, expandtab, cindent, foldmethod, textwidth, filetype
 
 import argparse
+from pathlib import Path
 import os
 import shlex
 import shutil
@@ -39,10 +40,28 @@ def _parse_args():
     args = parser.parse_args()
     global _VERBOSE
     _VERBOSE = args.verbose
-    if not args.color and not os.isatty(sys.stdin.fileno()):
-        color = sys.stdin.readline().strip()
-    else:
-        color = args.color
+    color = args.color
+
+    # if we didn't get the color off of the command line then there are a couple of other sources
+    if not color and not os.isatty(sys.stdin.fileno()):
+        # the user is piping the information in...
+        color = sys.stdin.readline().strip().lower()
+        color = color if color in _COLORS else None
+    if not color and os.path.isfile(os.path.expandvars('$HOME/.zsh_color')):
+        # the user is assuming we can grab the default from .zsh_color
+        path = Path(os.path.expandvars('$HOME/.zsh_color'))
+        color_text = path.read_text().splitlines()
+        if len(color_text) > 0 and color_text[0].strip().lower() in _COLORS:
+            color = color_text[0].strip().lower()
+    if not color and os.path.isfile(os.path.expandvars('$HOME/.bash_color')):
+        # the user is assuming we can grab the default from .bash_color
+        path = Path(os.path.expandvars('$HOME/.bash_color'))
+        color_text = path.read_text().splitlines()
+        if len(color_text) > 0 and color_text[0].strip().lower() in _COLORS:
+            color = color_text[0].strip().lower()
+    if not color:
+        raise parser.error('a valid color was not specified')
+
     _verbose_print('Args, verbose: {}, color: {}'.format(_VERBOSE, color))
     return color
 

@@ -69,7 +69,7 @@ class AppSettings(UserDict):
             msg = 'app settings:\n'
             for name, value in self.data.items():
                 if isinstance(value, list):
-                    value = ', '.join(value)
+                    value = ', '.join([str(elem) for elem in value])
                 msg += f'  {name}: "{value}"\n'
             am.ansiprint('<{0}>{1}</{0}>'.format(OutputType.INFO.name, msg), end='', file=sys.stdout)
 

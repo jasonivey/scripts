@@ -10,6 +10,7 @@ import platform
 import pprint
 import psutil
 from psutil._common import bytes2human
+import random
 import re
 import shlex
 import subprocess
@@ -38,12 +39,18 @@ user_tags = {
     'reboot'      : parse('<bold><red>'),      # bold red
 }
 
+random.seed()
+
 am = AnsiMarkup(tags=user_tags)
 
-MORNING_EMOJI   = '🌤'
-AFTERNOON_EMOJI = '🌎'
-EVENING_EMOJI   = '🌖'
-NIGHT_EMOJI     = '🌙'
+MORNING_EMOJIS   = ['🌤', '⛅', '🌦️', '🌤️', '🌥️']
+#MORNING_EMOJI   = '🌤'
+AFTERNOON_EMOJIS = ['🌎', '🌎', '🌍', '🌏', '🌞']
+#AFTERNOON_EMOJI = '🌎'
+EVENING_EMOJIS   = ['🌙', '🌖', '🌕', '🌓', '🌛', '🌝', '🌗', '🌜', '🌑', '🌚', '🌘', '🌒', '🌔']
+#EVENING_EMOJI   = '🌖'
+NIGHT_EMOJIS     = ['⭐', '💫', '🌟', '☄']
+#NIGHT_EMOJI     = '🌟'
 
 # Morning from 5am - 12pm
 MORNING_HOUR=5
@@ -63,15 +70,44 @@ TIME_OF_DAY_LABELS = {MORNING_HOUR   : MORNING_LABEL,
                       AFTERNOON_HOUR : AFTERNOON_LABEL,
                       EVENING_HOUR   : EVENING_LABEL,
                       NIGHT_HOUR     : NIGHT_LABEL}
-TIME_OF_DAY = {'morning'   : MORNING_EMOJI,
-               'afternoon' : AFTERNOON_EMOJI,
-               'evening'   : EVENING_EMOJI,
-               'night'     : NIGHT_EMOJI}
+TIME_OF_DAY = {MORNING_LABEL   : random.choice(MORNING_EMOJIS),
+               AFTERNOON_LABEL : random.choice(AFTERNOON_EMOJIS),
+               EVENING_LABEL   : random.choice(EVENING_EMOJIS),
+               NIGHT_LABEL     : random.choice(NIGHT_EMOJIS)}
 
 COLUMN_LH_WIDTH_1 = 15
 COLUMN_RH_WIDTH_1 = 20
 COLUMN_LH_WIDTH_2 = 25
 COLUMN_RH_WIDTH_2 = 14
+
+def _get_time_of_day():
+    hour = _get_now().hour
+    if hour >= NIGHT_HOUR or hour < MORNING_HOUR:
+        return NIGHT_LABEL
+    elif hour >= EVENING_HOUR:
+        return EVENING_LABEL
+    elif hour >= AFTERNOON_HOUR:
+        return AFTERNOON_LABEL
+    else:
+        assert hour >= MORNING_HOUR and hour < AFTERNOON_HOUR, app_settings.assertion(f'hour "{hour}" is out of the 0-23 range')
+        return MORNING_LABEL
+
+def _get_time_of_day_emoji():
+    label = _get_time_of_day()
+    assert label in TIME_OF_DAY, app_settings.assertion(f'unknown label "{label}" found for time of day')
+    return TIME_OF_DAY[label]
+
+def _get_greeting(user_name):
+    time_of_day = _get_time_of_day()
+    emoji = _get_time_of_day_emoji()
+    if time_of_day == MORNING_LABEL:
+        return f'Morning {user_name}! {emoji}'
+    elif time_of_day == AFTERNOON_LABEL:
+        return f'Afternoon {user_name}! {emoji}'
+    elif time_of_day == EVENING_LABEL:
+        return f'Evening {user_name}! {emoji}'
+    else:
+        return f'{user_name} stop working already... it\'s the middle of the night! {emoji}'
 
 def _print_time_of_daygreeting(message):
     am.ansiprint(f'<greeting>{message}</greeting>\n')
@@ -160,14 +196,32 @@ def _convert_time_duration(dt, hour, minute):
 def _convert_date_time(dt):
     return f'{dt:%d-%b-%Y %I:%M:%S%p %Z}'.replace('AM', 'am').replace('PM', 'pm')
 
+def _run_external_shell_command(cmd):
+    try:
+        completed_process = subprocess.run(cmd, shell=True, check=True, encoding='utf-8', capture_output=True)
+        return completed_process.stdout
+    except subprocess.SubprocessError as err:
+        app_settings.error(f'"{cmd}" returned: {err}')
+        return None
+    except Exception as err:
+        app_settings.error(f'"{cmd}" returned: {err}')
+        return None
+
 def _run_external_command(cmd):
     args = shlex.split(cmd)
-    process = subprocess.Popen(args, encoding='utf-8', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output, error = process.communicate()
-    if process.wait() != 0:
-        app_settings.error(error)
+    try:
+        completed_process = subprocess.run(args, check=True, encoding='utf-8', capture_output=True)
+        return completed_process.stdout
+    except subprocess.SubprocessError as err:
+        if 'mailq' in args != -1:
+            return None
+        app_settings.error(f'"{cmd}" returned: {err}')
         return None
-    return output
+    except Exception as err:
+        if 'mailq' in args != -1:
+            return None
+        app_settings.error(f'"{cmd}" returned: {err}')
+        return None
 
 class MacOsVersionNames:
     def __init__(self):
@@ -253,29 +307,21 @@ def _get_packages_available():
         with open(updates_available) as updates_available_file:
             return updates_available_file.read().strip()
 
-def _get_time_of_day():
-    hour = _get_now().hour
-    if hour >= NIGHT_HOUR or hour < MORNING_HOUR:
-        return NIGHT_LABEL
-    elif hour >= EVENING_HOUR:
-        return EVENING_LABEL
-    elif hour >= AFTERNOON_HOUR:
-        return AFTERNOON_LABEL
-    else:
-        assert hour >= MORNING_HOUR and hour < AFTERNOON_HOUR, app_settings.assertion(f'hour "{hour}" is out of the 0-23 range')
-        return MORNING_LABEL
+def _get_linux_user_first_name():
+    return _run_external_shell_command('getent passwd $USER | awk -F \':\' \'{ print $5 }\' | awk \'{ print $1 }\'').strip()
+
+def _get_macosx_user_first_name():
+    return _run_external_shell_command('dscacheutil -q user -a name $USER | grep \'gecos:\' | awk \'{ print $2 }\'').strip()
+
+def _get_user_first_name():
+    return _get_macosx_user_first_name() if sys.platform == 'darwin' else _get_linux_user_first_name()
 
 def _get_time_of_day_greeting():
-    label = _get_time_of_day()
-    assert label in TIME_OF_DAY, app_settings.assertion(f'unknown label "{label}" found for time of day')
     os_name = _get_os_name()
+    user_name = _get_user_first_name()
+    greeting = _get_greeting(user_name)
     assert os_name, app_settings.assertion('unable to retrieve the operating system version details')
-    return f'Good {label} {TIME_OF_DAY[label]} and welcome to {os_name}'
-
-def _get_time_of_day_emoji():
-    label = _get_time_of_day()
-    assert label in TIME_OF_DAY, app_settings.assertion(f'unknown label "{label}" found for time of day')
-    return TIME_OF_DAY[label]
+    return f'{greeting} Welcome to {os_name}'
 
 def _get_load_average():
     load_average = psutil.getloadavg()[0]
@@ -324,11 +370,9 @@ def _get_system_information_time():
 
 def _get_macosx_available_mail():
     output = _run_external_command('mailq')
-    assert output, app_settings.assertion('mailq did not return any output')
-    if output.strip() == 'Mail queue is empty':
+    if not output or output.strip() == 'Mail queue is empty':
         return 0
-    else:
-        return 1
+    return 1
 
 def _get_linux_available_mail():
     cmd = f'pam_tally --file /var/mail/{os.getlogin()} --user {os.getlogin()}'
@@ -352,7 +396,7 @@ def _get_quote():
     return quote if quote and len(quote) > 1 else ''
 
 def _get_last_login():
-    output = _run_external_command('last')
+    output = _run_external_command('last -1')
     assert output, app_settings.assertion('system command "last" did not return anything')
     for line in output.splitlines():
         line = line.strip()
@@ -421,11 +465,11 @@ def output_login_info():
         _print_columns('Swap Usage', _get_swap_memory_usage(), '', '')
     for i, network_info in enumerate(system_info.network_infos):
         if i == 0:
-            _print_columns('Memory Usage', _get_virtual_memory_usage(), f'IP address for {network_info.name}', network_info.ip)
-            _print_columns('Swap Usage', _get_swap_memory_usage(), f'Mac address for {network_info.name}', network_info.mac)
+            _print_columns('Memory Usage', _get_virtual_memory_usage(), f'{network_info.name} IP', network_info.ip)
+            _print_columns('Swap Usage', _get_swap_memory_usage(), f'{network_info.name} MAC', network_info.mac)
         else:
-            _print_columns('', '', f'IP address for {network_info.name}', network_info.ip)
-            _print_columns('', '', f'Mac address for {network_info.name}', network_info.mac)
+            _print_columns('', '', f'{network_info.name} IP', network_info.ip)
+            _print_columns('', '', f'{network_info.name} MAC', network_info.mac)
 
     _print_packages_available(_get_packages_available())
     _print_quote(_get_quote())

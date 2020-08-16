@@ -131,10 +131,7 @@ def _get_ip_address(json_data):
     return str(public_ip)
 
 def get_ip_address():
-    json_data = _call_ipstack()
-    if not json_data:
-        return None
-    return _get_ip_address(json_data)
+    return _get_ip_address(_call_ipstack())
 
 def _get_location(json_data):
     parsed_data = _parse_ipstack_json(json_data, parse_location=True)
@@ -143,10 +140,7 @@ def _get_location(json_data):
     return location
 
 def get_location():
-    json_data = _call_ipstack()
-    if not json_data:
-        return None
-    return _get_location(json_data)
+    return _get_location(_call_ipstack())
 
 def _get_zip_code(json_data):
     parsed_data = _parse_ipstack_json(json_data, parse_zip_code=True)
@@ -155,10 +149,7 @@ def _get_zip_code(json_data):
     return zip_code
 
 def get_zip_code():
-    json_data = _call_ipstack()
-    if not json_data:
-        return None
-    return _get_zip_code(json_data)
+    return _get_zip_code(_call_ipstack())
 
 def _get_gps_location(json_data):
     parsed_data = _parse_ipstack_json(json_data, parse_gps=True)
@@ -170,12 +161,10 @@ def get_gps_location():
     json_data = _call_ipstack()
     if not json_data:
         return None
-    return _get_gps_location(json_data)
+    return _get_gps_location(_call_ipstack())
 
 def get_information(want_ip_address, want_location, want_zip_code, want_gps):
     json_data = _call_ipstack()
-    if not json_data:
-        return None
 
     _verbose_print('JSON Data from {}\n{}\n'.format(_IP_STACK_URI, json.dumps(json_data, sort_keys=True, indent=4)))
 

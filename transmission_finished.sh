@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# vim: aw=on:sts=4:ts=4:sw=4:et:cin:fdm=manual:tw=120:ft=sh
+# vim: aw:sts=4:ts=4:sw=4:et:cin:fdm=manual:tw=120:ft=sh
 
 SERVER="127.0.0.1:9091 --auth admin:admin"
 SLEEP_TIME=10

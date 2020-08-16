@@ -51,13 +51,17 @@ def _call_external_command(command):
 
 class NetworkInfo:
     def __init__(self, name=None, ip=None, mac=None):
-        self._name = name
+        if name == 'USB 10/100/1000 LAN':
+            self._name = 'Lan'
+        else:
+            match = re.match(r'^Thunderbolt Ethernet Slot\s+(?P<slot>\d+)$', name)
+            self._name = f'Ethernet {match.group("slot")}' if match else name
         self._ip = ip
         self._mac = mac
 
     @property
     def name(self):
-        return 'Lan' if self._name == 'USB 10/100/1000 LAN' else self._name
+        return self._name
 
     @property
     def ip(self):
@@ -66,10 +70,6 @@ class NetworkInfo:
     @property
     def mac(self):
         return self._mac
-
-    def __str__(self):
-        s = 'IP Address {name}: {self.ip}\n'
-        return s + 'Mac Address {self.name}: {self.mac}\n'
 
 class NetworkInfos:
     def __init__(self):

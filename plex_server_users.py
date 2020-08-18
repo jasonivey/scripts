@@ -41,8 +41,8 @@ def parse_args(parser):
     global _VERBOSE
     _VERBOSE = args.verbose
     token = args.token
-    _verbose_print('Args:\n  Verbose: {}\n  User Name: {}\n  Password: {}\n  Token: {}' \
-                   .format(_VERBOSE, username, password, token))
+    printable_password = '*' * len(password) if password else ''
+    _verbose_print(f'Args:\n  Verbose: {_VERBOSE}\n  User Name: {username}\n  Password: {printable_password}\n  Token: {token}')
     return username, password, token
 
 def get_plex_auth_token(username, password, token):

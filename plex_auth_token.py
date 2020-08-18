@@ -49,7 +49,8 @@ def parse_args(parser=None, args=None):
     _VERBOSE = args.verbose
     username = args.username if args.username else _request_username()
     password = args.password if args.password else _request_password()
-    _verbose_print('Args:\n  Verbose: {}\n  User Name: {}\n  Password: {}'.format(_VERBOSE, username, password))
+    printable_password = '*' * len(password) if password else ''
+    _verbose_print(f'Args:\n  Verbose: {_VERBOSE}\n  User Name: {username}\n  Password: {printable_password}')
     return username, password
 
 def _generate_version_and_client_id():
@@ -65,33 +66,30 @@ def _generate_version_and_client_id():
         version, client_id = plex_package_name.split('-')
     else:
         print('ERROR: retreiving Plex version', file=sys.stderr)
-        print('ERROR: {}'.format(stderrdata.decode('utf-8').strip()), file=sys.stderr)
+        print(f'ERROR: {stderrdata.decode("utf-8").strip()}', file=sys.stderr)
         version = '1.1.1.1'
         client_id = str(uuid.uuid4()).replace('-', '')
-        _verbose_print('INFO: due to inability to find Plex version will now default to version {}, client id:{}' \
-                       .format(version, client_id))
+        _verbose_print(f'INFO: unable to find plex version, defaulting to version: {version} and client id: {client_id}')
 
-    _verbose_print('INFO: plex version {}, client id {}'.format(version, client_id))
+    _verbose_print(f'INFO: plex version: {version} and client id: {client_id}')
     return version, client_id
 
 def _generate_headers(username, password):
     version, client_id = _generate_version_and_client_id()
     distro_info = distro.linux_distribution()
-
     headers = {}
-    headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=utf-8' 
-    headers['X-Plex-Version'] = version 
+    headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=utf-8'
+    headers['X-Plex-Version'] = version
     headers['X-Plex-Product'] = 'Plex Media Server'
     headers['X-Plex-Provides'] = 'server'
     headers['X-Plex-Platform'] = platform.system()
-    headers['X-Plex-Platform-Version'] = platform.uname().release 
+    headers['X-Plex-Platform-Version'] = platform.uname().release
     headers['X-Plex-Device-Name'] = 'PlexMediaServer'
-    headers['X-Plex-Device'] = '{} {}'.format(distro_info[0], distro_info[1])
+    headers['X-Plex-Device'] = f'{distro_info[0]} {distro_info[1]}'
     headers['X-Plex-Client-Identifier'] = client_id
-    authorization_str = base64.b64encode('{}:{}'.format(username, password).encode('utf-8')).decode('utf-8')
-    headers['Authorization'] = 'Basic {}'.format(authorization_str)
-    _verbose_print('headers: {}'.format(pprint.pformat(headers, compact=True)))
-
+    authorization_str = base64.b64encode(f'{username}:{password}'.encode('utf-8')).decode('utf-8')
+    headers['Authorization'] = f'Basic {authorization_str}'.format()
+    _verbose_print(f'headers: {pprint.pformat(headers, compact=True)}')
     return headers
 
 def get_plex_auth_token(username, password):
@@ -99,15 +97,15 @@ def get_plex_auth_token(username, password):
     headers = _generate_headers(username, password)
 
     try:
-        _verbose_print('INFO: calling {} with a {} second timeout'.format(uri, _TIME_OUT))
+        _verbose_print(f'INFO: calling {uri} with a {_TIME_OUT} second timeout')
         response = requests.post(uri, headers=headers, timeout=_TIME_OUT)
         response.raise_for_status()
-        _verbose_print('INFO: response.headers: {}'.format(pprint.pformat(response.headers, compact=True)))
+        _verbose_print(f'INFO: response.headers: {pprint.pformat(response.headers, compact=True)}')
         if 'Content-Type' in response.headers and response.headers['Content-Type'].find('json') != -1:
             _verbose_print('INFO: treating response data as JSON')
             response_data = response.json()
-            _verbose_print('INFO: response data:\n{}'.format(json.dumps(response_data, separators=(',', ':'),
-                                                                        sort_keys=True, indent=None)))
+            response_data_json_str = json.dumps(response_data, separators=(',', ':'), sort_keys=True, indent=None)
+            _verbose_print(f'INFO: response data:\n{response_data_json_str}')
             if 'user' in response_data and 'authToken' in response_data['user']:
                 return response_data['user']['authToken']
             else:
@@ -115,29 +113,29 @@ def get_plex_auth_token(username, password):
         else:
             _verbose_print('INFO: treating response data as a regular string')
             response_data = response.text.strip()
-            _verbose_print('INFO: response data:\n{}'.format(response_data))
+            _verbose_print(f'INFO: response data:\n{response_data}')
             match = re.search(r'"authToken":"(?P<token>[^"]*)"', response_data)
             if match:
                 return match.group('token')
             else:
                 print('ERROR: unable to find the authToken in the response', file=sys.stderr)
     except Exception as e:
-        print('ERROR: Exception raised while calling or processing POST {}'.format(uri), file=sys.stderr)
-        print('ERROR: {}'.format(e), file=sys.stderr)
+        print(f'ERROR: Exception raised while calling or processing POST {uri}', file=sys.stderr)
+        print(f'ERROR: {e}', file=sys.stderr)
     return None
 
 def main():
     parser = create_argparse()
     username, password = parse_args(parser=parser)
     try:
-        auth_token = get_plex_auth_token(username, password) 
+        auth_token = get_plex_auth_token(username, password)
         if auth_token:
-            print('Auth Token: {}'.format(auth_token))
+            print(f'Auth Token: {auth_token}')
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
         return 1
-    return 0 
+    return 0
 
 if __name__ == '__main__':
     sys.exit(main())

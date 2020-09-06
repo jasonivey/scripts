@@ -5,6 +5,7 @@
 import argparse
 from pathlib import Path
 import os
+import re
 import shlex
 import shutil
 from subprocess import run, CalledProcessError, SubprocessError
@@ -12,86 +13,158 @@ import sys
 import traceback
 
 _VERBOSE = False
-_COLORS = {
-    'blank'  : r'"\033]6;1;bg;*;default\a"',
-    'lime'   : r'"\033]6;1;bg;*;default\a\033]6;1;bg;green;brightness;255\a"',
-    'red'    : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;255\a"',
-    'blue'   : r'"\033]6;1;bg;*;default\a\033]6;1;bg;blue;brightness;255\a"',
-    'yellow' : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;255\a\033]6;1;bg;green;brightness;255\a\033]6;1;bg;blue;brightness;0\a"',
-    'purple' : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;255\a\033]6;1;bg;green;brightness;0\a\033]6;1;bg;blue;brightness;255\a"',
-    'orange' : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;255\a\033]6;1;bg;green;brightness;128\a\033]6;1;bg;blue;brightness;0\a"',
-    'aqua'   : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;0\a\033]6;1;bg;green;brightness;255\a\033]6;1;bg;blue;brightness;255\a"',
-    'redder' : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;128\a\033]6;1;bg;green;brightness;0\a\033]6;1;bg;blue;brightness;0\a"',
-    'olive'  : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;128\a\033]6;1;bg;green;brightness;128\a\033]6;1;bg;blue;brightness;0\a"',
-    'green'  : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;0\a\033]6;1;bg;green;brightness;128\a\033]6;1;bg;blue;brightness;0\a"',
-    'teal'   : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;0\a\033]6;1;bg;green;brightness;128\a\033]6;1;bg;blue;brightness;128\a"',
-    'navy'   : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;0\a\033]6;1;bg;green;brightness;0\a\033]6;1;bg;blue;brightness;128\a"',
-}
 
 def _verbose_print(s):
     if _VERBOSE:
         print(s, file=sys.stdout)
 
+class RgbValue:
+    RGB_REGEX = re.compile(r'(?P<red>\d{1,3})\s*,\s*(?P<green>\d{1,3})\s*,\s*(?P<blue>\d{1,3})')
+    RGB_FORMAT = r'"\033]6;1;bg;red;brightness;{}\a\033]6;1;bg;green;brightness;{}\a\033]6;1;bg;blue;brightness;{}\a"'
+
+    def __init__(self, text):
+        self._values = RgbValue.parse(text)
+
+    def encode(self):
+        return RgbValue.RGB_FORMAT.format(self._values['red'], self._values['green'], self._values['blue'])
+
+    @staticmethod
+    def parse(text):
+        if not (match := RgbValue.RGB_REGEX.search(text)):
+            raise ValueError(f'incorrect format for rgb value, "{text}" -- should be rgb(0-255,0-255,0-255)')
+        return {'red' : match.group('red'), 'green' : match.group('green'), 'blue' : match.group('blue')}
+
+    def __str__(self):
+        return f'rgb({self._values["red"]},{self._values["green"]},{self._values["blue"]})'
+
+class TabColor:
+    COLORS = {
+        'blank'  : r'"\033]6;1;bg;*;default\a"',
+        'lime'   : r'"\033]6;1;bg;*;default\a\033]6;1;bg;green;brightness;255\a"',
+        'red'    : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;255\a"',
+        'blue'   : r'"\033]6;1;bg;*;default\a\033]6;1;bg;blue;brightness;255\a"',
+        'yellow' : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;255\a\033]6;1;bg;green;brightness;255\a\033]6;1;bg;blue;brightness;0\a"',
+        'purple' : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;255\a\033]6;1;bg;green;brightness;0\a\033]6;1;bg;blue;brightness;255\a"',
+        'orange' : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;255\a\033]6;1;bg;green;brightness;128\a\033]6;1;bg;blue;brightness;0\a"',
+        'aqua'   : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;0\a\033]6;1;bg;green;brightness;255\a\033]6;1;bg;blue;brightness;255\a"',
+        'redder' : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;128\a\033]6;1;bg;green;brightness;0\a\033]6;1;bg;blue;brightness;0\a"',
+        'olive'  : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;128\a\033]6;1;bg;green;brightness;128\a\033]6;1;bg;blue;brightness;0\a"',
+        'green'  : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;0\a\033]6;1;bg;green;brightness;128\a\033]6;1;bg;blue;brightness;0\a"',
+        'teal'   : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;0\a\033]6;1;bg;green;brightness;128\a\033]6;1;bg;blue;brightness;128\a"',
+        'navy'   : r'"\033]6;1;bg;*;default\a\033]6;1;bg;red;brightness;0\a\033]6;1;bg;green;brightness;0\a\033]6;1;bg;blue;brightness;128\a"',
+    }
+
+    def __init__(self, color_name=None, rgb_value=None):
+        if color_name:
+            assert color_name in TabColor.COLORS, f'{color_name} is not a valid color'
+        self._color_name = color_name
+        self._rgb_value = rgb_value
+
+    @property
+    def color(self):
+        assert self._color_name, 'attempting to read color property before it has been set'
+        return self._color_name
+
+    @property
+    def rgb(self):
+        assert self._rgb_value, 'attempting to read RGB property before it has been set'
+        return str(self._rgb_value)
+
+    def encode(self):
+        return TabColor.COLORS[self.color] if self._color_name else self._rgb_value.encode()
+
+    def __str__(self):
+        return f'{self.color}' if self._color_name else f'{str(self.rgb)}'
+
+def _is_valid_rgb(text):
+    try:
+        return RgbValue(text)
+    except Exception as ex:
+        raise argparse.ArgumentTypeError(str(ex))
+
+def _read_color_name_from_stdin():
+    # the user is piping the information in...
+    text = sys.stdin.readline().strip().lower()
+    color_name = text if text in TabColor.COLORS else None
+    rgb_value = None if color_name else RgbValue(text)
+    return color_name, rgb_value
+
+def read_color_from_path(file_path):
+    lines = file_path.read_text().splitlines()
+    if len(lines) == 0:
+        return None, None
+    line = lines[0]
+    word = '' if not line.strip() else line.split()[0].lower()
+    if word in TabColor.COLORS:
+        return word, None
+    else:
+        return None, RgbValue(line)
+
+def _find_color_name_elsewhere():
+    color_name = rgb_value = None
+
+    file_paths = [Path(os.path.expandvars('$HOME/.zsh_color')).resolve(),
+                  Path(os.path.expandvars('$HOME/.bash_color')).resolve()]
+
+    if not os.isatty(sys.stdin.fileno()):
+        color_name, rgb_value = _read_color_name_from_stdin()
+
+    for file_path in file_paths:
+        if color_name or rgb_value:
+            break
+        if not file_path.is_file():
+            continue
+        color_name, rgb_value = read_color_from_path(file_path)
+    return color_name, rgb_value
+
 def _parse_args():
     parser = argparse.ArgumentParser(description='Set the mac OS iterm tab color')
     parser.add_argument('-v', '--verbose', action="store_true", help='increase output verbosity')
-    parser.add_argument('color', const='blank', nargs='?', choices=_COLORS.keys())
-    #parser.add_argument('color', default=argparse.SUPPRESS, const='blank', nargs='?', choices=_COLORS.keys())
+    parser.add_argument('--rgb', type=_is_valid_rgb, required=False, help='tab color specified by the form of rgb(0-255, 0-255, 0-255)')
+    parser.add_argument('color', const='blank', nargs='?', choices=TabColor.COLORS.keys(), help=f'one of {", ".join(TabColor.COLORS.keys())}')
     args = parser.parse_args()
     global _VERBOSE
     _VERBOSE = args.verbose
-    color = args.color
+    color_name = args.color
+    rgb_value = args.rgb
 
-    # if we didn't get the color off of the command line then there are a couple of other sources
-    if not color and not os.isatty(sys.stdin.fileno()):
-        # the user is piping the information in...
-        color = sys.stdin.readline().strip().lower()
-        color = color if color in _COLORS else None
-    if not color and os.path.isfile(os.path.expandvars('$HOME/.zsh_color')):
-        # the user is assuming we can grab the default from .zsh_color
-        path = Path(os.path.expandvars('$HOME/.zsh_color'))
-        color_text = path.read_text().splitlines()
-        if len(color_text) > 0 and color_text[0].strip().lower() in _COLORS:
-            color = color_text[0].strip().lower()
-    if not color and os.path.isfile(os.path.expandvars('$HOME/.bash_color')):
-        # the user is assuming we can grab the default from .bash_color
-        path = Path(os.path.expandvars('$HOME/.bash_color'))
-        color_text = path.read_text().splitlines()
-        if len(color_text) > 0 and color_text[0].strip().lower() in _COLORS:
-            color = color_text[0].strip().lower()
-    if not color:
-        raise parser.error('a valid color was not specified')
+    if not color_name and not rgb_value:
+        color_name, rgb_value = _find_color_name_elsewhere()
 
-    _verbose_print('Args, verbose: {}, color: {}'.format(_VERBOSE, color))
-    return color
+    if not color_name and not rgb_value:
+        raise parser.error('a valid color name or rgb value was not specified')
+    if color_name and rgb_value:
+        raise parser.error('only one color name or rgb value can be specified at a time')
+
+    _verbose_print(f'Args, verbose: {_VERBOSE}, color: {color_name}, rgb: {rgb_value}')
+    return TabColor(color_name, rgb_value)
 
 # Previous versions contain various attempts at trying to call the operating system to
 #  change the tab color in iTerm2.
 def _call_subprocess_run(cmd):
     try:
-        _verbose_print('INFO: command: %s' % cmd)
+        _verbose_print(f'INFO: command: {cmd}')
         run(shlex.split(cmd), shell=False, check=True, env=os.environ, stdin=None, stdout=None, stderr=None)
         return True
     except CalledProcessError as err:
-        print('ERROR: {} calling {}'.format(err.returncode, cmd))
+        print(f'ERROR: {err.returncode} calling {cmd}')
         return False
     except SubprocessError as err:
-        print('ERROR: subprocess run error calling {}'.format(cmd))
+        print(f'ERROR: subprocess run error calling {cmd}')
         return False
 
 def _call_echo_command(color_str):
     cmd = f'printf {color_str}'
     _call_subprocess_run(cmd)
 
-def set_tab_color(color):
-    assert color in _COLORS, '{} is not a color supported by this script'.format(color)
-    _verbose_print('INFO: setting tab color to {}'.format(color))
-    _call_echo_command(_COLORS[color])
+def set_tab_color(tab_color):
+    _verbose_print(f'INFO: setting tab color to {tab_color}')
+    _call_echo_command(tab_color.encode())
 
 def main():
-    color = _parse_args()
+    tab_color = _parse_args()
     try:
-        set_tab_color(color)
+        set_tab_color(tab_color)
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)

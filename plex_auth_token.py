@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
+import sys
+if sys.version_info.major < 3 or sys.version_info.minor < 8:
+    raise AssertionError('ERROR: script requires python3.8 or later')
 
 import argparse
 import base64
@@ -11,7 +14,6 @@ import platform
 import pprint
 import re
 import requests
-import sys
 import subprocess
 import traceback
 import uuid
@@ -114,8 +116,7 @@ def get_plex_auth_token(username, password):
             _verbose_print('INFO: treating response data as a regular string')
             response_data = response.text.strip()
             _verbose_print(f'INFO: response data:\n{response_data}')
-            match = re.search(r'"authToken":"(?P<token>[^"]*)"', response_data)
-            if match:
+            if (match := re.search(r'"authToken":"(?P<token>[^"]*)"', response_data)):
                 return match.group('token')
             else:
                 print('ERROR: unable to find the authToken in the response', file=sys.stderr)
@@ -128,8 +129,7 @@ def main():
     parser = create_argparse()
     username, password = parse_args(parser=parser)
     try:
-        auth_token = get_plex_auth_token(username, password)
-        if auth_token:
+        if (auth_token := get_plex_auth_token(username, password)):
             print(f'Auth Token: {auth_token}')
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()

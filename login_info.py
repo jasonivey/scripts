@@ -43,9 +43,9 @@ random.seed()
 
 am = AnsiMarkup(tags=user_tags)
 
-MORNING_EMOJIS   = ['🌤', '⛅', '🌦️', '🌤️', '🌥️']
+MORNING_EMOJIS   = ['🌤', '⛅', '🌦️', '🌤️', '🌥️', '🌈', '🌦']
 #MORNING_EMOJI   = '🌤'
-AFTERNOON_EMOJIS = ['🌎', '🌎', '🌍', '🌏', '🌞']
+AFTERNOON_EMOJIS = ['🌎', '🌎', '🌍', '🌏', '⛱', '🏖']
 #AFTERNOON_EMOJI = '🌎'
 EVENING_EMOJIS   = ['🌙', '🌖', '🌕', '🌓', '🌛', '🌝', '🌗', '🌜', '🌑', '🌚', '🌘', '🌒', '🌔']
 #EVENING_EMOJI   = '🌖'
@@ -190,7 +190,7 @@ def _convert_yearless_timestamp(timestamp):
     return dt.replace(year=year, tzinfo=tz)
 
 def _convert_time_duration(dt, hour, minute):
-    delta = datetime.delta(minutes=minute, hours=hour)
+    delta = datetime.timedelta(minutes=minute, hours=hour)
     return dt + delta
 
 def _convert_date_time(dt):

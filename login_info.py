@@ -136,7 +136,9 @@ def _print_boot_time(boot_time):
     print(f'  {lh:{lh_width}} {rh:{rh_width}}\n')
 
 def _print_last_login(values):
-    assert len(values) >= 1, app_settings.assertion('last login message must be at least one line long')
+    if len(values) == 0:
+        app_settings.error('last login message must be at least one line long')
+        return
     rhs = []
     rhs_widths = []
     for value in values:
@@ -213,15 +215,12 @@ def _run_external_command(cmd):
         completed_process = subprocess.run(args, check=True, encoding='utf-8', capture_output=True)
         return completed_process.stdout
     except subprocess.SubprocessError as err:
-        if 'mailq' in args != -1:
-            return None
-        app_settings.error(f'"{cmd}" returned: {err}')
-        return None
+        if 'mailq' not in args:
+            app_settings.error(f'"{cmd}" returned: {err}')
     except Exception as err:
-        if 'mailq' in args != -1:
-            return None
-        app_settings.error(f'"{cmd}" returned: {err}')
-        return None
+        if 'mailq' not in args:
+            app_settings.error(f'"{cmd}" returned: {err}')
+    return None
 
 class MacOsVersionNames:
     def __init__(self):
@@ -401,13 +400,18 @@ def _get_last_login():
     for line in output.splitlines():
         line = line.strip()
         parts = line.split()
-        # if the list of parts is not 9-10 items long
-        if (9 <= len(parts) <= 10) == False:
+        print(f'last -1 line: {line}, {len(parts)} parts')
+        # if the list of parts is not 9-10 items long, now linux last is 11 items long specifying current process name
+        #'jasoni   pts/1        192.168.1.130 vi Sat Oct 24 01:52   still logged in'
+        #'jasoni', 'pts/1', '192.168.1.130', 'vi', 'Sat', 'Oct', '24', '01:52', 'still', 'logged', 'in'
+        #0       , 1      , 2              , 3   , 4    , 5    , 6   , 7      , 8      , 9       , 10
+        #-11     , -10    , -9             , -8  , -7   , -6   , -5  , -4     , -3     , -2      , -1
+        if not (9 <= len(parts) <= 11):
             continue
         user = parts[0]
         terminal = parts[1]
-        host = ''
-        if len(parts) == 10:
+        host = None
+        if len(parts) >= 10:
             host = parts[2]
         login_time = _convert_yearless_timestamp(' '.join(parts[-7:-3]))
         login_time_str = _convert_date_time(login_time)

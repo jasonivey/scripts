@@ -223,25 +223,27 @@ def _run_external_command(cmd):
     return None
 
 class MacOsVersionNames:
-    def __init__(self):
-        self._platform_names = {10.11 : 'Mac OS X', 10.15 : 'macOS 10', 11.0 : 'macOS 11',}
-        self._version_names = {10.0 : 'Cheetah', 10.1 : 'Puma', 10.2 : 'Jaguar', 10.3 : 'Panther', \
-                               10.4 : 'Tiger', 10.5 : 'Leopard', 10.6 : 'Snow Leopard', 10.7 : 'Lion', \
-                               10.8 : 'Mountain Lion', 10.9 : 'Mavericks', 10.10 : 'Yosemite', \
-                               10.11 : 'El Capitan', 10.12 : 'Sierra', 10.13 : 'High Sierra', \
-                               10.14 : 'Mojave', 10.15 : 'Catalina', 11.0 : 'Big Sur',}
+    PLATFORM_NAMES = {10.11 : 'Mac OS X', 10.15 : 'macOS 10', 11.0 : 'macOS 11',}
+    VERSION_NAMES = {10.0 : 'Cheetah', 10.1 : 'Puma', 10.2 : 'Jaguar', 10.3 : 'Panther', \
+                     10.4 : 'Tiger', 10.5 : 'Leopard', 10.6 : 'Snow Leopard', 10.7 : 'Lion', \
+                     10.8 : 'Mountain Lion', 10.9 : 'Mavericks', 10.10 : 'Yosemite', \
+                     10.11 : 'El Capitan', 10.12 : 'Sierra', 10.13 : 'High Sierra', \
+                     10.14 : 'Mojave', 10.15 : 'Catalina', 11.0 : 'Big Sur',}
 
-    def _get_platform_name(self, version):
-        for max_version, platform_name in self._platform_names.items():
+    @staticmethod
+    def get_platform_name(version):
+        for max_version, platform_name in MacOsVersionNames.PLATFORM_NAMES.items():
             if version <= max_version:
                 return platform_name
         return 'macOS'
 
-    def _get_version_name(self, version):
-        return self._version_names[version] if version in self._version_names else 'Unknown'
+    @staticmethod
+    def get_version_name(version):
+        return MacOsVersionNames.VERSION_NAMES[version] if version in MacOsVersionNames.VERSION_NAMES else 'Unknown'
 
-    def get_version(self, version):
-        return f'{self._get_platform_name(version)} {self._get_version_name(version)}'
+    @staticmethod
+    def get_version(version):
+        return f'{MacOsVersionNames.get_platform_name(version)} {MacOsVersionNames.get_version_name(version)}'
 
 class MacOsVersionName:
     def __init__(self, version):
@@ -252,8 +254,7 @@ class MacOsVersionName:
         elif isinstance(version, int):
             self._version = float(version)
         elif isinstance(version, str):
-            match = re.search(r'(?P<version_number>\d+(?:\.\d+)?)', version)
-            if match:
+            if (match := re.search(r'(?P<version_number>\d+(?:\.\d+)?)', version)):
                 self._version = float(match.group('version_number'))
 
     def __str__(self):
@@ -264,11 +265,9 @@ def _get_macosx_name():
     assert output, app_settings.assertion('sw_vers command did not return any information')
     version = build = None
     for line in output.splitlines():
-        match = re.match('^ProductVersion:\s+(?P<product_version>.*)$', line)
-        if match:
+        if (match := re.match('^ProductVersion:\s+(?P<product_version>.*)$', line)):
             version = match.group('product_version')
-        match = re.match('^BuildVersion:\s+(?P<build_version>.*)$', line)
-        if match:
+        if (match := re.match('^BuildVersion:\s+(?P<build_version>.*)$', line)):
             build = match.group('build_version')
     assert version and build, app_settings.assertion('sw_vers is no longer giving the ProductVersion and BuildVersion')
     utsname = platform.uname()

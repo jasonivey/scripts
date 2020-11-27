@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 import argparse
 import datetime
 import json
@@ -10,25 +10,32 @@ _VERBOSE_OUTPUT = False
 _DATE_CONVERSION_FMT = '%Y-%m-%d'
 
 _COMMANDS_STATS = 'stats'
-_COMMANDS_SHOW  = 'show'
+_COMMANDS_SHOW = 'show'
 _COMMANDS_CREATE = 'create'
 _COMMANDS_ADD = 'add'
 _COMMANDS_UPDATE = 'update'
 
+
 def _is_verbose_output_enabled():
     return _VERBOSE_OUTPUT
 
+
 def _to_date(value):
     return datetime.datetime.strptime(value, _DATE_CONVERSION_FMT).date()
+
 
 def _from_date(value, include_weekday=False):
     if not include_weekday:
         fmt_str = '{0:' + _DATE_CONVERSION_FMT + '}'
         return fmt_str.format(value)
     else:
-        weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        weekdays = [
+            'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+            'Sunday'
+        ]
         fmt_str = '{0:' + _DATE_CONVERSION_FMT + '} ({1})'
         return fmt_str.format(value, weekdays[value.weekday()])
+
 
 def _is_date(date_str):
     try:
@@ -40,8 +47,9 @@ def _is_date(date_str):
             return datetime.date.today() + datetime.timedelta(days=1)
         else:
             return _to_date(date_str)
-    except:
+    except Exception:
         raise argparse.ArgumentTypeError('date value is invalid')
+
 
 def _print_args(commands):
     for key, value in list(commands.items()):
@@ -49,12 +57,14 @@ def _print_args(commands):
             values = ''
             for subkey, subvalue in list(value.items()):
                 if isinstance(subvalue, datetime.date):
-                    values += '{0}: {1}, '.format(subkey, _from_date(subvalue, True))
+                    values += '{0}: {1}, '.format(subkey,
+                                                  _from_date(subvalue, True))
                 else:
                     values += '{0}: {1}, '.format(subkey, subvalue)
             print('command {0}: [{1}]'.format(key, values.rstrip(' ,')))
         else:
             print('command {0}: {1}'.format(key, value))
+
 
 def _parse_args():
     description = 'Medical prescription usage'
@@ -62,50 +72,107 @@ def _parse_args():
 
     sub_parsers = parser.add_subparsers(help='commands', dest='command')
 
-    sub_parsers.add_parser(_COMMANDS_STATS, help='report the stats of the medication')
+    sub_parsers.add_parser(_COMMANDS_STATS,
+                           help='report the stats of the medication')
 
-    sub_parsers.add_parser(_COMMANDS_SHOW, help='dump the medication and usages')
+    sub_parsers.add_parser(_COMMANDS_SHOW,
+                           help='dump the medication and usages')
 
-    create = sub_parsers.add_parser(_COMMANDS_CREATE, help='create a new medication')
-    create.add_argument('-n', '--name', required=True, help='name of the medication')
-    create.add_argument('-c', '--count', required=True, metavar='<NUMBER>', type=int, help='total pills in medication')
-    create.add_argument('-u', '--usage', required=True, metavar='<NUMBER>', type=int, help='daily pill usage')
-    create.add_argument('-d', '--days', required=False, metavar='<NUMBER>', default=30, type=int,
+    create = sub_parsers.add_parser(_COMMANDS_CREATE,
+                                    help='create a new medication')
+    create.add_argument('-n',
+                        '--name',
+                        required=True,
+                        help='name of the medication')
+    create.add_argument('-c',
+                        '--count',
+                        required=True,
+                        metavar='<NUMBER>',
+                        type=int,
+                        help='total pills in medication')
+    create.add_argument('-u',
+                        '--usage',
+                        required=True,
+                        metavar='<NUMBER>',
+                        type=int,
+                        help='daily pill usage')
+    create.add_argument('-d',
+                        '--days',
+                        required=False,
+                        metavar='<NUMBER>',
+                        default=30,
+                        type=int,
                         help='total number of days in prescription')
-    create.add_argument('-s', '--start_date', metavar='<YYYY-MM-DD>', default=datetime.date.today(), type=_is_date,
+    create.add_argument('-s',
+                        '--start_date',
+                        metavar='<YYYY-MM-DD>',
+                        default=datetime.date.today(),
+                        type=_is_date,
                         help='start date of medication')
 
     add = sub_parsers.add_parser(_COMMANDS_ADD, help='log a medication usage')
-    add.add_argument('-a', '--amount', required=True, metavar='<NUMBER>', type=int, help='pill usage amount')
-    add.add_argument('-d', '--date', metavar='<YYYY-MM-DD>', default=datetime.date.today(), type=_is_date,
+    add.add_argument('-a',
+                     '--amount',
+                     required=True,
+                     metavar='<NUMBER>',
+                     type=int,
+                     help='pill usage amount')
+    add.add_argument('-d',
+                     '--date',
+                     metavar='<YYYY-MM-DD>',
+                     default=datetime.date.today(),
+                     type=_is_date,
                      help='date of the usage')
 
-    update = sub_parsers.add_parser(_COMMANDS_UPDATE, help='update a medication usage')
-    update.add_argument('-a', '--amount', required=True, metavar='<NUMBER>', type=int, help='pill usage amount')
-    update.add_argument('-d', '--date', metavar='<YYYY-MM-DD>', default=datetime.date.today(), type=_is_date,
+    update = sub_parsers.add_parser(_COMMANDS_UPDATE,
+                                    help='update a medication usage')
+    update.add_argument('-a',
+                        '--amount',
+                        required=True,
+                        metavar='<NUMBER>',
+                        type=int,
+                        help='pill usage amount')
+    update.add_argument('-d',
+                        '--date',
+                        metavar='<YYYY-MM-DD>',
+                        default=datetime.date.today(),
+                        type=_is_date,
                         help='date of the usage')
 
-    parser.add_argument('-f', '--file', required=True, help='file name of persistent data')
-    parser.add_argument('-v', '--verbose', default=False, action='store_true',
+    parser.add_argument('-f',
+                        '--file',
+                        required=True,
+                        help='file name of persistent data')
+    parser.add_argument('-v',
+                        '--verbose',
+                        default=False,
+                        action='store_true',
                         help='output verbose debugging information')
 
     args = parser.parse_args()
     global _VERBOSE_OUTPUT
     _VERBOSE_OUTPUT = args.verbose
 
-    commands = {_COMMANDS_STATS: args.command == 'stats',
-                _COMMANDS_SHOW: args.command == 'show',
-                _COMMANDS_CREATE: {},
-                _COMMANDS_ADD: {},
-                _COMMANDS_UPDATE: {}}
+    commands = {
+        _COMMANDS_STATS: args.command == 'stats',
+        _COMMANDS_SHOW: args.command == 'show',
+        _COMMANDS_CREATE: {},
+        _COMMANDS_ADD: {},
+        _COMMANDS_UPDATE: {}
+    }
 
     if args.command == _COMMANDS_CREATE:
-        commands[_COMMANDS_CREATE] = {'name':args.name, 'count':args.count, 'days': args.days,
-                                      'daily_count':args.usage, 'start_date':args.start_date}
+        commands[_COMMANDS_CREATE] = {
+            'name': args.name,
+            'count': args.count,
+            'days': args.days,
+            'daily_count': args.usage,
+            'start_date': args.start_date
+        }
     elif args.command == _COMMANDS_ADD:
-        commands[_COMMANDS_ADD] = {'count':args.amount, 'date':args.date}
+        commands[_COMMANDS_ADD] = {'count': args.amount, 'date': args.date}
     elif args.command == _COMMANDS_UPDATE:
-        commands[_COMMANDS_UPDATE] = {'count':args.amount, 'date':args.date}
+        commands[_COMMANDS_UPDATE] = {'count': args.amount, 'date': args.date}
 
     if _is_verbose_output_enabled():
         _print_args(commands)
@@ -113,8 +180,8 @@ def _parse_args():
     return commands, args.file
 
 
-class MedicationUsage(object):
-    def __init__(self,  **kwargs):
+class MedicationUsage():
+    def __init__(self, **kwargs):
         self._count = kwargs['count']
         self._date = kwargs['date']
 
@@ -126,7 +193,7 @@ class MedicationUsage(object):
 
     @classmethod
     def deserialize(cls, obj):
-        data = {'count':obj['count'], 'date':_to_date(obj['date'])}
+        data = {'count': obj['count'], 'date': _to_date(obj['date'])}
         c = cls(**data)
         return c
 
@@ -142,9 +209,6 @@ class MedicationUsage(object):
     def date(self):
         return self._date
 
-    def __cmp__(self, other):
-        return cmp(self.date, other.date)
-
     def __lt__(self, other):
         return self.date < other.date
 
@@ -152,7 +216,8 @@ class MedicationUsage(object):
         return self.date == other.date
 
     def __str__(self):
-        return 'count: {0}, date: {1}'.format(self.count, _from_date(self.date, True))
+        return 'count: {0}, date: {1}'.format(self.count,
+                                              _from_date(self.date, True))
 
 
 class Medication(object):
@@ -168,15 +233,20 @@ class Medication(object):
 
     def report_stats(self):
         print('name:                    {0}'.format(self.name))
-        print('today\'s date:            {0}'.format(_from_date(self.todays_date, True)))
-        print('start date:              {0}'.format(_from_date(self.start_date, True)))
-        print('end date:                {0}'.format(_from_date(self.end_date, True)))
-        print('end pill date:           {0}'.format(_from_date(self.actual_end_date, True)))
+        print('today\'s date:            {0}'.format(
+            _from_date(self.todays_date, True)))
+        print('start date:              {0}'.format(
+            _from_date(self.start_date, True)))
+        print('end date:                {0}'.format(
+            _from_date(self.end_date, True)))
+        print('end pill date:           {0}'.format(
+            _from_date(self.actual_end_date, True)))
 
         print('total days in RX:        {0}'.format(self.days))
         print('days elapsed:            {0}'.format(self.days_elapsed))
         print('days remaining:          {0}'.format(self.days_remaining))
-        print('days of pills remaining: {0}'.format(self.days_of_pills_remaining))
+        print('days of pills remaining: {0}'.format(
+            self.days_of_pills_remaining))
 
         print('total pill count:        {0}'.format(self.count))
         print('remaining pill count:    {0}'.format(self.current_count))
@@ -187,18 +257,20 @@ class Medication(object):
         print('daily recovery count:    {0:.2f}'.format(self.recovery_count))
 
     def update_date(self):
-        if len(self.usages) > 0 and self.usages[-1].date > datetime.date.today():
+        if len(self.usages) > 0 and self.usages[-1].date > datetime.date.today(
+        ):
             self._todays_date = self.usages[-1].date
 
     def add_usage(self, **kwargs):
         new_medication = MedicationUsage(**kwargs)
         for existing_usage in self.usages:
             if existing_usage.date == new_medication.date:
-                print('EROR: the usage on {0} has already been added'.format(_from_date(existing_usage.date, True)))
+                print('EROR: the usage on {0} has already been added'.format(
+                    _from_date(existing_usage.date, True)))
                 return
         if _is_verbose_output_enabled():
-            print('INFO: adding {0} pills used on {1}'.
-                  format(new_medication.count, _from_date(new_medication.date, True)))
+            print('INFO: adding {0} pills used on {1}'.format(
+                new_medication.count, _from_date(new_medication.date, True)))
         self.usages.append(new_medication)
         self.usages.sort()
         self.update_date()
@@ -209,14 +281,17 @@ class Medication(object):
         for existing_usage in self.usages:
             if existing_usage.date == new_medication.date:
                 if _is_verbose_output_enabled():
-                    print('INFO: updating the usage on {0} to be {1} pills used'.
-                          format(_from_date(existing_usage.date, True), new_medication.count))
+                    print(
+                        'INFO: updating the usage on {0} to be {1} pills used'.
+                        format(_from_date(existing_usage.date, True),
+                               new_medication.count))
                 existing_usage.count = new_medication.count
                 self.update_date()
                 self.dirty = True
                 return
         if _is_verbose_output_enabled():
-            print('ERROR: usage for {0} is not found'.format(_from_date(new_medication.date, True)))
+            print('ERROR: usage for {0} is not found'.format(
+                _from_date(new_medication.date, True)))
 
     def serialize(self):
         obj = {}
@@ -271,7 +346,8 @@ class Medication(object):
 
     @property
     def recovery_count(self):
-        return 0 if self.excess_count >= 0 else float(self.current_count) / float(self.days_remaining)
+        return 0 if self.excess_count >= 0 else float(
+            self.current_count) / float(self.days_remaining)
 
     @property
     def used_count(self):
@@ -302,7 +378,8 @@ class Medication(object):
 
     @property
     def actual_end_date(self):
-        return self.todays_date + datetime.timedelta(days=self.days_of_pills_remaining)
+        return self.todays_date + datetime.timedelta(
+            days=self.days_of_pills_remaining)
 
     @property
     def usages(self):
@@ -331,7 +408,7 @@ class Medication(object):
         self._dirty = value
 
     def __str__(self):
-        s =  'name:      {0}\n'.format(self.name)
+        s = 'name:      {0}\n'.format(self.name)
         s += 'count:     {0}\n'.format(self.current_count)
         s += 'days:      {0}\n'.format(self.days)
         s += 'total:     {0}\n'.format(self.count)
@@ -348,20 +425,28 @@ def _load_data(filename):
             print('INFO: deserializing data from {0}'.format(filename))
         return Medication.deserialize(json.loads(handle.read()))
 
+
 def _create_database(**kwargs):
     medication = Medication(**kwargs)
     medication.dirty = True
     return medication
 
+
 def _unload_data(filename, medication):
     if not medication.dirty:
         if _is_verbose_output_enabled():
-            print('INFO: not serializing identical data to disk {0}'.format(filename))
+            print('INFO: not serializing identical data to disk {0}'.format(
+                filename))
         return
     with open(filename, 'w') as handle:
         if _is_verbose_output_enabled():
             print('INFO: writing the data to {0}'.format(filename))
-        handle.write(json.dumps(medication.serialize(), sort_keys=True, indent=4, separators=(',', ': ')))
+        handle.write(
+            json.dumps(medication.serialize(),
+                       sort_keys=True,
+                       indent=4,
+                       separators=(',', ': ')))
+
 
 def main():
     commands, filename = _parse_args()
@@ -384,9 +469,13 @@ def main():
         _unload_data(filename, medication)
     except Exception:
         exc_type, exc_value, exc_traceback = sys.exc_info()
-        traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
+        traceback.print_exception(exc_type,
+                                  exc_value,
+                                  exc_traceback,
+                                  file=sys.stdout)
         return 1
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())

@@ -1,6 +1,7 @@
 
 import argparse
 import os
+import subprocess
 import sys
 import traceback
 
@@ -76,6 +77,17 @@ def _parse_system_include_path(input_str):
     verbose_print(Verbosity.DEBUG, 'the input str {} did not contain a valid path'.format(input_str))
     return None
 
+def _run_external_shell_command(cmd):
+    try:
+        completed_process = subprocess.run(cmd, shell=True, check=True, encoding='utf-8', capture_output=True)
+        return completed_process.stdout
+    except subprocess.SubprocessError as err:
+        print(f'ERROR: "{cmd}" returned: {err}', file=sys.stderr)
+        return None
+    except Exception as err:
+        print(f'EROR: "{cmd}" returned: {err}', file=sys.stderr)
+        return None
+
 def find_system_include_paths(compiler, stdlib=None):
     if stdlib:
         command = '{0} -stdlib={1} -E -x c++ - -v < /dev/null'.format(compiler, stdlib)
@@ -83,7 +95,8 @@ def find_system_include_paths(compiler, stdlib=None):
         command = '{0} -E -x c++ - -v < /dev/null'.format(compiler)
     paths = []
     verbose_print(Verbosity.INFO, 'system command: {}'.format(command))
-    for line in os.popen4(command, 't')[1].readlines():
+    output = _run_external_shell_command(command)
+    for line in output.splitlines():
         include = _parse_system_include_path(line)
         if include:
             paths.append(include)

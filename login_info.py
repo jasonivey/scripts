@@ -399,7 +399,7 @@ def _get_last_login():
     for line in output.splitlines():
         line = line.strip()
         parts = line.split()
-        print(f'last -1 line: {line}, {len(parts)} parts')
+        #print(f'last -1 line: {line}, {len(parts)} parts')
         # if the list of parts is not 9-10 items long, now linux last is 11 items long specifying current process name
         #'jasoni   pts/1        192.168.1.130 vi Sat Oct 24 01:52   still logged in'
         #'jasoni', 'pts/1', '192.168.1.130', 'vi', 'Sat', 'Oct', '24', '01:52', 'still', 'logged', 'in'

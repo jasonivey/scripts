@@ -13,6 +13,7 @@ include = '\.py$'
 
 [tool.autopep8]
 max_line_length = 120
+ignore = ["E231", "E501"]
 
 [tool.pylint.messages_control]
 disable = "C0330, C0326"

@@ -14,9 +14,10 @@ import sys
 import traceback
 
 user_tags = {
-    'info'     : parse('<bold><green>'),    # bold green
-    'text'      : parse('<bold><white>'),    # bold white
-    'error'     : parse('<bold><red>'),      # bold red
+    'info'   : parse('<bold><cyan>'),
+    'text'   : parse('<bold><white>'),
+    'error'  : parse('<bold><red>'),
+    'status' : parse('<bold><green>'),
 }
 
 am = AnsiMarkup(tags=user_tags)
@@ -29,14 +30,18 @@ _EXTENSIONS = ['.webm', '.mpg', '.mp2', '.mpeg',
                '.mov', '.qt', '.flv', '.swf',
                '.avchd', '.mkv']
 
+def _status_print(msg, newline=False):
+    newline_str = '\n' if newline else ''
+    am.ansiprint(f'{newline_str}<status>STATUS:</status> <text>{msg}</text>', file=sys.stdout)
 
-def _verbose_print(msg):
+def _verbose_print(msg, newline=False):
+    newline_str = '\n' if newline else ''
     if _VERBOSE:
-        am.ansiprint(f'<info>INFO:</info> <text>{msg}</text>', file=sys.stdout)
+        am.ansiprint(f'{newline_str}<info>INFO:</info> <text>{msg}</text>', file=sys.stdout)
 
 def _error_print(msg, prefix=True):
     if prefix:
-        am.ansiprint(f'<error>ERROR: {msg}</error>', file=sys.stderr)
+        am.ansiprint(f'<error>ERROR:</error> <text>{msg}</text>', file=sys.stderr)
     else:
         am.ansiprint(f'<error>{msg}</error>', file=sys.stderr)
 
@@ -50,7 +55,7 @@ def _call_external_process(command, dry_run):
     args = shlex.split(command)
     try:
         if dry_run:
-            _verbose_print(f'dry-run: not executing \'{command}\'')
+            _status_print(f'dry-run skipping: \'{command}\'')
         else:
             _verbose_print(f'executing \'{command}\'')
             subprocess.run(args, check=True, encoding='utf-8', stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -100,8 +105,7 @@ def _parse_args():
     remove_metadata_description = 'this command will create/overwrite movie files using ffmpeg to copy existing streams wihtout existing metadata'
     remove_metadata_parser = subparsers.add_parser('remove', description=remove_metadata_description, help='remove movie metadata')
     remove_metadata_parser.add_argument('-s', '--simulated-run', dest='dry_run', action="store_true", help='identify extraneous metadata but DO NOT remove it')
-    command_option_help = 'force all files to be re-written using ffmpeg.  this bypasses the metadata query step where attempts are made to identify the files which contain extraneous metadata'
-    remove_metadata_parser.add_argument('-c', '--command', dest='force', action="store_true", help=command_option_help)
+    remove_metadata_parser.add_argument('-F', '--force', dest='force', action="store_true", help='force all files to be re-written using ffmpeg')
 
     sources_group = parser.add_mutually_exclusive_group(required=True)
     sources_group.add_argument('-d', '--dir', dest='dirs', type=_is_valid_directory, action='append', help='source directory to locate movie files')
@@ -120,15 +124,6 @@ def _parse_args():
 
     return args.subcommand, file_paths, dry_run, force
 
-def _get_index_width(input_file_count):
-    if input_file_count >= 100:
-        # Once it gets to 100 convert the number to a str and then get the length of that
-        #  I.E if the number of input files is 5980 this wil give an len('5980') or width
-        #  of 4.  This allows output of the indexes from 1-5980 in a fixed column width.
-        return len(str(input_file_count))
-    # Default to a minimum width of 2
-    return 2
-
 class MediaMetadataParser:
     # Video & Audio Tracks will often have a title or title_name metadata field. This will indicate the type
     #  of video (Sterio, AAC, etc.) or the language of the audio (en, es, de, etc.) both are rather helpful.
@@ -139,9 +134,8 @@ class MediaMetadataParser:
     NonGeneralMetadataFields = {'movie', 'movie_name', 'season', 'part', 'performer', 'composer', 'genre', 'contenttype', 'description', 'comment'}
     TrackNames = ['General', 'Video', 'Audio']
 
-    def __init__(self, file_path, force=False):
+    def __init__(self, file_path):
         self._file_path = file_path
-        self._force = force
         self._media_info = None
         self._metadata = {}
         self._json_metadata = None
@@ -164,8 +158,6 @@ class MediaMetadataParser:
     def find_first_of_any_extraneous_metadata(self):
         if not self._parse():
             return False
-        if self._is_force_enabled():
-            return True
         if not self._are_all_expected_tracks_available():
             return False
         for track in self._media_info.tracks:
@@ -173,7 +165,7 @@ class MediaMetadataParser:
                 continue
             track_data = track.to_data()
             if not track_data:
-                _error_print(f'unable to convert {track.track_type} properties to a dictionary in media {self._file_path}')
+                _error_print(f'unable to convert "{track.track_type}" properties to a dictionary in "{self._file_path}"')
                 continue
             if self._get_extraneous_metadata_in_track(track_data, track.track_type):
                 return True
@@ -187,21 +179,16 @@ class MediaMetadataParser:
             _error_print('MediaInfo parse raised exception {ex}')
             return False
 
-    def _is_force_enabled(self):
-        if self._force:
-            _verbose_print('forcing has_metadata to return \'True\' via --force flag')
-        return self._force
-
     def _are_all_expected_tracks_available(self):
         available_tracks = set([track.track_type for track in  self._media_info.tracks])
         missing_tracks = set(MediaMetadataParser.TrackNames) - available_tracks
         if len(missing_tracks) > 0:
-            _error_print(f'File, {self._file_path}, is missing {", ".join(missing_tracks)} track(s)')
+            _error_print(f'some of the tracks are not present ({", ".join(missing_tracks)}) in "{self._file_path}"')
         return len(missing_tracks) == 0
 
     def _is_known_track_type(self, track_type):
         if track_type not in MediaMetadataParser.TrackNames:
-            _verbose_print(f'ignoring track \'{track_type}\' in {self._file_path}')
+            _verbose_print(f'ignoring track \'{track_type}\' in "{self._file_path}"')
         return track_type in MediaMetadataParser.TrackNames
 
     def _get_fields_in_track_which_contain_metadata(self, track, track_name):
@@ -209,20 +196,20 @@ class MediaMetadataParser:
         track_fields = set(track.keys())
         metadata_fields = fields_containing_metadata & track_fields
         if len(metadata_fields) == 0:
-            _verbose_print(f'did not find any extraneous metadata in the \'{track_name}\' track')
+            _verbose_print(f'did not find any metadata in the \'{track_name}\' track')
             return None
         # return the first field (may be many) which is both a member of the set 'fields_containing_metadata' and 'track_fields'
         return metadata_fields.pop()
 
     def _get_extraneous_metadata_in_track(self, track, track_name):
-        _verbose_print(f'checking \'{track_name}\' track for extraneous metadata')
+        _verbose_print(f'checking the \'{track_name}\' track for metadata')
         metadata_field = self._get_fields_in_track_which_contain_metadata(track, track_name)
         if not metadata_field:
             return False
         if track_name not in self._metadata:
             self._metadata[track_name] = {}
         self._metadata[track_name][metadata_field] = track[metadata_field]
-        _verbose_print(f'extraneous metadata was found in the \'{track_name}\' track')
+        _verbose_print(f'metadata was found in the \'{track_name}\' track')
         return True
 
     @property
@@ -251,12 +238,17 @@ class MediaMetadataParser:
             return self._json_metadata if self._json_metadata else ''
 
 def get_files_with_metadata(file_paths, force):
-    index_width = _get_index_width(len(file_paths))
-    for i, file_path in enumerate(file_paths, start=1):
-        _verbose_print(f'{i:{index_width}}: checking for custom metadata {file_path}')
-        media_metadata_parser = MediaMetadataParser(file_path)
-        if media_metadata_parser.has_metadata():
-            _verbose_print(f'{i:{index_width}}: custom metadata found {file_path}')
+    for file_path in file_paths:
+        _status_print(f'checking: "{file_path}"', True)
+        if force:
+            _status_print(f'forced: "{file_path}"')
+            yield file_path
+        else:
+            media_metadata_parser = MediaMetadataParser(file_path)
+            if not media_metadata_parser.has_metadata():
+                _status_print(f'NO extra metadata: "{file_path}"')
+                continue
+            _status_print(f'HAS extra metadata: "{file_path}"')
             _verbose_print(f'  metadata: {media_metadata_parser}')
             yield file_path
 
@@ -265,49 +257,48 @@ def _create_temp_path(file_path):
     return file_path.with_suffix(updated_extension)
 
 def _clean_up_on_error(file_path):
-    _verbose_print(f'cleaning up by deleting the destination file if it exists here {file_path}')
+    _verbose_print(f'cleaning up by deleting "{file_path}"')
     if not os.path.isfile(file_path):
-        _verbose_print(f'the destination file was never created so no need to delete {file_path}')
+        _verbose_print(f'destination file was not created, "{file_path}"')
         return
-    _verbose_print(f'the destination file exists -- attempting to delete {file_path}')
+    _verbose_print(f'deleting "{file_path}"')
     try:
         os.remove(file_path)
-        _verbose_print(f'successfully deleted the file {file_path}')
+        _verbose_print(f'successfully deleted "{file_path}"')
     except OSError as err:
         _error_print(f'OSError exception thrown -- {err}')
-        _error_print(f'  unable to remove the destination file {file_path}', prefix=False)
+        _error_print(f'  unable to remove "{file_path}"', prefix=False)
 
 def _remove_metadata_from_file(file_path, dry_run):
-    _verbose_print(f'removing metadata from {file_path}')
+    _verbose_print(f'removing metadata: "{file_path}"')
     new_file_path = _create_temp_path(file_path)
-    _verbose_print(f'temporary metadata free file will be named {new_file_path}')
+    _verbose_print(f'temporary file: "{new_file_path}"')
     command = f'ffmpeg -i "{file_path}" -map_chapters -1 -map_metadata -1 -c:v copy -c:a copy "{new_file_path}"'
     if not _call_external_process(command, dry_run):
         _clean_up_on_error(new_file_path)
         return False
-    _verbose_print(f'created {new_file_path} and removed the metadata')
+    _verbose_print(f'created "{new_file_path}" and removed the metadata')
     if not dry_run:
         shutil.move(new_file_path, file_path)
-    _verbose_print(f'moved {new_file_path} over top of {file_path}')
+    _verbose_print(f'moved "{new_file_path}" over top of "{file_path}"')
+    _status_print(f'removed metadata: "{file_path}"')
     return True
 
 def show_metadata_from_files(file_paths):
-    index_width = _get_index_width(len(file_paths))
-    for i, file_path in enumerate(file_paths, start=1):
-        _verbose_print(f'{i:{index_width}}: gathing metadata for {file_path}')
+    for file_path in file_paths:
+        _verbose_print(f'gathing metadata: "{file_path}"')
         media_metadata_parser = MediaMetadataParser(file_path)
         if not media_metadata_parser.find_all_metadata():
             continue
         metadata_str = str(media_metadata_parser).replace('\n', '\n' + ' ' * 7)
-        _verbose_print(f'{i:{index_width}}: metadata {file_path}')
-        _verbose_print(f'\n{" ":{7}}{metadata_str}')
+        _status_print(f'metadata: "{file_path}"')
+        _status_print(f'\n{" ":{7}}{metadata_str}')
 
 def remove_metadata_from_files(file_paths, force, dry_run):
     retval = True
     first = True
     for file_path in get_files_with_metadata(file_paths, force):
         if first: first = False
-        else: print('')
         if not _remove_metadata_from_file(file_path, dry_run):
             retval = False
     return retval

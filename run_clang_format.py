@@ -89,7 +89,7 @@ def _find_configuration(filename):
 
 def run_clang_format(filename):
     config_file = _find_configuration(filename)
-    command = 'cat {0} | clang-format-3.7 -assume-filename={1} | tee {0}'.format(filename, config_file)
+    command = 'cat {0} | clang-format -assume-filename={1} | tee {0}'.format(filename, config_file)
     retval, output = _execute_command(command)
     if not retval:
         _verbose_print(Verbosity.ERROR, '%s: %s' % (filename, output.strip()))

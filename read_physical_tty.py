@@ -3,9 +3,15 @@
 
 from pathlib import Path
 import os
+import re
 import sys
 import pprint
+import psutil
+import datetime
+import time
 import traceback
+import fileinput
+
 #from ansimarkup import AnsiMarkup, parse
 '''
 user_tags = {
@@ -15,11 +21,11 @@ user_tags = {
     'output': parse('<bold><cyan>'),
     'arg': parse('<bold><yellow>'),}
 '''
-
-_SIGNATURE = [0x30, 0xAA, 0x00, 0x05]
-_VERBOSE = True
 #am = AnsiMarkup(tags=user_tags)
 
+_SIGNATURE = [0x30, 0xAA, 0x00]
+_SIGNATURE_SIZE = 3
+_VERBOSE = True
 
 def _print_info(msg):
     if _VERBOSE:
@@ -34,73 +40,60 @@ def _print_error(msg):
 
 def _get_signature(data):
     sig = []
-    for i in data[:len(_SIGNATURE)]:
+    for i in data[:_SIGNATURE_SIZE]:
         sig.append(int(i))
     return sig
 
 
 def _has_tty_signature(data):
-    #print(f'data len:  {len(data)}')
-    #print(f'signature: {pprint.pformat(_SIGNATURE)}')
-    if len(data) < 4: return False
+    print(f'signature validation')
+    print(f'expected signature: {pprint.pformat(_SIGNATURE)}')
+    print(f'data size:          {len(data)}')
+    if len(data) < _SIGNATURE_SIZE:
+        _print_error('data is {len(data)} bytes and should be at least {_SIGNATURE_SIZE} bytes')
+        return False
     signature = _get_signature(data)
-    #print(f'data:      {pprint.pformat(signature)}')
-    return signature == _SIGNATURE
+    print(f'data:               {pprint.pformat(signature)}')
+    return signature[0] == _SIGNATURE[0] and signature[1] == _SIGNATURE[1] and signature[2] == _SIGNATURE[2]
+
+
+def _get_adjusted_time_stamp(adjustment):
+    return datetime.datetime.fromtimestamp(psutil.boot_time() + adjustment);
+
+
+def timestamp_replacement(match_obj):
+    timestamp_match = match_obj.group(0)[1:-1]
+    print('replacing {timestamp_match}')
+    timestamp = _get_adjusted_time_stamp(float(timestamp_match))
+    return f'[{timestamp}]'
 
 
 def _convert_bytes_to_string(data):
-    data_str = ''
+    text = ''
     for b in data:
         ch = chr(b)
         if ch.isprintable():
-            data_str += ch
-    return data_str
-
-
-def _add_newlines(data_str):
-    i = 0
-    substr = ''
-    lines = []
-    while i < len(data_str):
-        if data_str[i].isprintable() and not data_str[i].isspace():
-            substr += data_str[i]
-            #print(f'adding {data_str[i]} character to {substr}')
-            i += 1
-        elif len(substr) > 0 and i + 3 <= len(data_str) and data_str[i : i + 3].isspace():
-            #print(f'adding {substr} to the list of {len(lines)} string(data_str)')
-            lines.append(substr)
-            substr = ''
-            i += 3
-        elif len(substr) > 0 and data_str[i].isspace():
-            #print(f'adding a whitespace character to {substr}')
-            substr += data_str[i]
-            i += 1
-        else:
-            #print(f'not doing anything except incrementing i from {i} to {i + 1}')
-            i += 1
-    return '\n'.join(lines)
+            text += ch
+    new_text = re.sub(r'\s{4,}', '\n', text)
+    return re.sub(r'\[\s*\d+\.\d+\]', timestamp_replacement, new_text)
 
 
 def read_physical_tty(name='/dev/vcsa'):
-    tty_path = Path(name).resolve()
-    if not tty_path.exists():
-        _print_error(f'file {tty_path} does not exist')
-        return
-    elif not tty_path.is_char_device():
-        _print_error(f'file {tty_path} is not a character device')
-        return
-    data = tty_path.read_bytes()
-    if not _has_tty_signature(data):
-        _print_error(f'the first 4 bytes of {tty_path} is not {pprint.pformat(_SIGNATURE)}')
-        return
-    data_str = _convert_bytes_to_string(data[len(_SIGNATURE):])
-    return _add_newlines(data_str)
+    with fileinput.input(mode='rb') as input_data:
+        for data in input_data:
+            if input_data.isfirstline():
+                if _has_tty_signature(data):
+                    data = data[4:]
+                else:
+                    _print_error(f'signature not found at the beginning of the buffer')
+                    return
+            text = _convert_bytes_to_string(data)
+            print(text)
 
 
 def main():
-    #_parse_args()
     try:
-        print(read_physical_tty())
+        read_physical_tty()
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)

@@ -5,14 +5,15 @@
 import argparse
 from pathlib import Path
 import os
+import random
 import re
 import shlex
 from subprocess import run, CalledProcessError, SubprocessError
 import sys
 import traceback
 
+random.seed(None)
 _VERBOSE = False
-
 
 def _verbose_print(s):
     if _VERBOSE:
@@ -118,6 +119,12 @@ class TabColor:
         return f'{self.color}' if self._color_name else f'{str(self.rgb)}'
 
 
+def _select_random_color_name():
+    color_name = random.choice(list(TabColor.COLORS))
+    _verbose_print(f'color selected randomly: {color_name}')
+    return color_name
+
+
 def _is_rgb(text):
     if RgbValue.is_valid(text):
         return RgbValue(text)
@@ -142,7 +149,7 @@ def _read_color_name_from_stdin():
     return _parse_raw_text_for_color(text)
 
 
-def read_color_from_path(file_path):
+def _read_color_from_path(file_path):
     lines = file_path.read_text().splitlines()
     if len(lines) == 0:
         return None, None
@@ -166,7 +173,7 @@ def _find_color_name_elsewhere():
             break
         if not file_path.is_file():
             continue
-        color_name, rgb_value = read_color_from_path(file_path)
+        color_name, rgb_value = _read_color_from_path(file_path)
     return color_name, rgb_value
 
 
@@ -182,6 +189,7 @@ def _parse_args():
         type=_is_rgb,
         required=False,
         help='tab color specified by the form of rgb(0-255, 0-255, 0-255)')
+    parser.add_argument('-r', '--random', action="store_true", help='use a random color instead of specifying one')
     parser.add_argument('color',
                         const='blank',
                         nargs='?',
@@ -192,18 +200,22 @@ def _parse_args():
     _VERBOSE = args.verbose
     color_name = args.color
     rgb_value = args.rgb
+    select_random_color = args.random
 
-    if not color_name and not rgb_value:
+    # if not --rgb and no color as program arg it may be <stdin>, also try various default files
+    if not color_name and not rgb_value and not select_random_color:
         color_name, rgb_value = _find_color_name_elsewhere()
+
+    # if still no color then just choose one randomly
+    if select_random_color and not color_name and not rgb_value:
+        color_name = _select_random_color_name()
 
     if not color_name and not rgb_value:
         raise parser.error('a valid color name or rgb value was not specified')
     if color_name and rgb_value:
-        raise parser.error(
-            'only one color name or rgb value can be specified at a time')
+        raise parser.error('only one color name or rgb value can be specified at a time')
 
-    _verbose_print(
-        f'Args, verbose: {_VERBOSE}, color: {color_name}, rgb: {rgb_value}')
+    _verbose_print(f'Args, verbose: {_VERBOSE}, random: {select_random_color}, color: {color_name}, rgb: {rgb_value}')
     return TabColor(color_name, rgb_value)
 
 

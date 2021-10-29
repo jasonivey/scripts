@@ -3,7 +3,7 @@
 
 import argparse
 import datetime
-import exceptions
+import builtins
 import os
 import pep8
 import platform
@@ -70,7 +70,7 @@ def get_platform_id():
     elif uname[0] == 'Linux':
         return 'linux_x86-64' if bitness == '64' else 'linux_i686'
     else:
-        raise exceptions.RuntimeError('Unknown platform encountered: "{0}"'.format(uname[0]))
+        raise RuntimeError('Unknown platform encountered: "{0}"'.format(uname[0]))
 
 def find_path_in_directory(start_dir, filename=None, dirname=None):
     dir = start_dir

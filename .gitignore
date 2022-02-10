@@ -1,3 +1,4 @@
 go/pkg
 go/src/github.com/
 glob-from-gitignore/node_modules/
+.python-version

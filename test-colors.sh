@@ -7,7 +7,7 @@ for i in {0..255} ; do
         continue;
     elif (( $i == 15 )) ; then
         echo;
-    elif (( ($i - 15) % 12 == 0 )) ; then # (( (( (($i - 15)) % 12 )) == 0 )); then
+    elif (( ($i - 15) % 16 == 0 )) ; then
         echo;
     fi
 done

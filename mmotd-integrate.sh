@@ -37,6 +37,10 @@ error_exit()
     exit 1
 }
 
+exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
 integrate_cmake_init_variation() {
     CC=$1 CXX=$2 cmake -S .. -B . -DCMAKE_BUILD_TYPE="$3" -DCMAKE_VERBOSE_MAKEFILE=ON -GNinja || error_exit "configuring mmotd using $2 in $3 mode"
 }
@@ -84,8 +88,14 @@ mmotd-integrate() {
         local -a c_compiler_names=("/usr/local/opt/llvm/bin/clang-13" "/usr/bin/clang" "/usr/local/opt/gcc/bin/gcc-11")
         local -a cxx_compiler_names=("/usr/local/opt/llvm/bin/clang-13" "/usr/bin/clang++" "/usr/local/opt/gcc/bin/g++-11")
     elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
-        local -a c_compiler_names=("/usr/bin/clang-11" "/usr/bin/gcc-10")
-        local -a cxx_compiler_names=("/usr/bin/clang++-11" "/usr/bin/g++-10")
+        if exists "g++-11"; then
+            local -a c_compiler_names=("/usr/bin/gcc-11")
+            local -a cxx_compiler_names=("/usr/bin/g++-11")
+        fi
+        if exists "clang-13"; then
+            local -a c_compiler_names=("clang-13")
+            local -a cxx_compiler_names=("clang++-13")
+        fi
     else
         local -a c_compiler_names=()
         local -a cxx_compiler_names=()

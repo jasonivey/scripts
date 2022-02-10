@@ -6,9 +6,9 @@ get_date_format() {
 }
 
 print_debug() {
-    #local date_fmt="$(get_date_format)"
-    #printf "\e[93m[%s]  \e[33mDEBUG\e[37;1m: %s\e[0m\n" "$(date "$date_fmt")" "$1" 1>&2
-    echo > /dev/null
+    local date_fmt="$(get_date_format)"
+    printf "\e[93m[%s]  \e[33mDEBUG\e[37;1m: %s\e[0m\n" "$(date "$date_fmt")" "$1" 1>&2
+    #echo > /dev/null
 }
 
 print_info() {
@@ -59,60 +59,66 @@ start_virtual_machine() {
 }
 
 find_virtual_machine_vmx() {
-    local vm_dir="$1"
-    local vmx_path=$(/bin/ls "$vm_dir" | egrep -i '\.vmx\b')
+    local vm_input_path="$1"
+    local vmx_path=$(/bin/ls "$vm_input_path" | egrep -i '\.vmx$')
     if [[ $? -ne 0 ]]; then
-        error_exit "unable to find a .vmx file within: $vm_dir"
+        error_exit "unable to find a .vmx file within: $vm_input_path"
     fi
-    vmx_path="`realpath -LPe "$vm_dir"/"$vmx_path"`"
-    print_debug "vmx file found: $vmx_path"
-    ret_val="$vmx_path"
+    vmx_vm_machine=`realpath -LPe "$vm_input_path/$vmx_path"`
+    print_debug "vmx path: ${vmx_vm_machine}"
+    #if [ -z ${vmx_path+x} ] && [ -n ${vmx_path} ]; then
+    if [ -e "${vmx_vm_machine}" ]; then
+        print_debug "vmx file found: ${vmx_vm_machine}"
+    else
+        error_exit "unable to find vmx within $vm_input_path";
+    fi
+    ret_val="${vmx_vm_machine}"
 }
 
 find_virtual_machine_vmwarevm() {
-    local vm_name="$1"
+    local vm_root_path="$1"
     get_virtual_machine_directory
     local vm_root_dir="$ret_val"
     print_debug "virtual machine directory: $vm_root_dir"
-    local vm_dir="$vm_root_dir/$vm_name"
-    print_debug "full virtual machine directory: $vm_dir"
-    if [[ ! -d "$vm_dir" ]]; then
-        error_exit "unable to find vm directory: $vm_dir"
+    local vm_path="$vm_root_dir/$vm_root_path"
+    print_debug "full virtual machine directory: $vm_path"
+    if [[ ! -d "$vm_path" ]]; then
+        error_exit "unable to find vm directory: $vm_path"
     fi
-    ret_val="$vm_dir"
+    ret_val="$vm_path"
 }
 
 find_virtual_machine_path() {
-    vm_name="$1"
-    print_debug "vm_name: $vm_name"
+    vm_input_name="$1"
+    print_debug "vm input name: $vm_input_name"
 
     local ends_with_vmx=0
-    if [[ "${vm_name/*.vmx/1}" == '1' ]]; then
+    if [[ "${vm_input_name/*.vmx/1}" == '1' ]]; then
         print_debug "path ends with .vmx extension";
         ends_with_vmx=1
     fi
 
-    if [[ -e "$vm_name" && ((ends_with_vmx == 1)) ]]; then
-        print_debug "file exists: $vm_name";
-        ret_val="$vm_name";
-    elif [[ -e "${vm_name}.vmx" ]]; then
-        print_debug "file exists (after adding .vmx): $vm_name";
-        ret_val="${vm_name}.vmx";
-    elif [[ -d "$vm_name" ]]; then
-        print_debug "directory exists: $vm_name";
-        find_virtual_machine_vmx "$vm_name";
-    elif [[ -d "${vm_name}.vmwarevm" ]]; then
-        print_debug "directory exists (after adding .vmwarevm): $vm_name";
-        find_virtual_machine_vmx "${vm_name}.vmwarevm";
+    if [[ -e "$vm_input_name" && ((ends_with_vmx == 1)) ]]; then
+        print_debug "file exists: $vm_input_name";
+        ret_val="$vm_input_name";
+    elif [[ -e "${vm_input_name}.vmx" ]]; then
+        print_debug "file exists (after adding .vmx): $vm_input_name";
+        ret_val="${vm_input_name}.vmx";
+    elif [[ -d "$vm_input_name" ]]; then
+        print_debug "directory exists: $vm_input_name";
+        find_virtual_machine_vmx "$vm_input_name";
+    elif [[ -d "${vm_input_name}.vmwarevm" ]]; then
+        print_debug "directory exists (after adding .vmwarevm): $vm_input_name";
+        find_virtual_machine_vmx "${vm_input_name}.vmwarevm";
     else
-        if [[ "${vm_name/*.vmwarevm/1}" == '1' ]]; then
-            find_virtual_machine_vmwarevm "$vm_name";
-            vm_dir="$ret_val"
+        if [[ "${vm_input_name/*.vmwarevm/1}" == '1' ]]; then
+            find_virtual_machine_vmwarevm "$vm_input_name";
+            vmwarevm_dir="$ret_val"
         else
-            find_virtual_machine_vmwarevm "${vm_name}.vmwarevm";
-            vm_dir="$ret_val"
+            find_virtual_machine_vmwarevm "${vm_input_name}.vmwarevm";
+            vmwarevm_dir="$ret_val"
         fi
-        find_virtual_machine_vmx "$vm_dir"
+        find_virtual_machine_vmx "$vmwarevm_dir"
     fi
 }
 

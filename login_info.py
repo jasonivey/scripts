@@ -5,6 +5,7 @@ from ansimarkup import AnsiMarkup, parse
 from app_settings import app_settings
 import argparse
 import datetime
+import math
 import os
 import platform
 import pprint
@@ -253,6 +254,7 @@ class MacOsVersionNames:
 
     @staticmethod
     def get_platform_name(version):
+        version = float(math.floor(version)) if version >= 11.0 else version
         for max_version, platform_name in MacOsVersionNames.PLATFORM_NAMES.items():
             if version <= max_version:
                 return platform_name
@@ -260,6 +262,7 @@ class MacOsVersionNames:
 
     @staticmethod
     def get_version_name(version):
+        version = float(math.floor(version)) if version >= 11.0 else version
         return MacOsVersionNames.VERSION_NAMES[version] if version in MacOsVersionNames.VERSION_NAMES else 'Unknown'
 
     @staticmethod

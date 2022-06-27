@@ -31,14 +31,13 @@ print_error() {
     printf "\e[93m[%s]  \e[31mERROR\e[37;1m: %s\e[0m\n" "$(date "$date_fmt")" "$1" 1>&2
 }
 
-error_exit()
-{
+error_exit() {
     print_error "$1"
     exit 1
 }
 
 exists() {
-    command -v "$1" >/dev/null 2>&1
+    command -v "$1" &> /dev/null
 }
 
 integrate_cmake_init_variation() {
@@ -70,7 +69,7 @@ integrate_variation() {
 
 clean_build_dir() {
     local build_dir_=$1
-    if [[ "`realpath -LPe $PWD`" = "$build_dir_" ]]; then
+    if [[ "$(realpath -LPe $PWD)" = "$build_dir_" ]]; then
         cd ..
     fi
     if [[ -d "$build_dir_" ]]; then
@@ -81,12 +80,12 @@ clean_build_dir() {
 }
 
 # usage: integrate </dir-to-project/build>
-mmotd-integrate() {
+mmotd_integrate() {
     build_dir_=$1
     echo "Integrating $build_dir_"
     if [ "$(uname)" == "Darwin" ]; then
-        local -a c_compiler_names=("/usr/local/opt/llvm/bin/clang-13" "/usr/bin/clang" "/usr/local/opt/gcc/bin/gcc-11")
-        local -a cxx_compiler_names=("/usr/local/opt/llvm/bin/clang-13" "/usr/bin/clang++" "/usr/local/opt/gcc/bin/g++-11")
+        local -a c_compiler_names=("/usr/local/llvm/14.0.0_0/bin/clang-14" "/usr/bin/clang" "/usr/local/opt/gcc/bin/gcc-11")
+        local -a cxx_compiler_names=("/usr/local/llvm/14.0.0_0/bin/clang++" "/usr/bin/clang++" "/usr/local/opt/gcc/bin/g++-11")
     elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
         if exists "g++-11"; then
             local -a c_compiler_names=("/usr/bin/gcc-11")
@@ -101,7 +100,7 @@ mmotd-integrate() {
         local -a cxx_compiler_names=()
     fi
     local -a build_types=("Debug" "Release")
-    for ((i = 0; i < ${#c_compiler_names[@]}; ++i)) do
+    for ((i = 0; i < ${#c_compiler_names[@]}; ++i)); do
         echo "${c_compiler_names[$i]}"
         local c_compiler="${c_compiler_names[$i]}"
         local cxx_compiler="${cxx_compiler_names[$i]}"
@@ -116,7 +115,7 @@ mmotd-integrate() {
 }
 
 main() {
-    mmotd-integrate "`pwd`/build"
+    mmotd_integrate "$(pwd)/build"
 }
 
 main
